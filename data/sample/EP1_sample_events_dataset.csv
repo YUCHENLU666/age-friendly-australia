@@ -1,0 +1,21 @@
+event_name,category_tags,venue,suburb,day_time,recurrence,senior_relevant,source_note
+Brain Training,PALS;Social Connections;Wellbeing,Oakleigh Senior Citizens Centre,Oakleigh,10:30AM Tue,Series,Yes,Monash Public Library Service events calendar
+Why Do Birds Sing?,PALS;Sustainability;Wellbeing,Wheelers Hill Library,Wheelers Hill,10:00AM Wed,One-off,Yes,Monash Public Library Service events calendar
+Digital Learners' Club: Artificial Intelligence Beyond Basics,PALS;Social Connections;Technology,Wheelers Hill Library,Wheelers Hill,10:00AM Wed,Series,Yes,Monash Public Library Service events calendar
+Scams Awareness Session (Mandarin) / 防诈骗意识讲座：普通话专场,PALS;Technology,Wheelers Hill Library,Wheelers Hill,10:30AM Fri,Series,Yes,Monash Public Library Service events calendar
+Scambusters: Scams Awareness Week,PALS;Technology,Wheelers Hill Library,Wheelers Hill,10:00AM Tue,Series,Yes,Monash Public Library Service events calendar
+Safety Matters: Confidence and Awareness in Daily Life,PALS;Wellbeing,Wheelers Hill Library,Wheelers Hill,11:00AM Wed,Series,Yes,Monash Public Library Service events calendar
+Digital Learners' Club: Online Security,PALS;Social Connections;Technology,Wheelers Hill Library,Wheelers Hill,10:00AM Wed,Series,Yes,Monash Public Library Service events calendar
+Italian Social Group / Gruppo Italiano di socializzazione,Cultural Event;PALS;Social Connections,Mulgrave Library,Mulgrave,10:00AM Wed,Series,Yes,Monash Public Library Service events calendar
+Discover Bushwalking,Health;PALS;Social Connections,Wheelers Hill Library,Wheelers Hill,10:30AM Mon,One-off,Yes,Monash Public Library Service events calendar
+Smart Watches & Fitness Trackers for Health,Health;Technology;Wellbeing,Mulgrave Neighbourhood Library,Mulgrave,TBD,One-off,Yes,Monash Public Library Service events calendar
+Mandarin Conversation Circles / 中文会话圈活动,Personal Development;Cultural Event;Social Connections,Glen Waverley Library,Glen Waverley,10:30AM Fri,Series,Yes,Monash Public Library Service events calendar
+Conversation Circles: Glen Waverley (English practice),Personal Development;Social Connections,Glen Waverley Library,Glen Waverley,10:30AM Mon,Series,Yes,Monash Public Library Service events calendar
+Justice of the Peace: Glen Waverley,Adult;Event Series,Glen Waverley Library,Glen Waverley,Wednesdays,Series,Yes,Monash Public Library Service events calendar
+Knitting Group,Craft;Social Connections,Glen Waverley Library,Glen Waverley,4:00PM Wed,Series,Yes,Monash Public Library Service events calendar
+Knitting Group (19 sessions),Personal Development;Craft;Social Connections,Oakleigh Library,Oakleigh,2:00PM (fortnightly),Series,Yes,Monash Public Library Service events calendar
+Upcycling Plastic Trash into Treasure,Craft;Sustainability,Wheelers Hill Library,Wheelers Hill,10:00AM Thu,One-off,Partially,Monash Public Library Service events calendar
+Storytime,Children;Craft;Storytime,Wheelers Hill Library,Wheelers Hill,11:00AM Mon,Series,No,Monash Public Library Service events calendar
+Indigenous Weaving Workshop,Cultural Event;Craft,Mulgrave Neighbourhood Library,Mulgrave,TBD,One-off,Partially,Monash Public Library Service events calendar
+Council Festivals and Events (general listing),Local Event,Various Monash Council venues,Monash LGA,Varies,Recurring calendar,Yes,City of Monash official Festivals & Events calendar (web page, not API)
+Love Our Street (community clean-up event),Environment,Various Monash Council locations,Monash LGA,Varies,One-off,Partially,City of Monash Events directory (web page, not API)
