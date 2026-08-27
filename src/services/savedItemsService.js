@@ -1,64 +1,210 @@
-const SAVED_ACTIVITY_KEY =
+const SAVED_ITEMS_KEY =
+  'ageFriendlyAustralia.savedItems'
+
+const LEGACY_ACTIVITY_KEY =
   'ageFriendlyAustralia.savedActivityIds'
 
-function readSavedIds() {
-  try {
-    const stored = localStorage.getItem(
-      SAVED_ACTIVITY_KEY,
-    )
-
-    if (!stored) {
-      return []
-    }
-
-    const parsed = JSON.parse(stored)
-
-    if (!Array.isArray(parsed)) {
-      return []
-    }
-
-    return parsed.map(String)
-  } catch {
-    return []
+function createDefaultSavedItems() {
+  return {
+    activityIds: [],
+    serviceIds: [],
   }
 }
 
-function writeSavedIds(ids) {
+function cleanIds(value) {
+  if (!Array.isArray(value)) {
+    return []
+  }
+
+  return [
+    ...new Set(
+      value
+        .map((id) =>
+          String(id ?? '').trim(),
+        )
+        .filter(Boolean),
+    ),
+  ]
+}
+
+function writeSavedItems(savedItems) {
   localStorage.setItem(
-    SAVED_ACTIVITY_KEY,
-    JSON.stringify(ids),
+    SAVED_ITEMS_KEY,
+    JSON.stringify(savedItems),
   )
+}
+
+function readSavedItems() {
+  try {
+    const stored =
+      localStorage.getItem(
+        SAVED_ITEMS_KEY,
+      )
+
+    if (stored) {
+      const parsed =
+        JSON.parse(stored)
+
+      return {
+        activityIds:
+          cleanIds(
+            parsed.activityIds,
+          ),
+
+        serviceIds:
+          cleanIds(
+            parsed.serviceIds,
+          ),
+      }
+    }
+
+    /*
+     * Migrate activity saves created
+     * by the earlier version.
+     */
+    const legacyActivities =
+      localStorage.getItem(
+        LEGACY_ACTIVITY_KEY,
+      )
+
+    if (legacyActivities) {
+      const migrated = {
+        activityIds:
+          cleanIds(
+            JSON.parse(
+              legacyActivities,
+            ),
+          ),
+
+        serviceIds: [],
+      }
+
+      writeSavedItems(
+        migrated,
+      )
+
+      localStorage.removeItem(
+        LEGACY_ACTIVITY_KEY,
+      )
+
+      return migrated
+    }
+  } catch (error) {
+    console.error(
+      'Unable to read saved items.',
+      error,
+    )
+  }
+
+  return createDefaultSavedItems()
+}
+
+function toggleId(
+  ids,
+  id,
+) {
+  const itemId =
+    String(id)
+
+  if (ids.includes(itemId)) {
+    return ids.filter(
+      (savedId) =>
+        savedId !== itemId,
+    )
+  }
+
+  return [
+    ...ids,
+    itemId,
+  ]
+}
+
+export function getSavedItems() {
+  return readSavedItems()
 }
 
 export function getSavedActivityIds() {
-  return readSavedIds()
+  return readSavedItems()
+    .activityIds
 }
 
-export function toggleSavedActivityId(id) {
-  const activityId = String(id)
-  const savedIds = readSavedIds()
-
-  const nextIds = savedIds.includes(activityId)
-    ? savedIds.filter(
-        (savedId) =>
-          savedId !== activityId,
-      )
-    : [...savedIds, activityId]
-
-  writeSavedIds(nextIds)
-
-  return nextIds
+export function getSavedServiceIds() {
+  return readSavedItems()
+    .serviceIds
 }
 
-export function removeSavedActivityId(id) {
-  const activityId = String(id)
+export function toggleSavedActivityId(
+  id,
+) {
+  const savedItems =
+    readSavedItems()
 
-  const nextIds = readSavedIds().filter(
-    (savedId) =>
-      savedId !== activityId,
+  savedItems.activityIds =
+    toggleId(
+      savedItems.activityIds,
+      id,
+    )
+
+  writeSavedItems(
+    savedItems,
   )
 
-  writeSavedIds(nextIds)
+  return savedItems.activityIds
+}
 
-  return nextIds
+export function toggleSavedServiceId(
+  id,
+) {
+  const savedItems =
+    readSavedItems()
+
+  savedItems.serviceIds =
+    toggleId(
+      savedItems.serviceIds,
+      id,
+    )
+
+  writeSavedItems(
+    savedItems,
+  )
+
+  return savedItems.serviceIds
+}
+
+export function removeSavedActivityId(
+  id,
+) {
+  const savedItems =
+    readSavedItems()
+
+  savedItems.activityIds =
+    savedItems.activityIds.filter(
+      (savedId) =>
+        savedId !== String(id),
+    )
+
+  writeSavedItems(
+    savedItems,
+  )
+
+  return savedItems.activityIds
+}
+
+export function removeSavedServiceId(
+  id,
+) {
+  const savedItems =
+    readSavedItems()
+
+  savedItems.serviceIds =
+    savedItems.serviceIds.filter(
+      (savedId) =>
+        savedId !== String(id),
+    )
+
+  writeSavedItems(
+    savedItems,
+  )
+
+  return savedItems.serviceIds
 }

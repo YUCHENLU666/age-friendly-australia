@@ -12,11 +12,21 @@ import {
   getServices,
 } from '@/services/serviceService'
 
+import {
+  getSavedServiceIds,
+  toggleSavedServiceId,
+} from '@/services/savedItemsService'
+
 const services = ref([])
 
-const loading = ref(true)
+const savedServiceIds =
+  ref([])
 
-const errorMessage = ref('')
+const loading =
+  ref(true)
+
+const errorMessage =
+  ref('')
 
 const filters = ref({
   search: '',
@@ -26,6 +36,9 @@ const filters = ref({
 })
 
 onMounted(async () => {
+  savedServiceIds.value =
+    getSavedServiceIds()
+
   try {
     services.value =
       await getServices()
@@ -40,16 +53,19 @@ onMounted(async () => {
 })
 
 /*
- * The filters become available automatically
+ * Filters automatically become available
  * once verified service records are connected.
  */
-const dataAvailable = computed(() => {
-  return services.value.length > 0
-})
+const dataAvailable =
+  computed(() => {
+    return (
+      services.value.length > 0
+    )
+  })
 
 /*
- * General areas come directly from the
- * connected service dataset.
+ * General area options come directly
+ * from the connected dataset.
  */
 const areas = computed(() => {
   return [
@@ -65,8 +81,8 @@ const areas = computed(() => {
 })
 
 /*
- * Service types also come directly from
- * the connected service dataset.
+ * Service types come directly
+ * from verified service records.
  */
 const serviceTypes =
   computed(() => {
@@ -83,9 +99,8 @@ const serviceTypes =
   })
 
 /*
- * Accessibility choices are created only
- * from verified access information included
- * in service records.
+ * Accessibility options are built
+ * only from supplied source data.
  */
 const accessibilityOptions =
   computed(() => {
@@ -100,7 +115,7 @@ const accessibilityOptions =
   })
 
 /*
- * Apply all currently selected filters.
+ * Apply all search and filter choices.
  */
 const filteredServices =
   computed(() => {
@@ -149,7 +164,8 @@ const filteredServices =
         }
 
         if (
-          filters.value.accessibility &&
+          filters.value
+            .accessibility &&
           !service.accessibility.includes(
             filters.value
               .accessibility,
@@ -177,6 +193,23 @@ const clearFilters = () => {
     type: '',
     accessibility: '',
   }
+}
+
+const isServiceSaved = (
+  id,
+) => {
+  return savedServiceIds.value.includes(
+    String(id),
+  )
+}
+
+const toggleServiceSave = (
+  id,
+) => {
+  savedServiceIds.value =
+    toggleSavedServiceId(
+      id,
+    )
 }
 </script>
 
@@ -383,7 +416,7 @@ const clearFilters = () => {
           </p>
         </div>
 
-        <!-- ================= NO DATASET YET ================= -->
+        <!-- ================= DATA NOT CONNECTED ================= -->
         <div
           v-else-if="
             !dataAvailable
@@ -482,6 +515,14 @@ const clearFilters = () => {
             "
             :key="service.id"
             :service="service"
+            :saved="
+              isServiceSaved(
+                service.id,
+              )
+            "
+            @toggle-save="
+              toggleServiceSave
+            "
           />
         </div>
       </div>
