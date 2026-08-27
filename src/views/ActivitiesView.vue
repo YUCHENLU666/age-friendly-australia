@@ -17,11 +17,23 @@ import {
   toggleSavedActivityId,
 } from '@/services/savedItemsService'
 
+import {
+  getPreferences,
+} from '@/services/preferencesService'
+
 const activities = ref([])
-const savedActivityIds = ref([])
+
+const savedActivityIds =
+  ref([])
+
+const preferences = ref(
+  getPreferences(),
+)
 
 const loading = ref(true)
-const errorMessage = ref('')
+
+const errorMessage =
+  ref('')
 
 const defaultFilters = () => ({
   search: '',
@@ -29,7 +41,8 @@ const defaultFilters = () => ({
   interest: '',
   day: '',
   recurrence: '',
-  suitability: 'recommended',
+  suitability:
+    'recommended',
 })
 
 const filters = ref(
@@ -39,6 +52,9 @@ const filters = ref(
 onMounted(async () => {
   savedActivityIds.value =
     getSavedActivityIds()
+
+  preferences.value =
+    getPreferences()
 
   try {
     activities.value =
@@ -64,27 +80,31 @@ const areas = computed(() => {
   ].sort()
 })
 
-const interests = computed(() => {
-  const lessUsefulFilterTags = new Set([
-    'PALS',
-    'Adult',
-    'Event Series',
-    'Children',
-    'Storytime',
-  ])
+const interests =
+  computed(() => {
+    const excludedTags =
+      new Set([
+        'PALS',
+        'Adult',
+        'Event Series',
+        'Children',
+        'Storytime',
+      ])
 
-  return [
-    ...new Set(
-      activities.value.flatMap(
-        (activity) =>
-          activity.tags.filter(
-            (tag) =>
-              !lessUsefulFilterTags.has(tag),
-          ),
+    return [
+      ...new Set(
+        activities.value.flatMap(
+          (activity) =>
+            activity.tags.filter(
+              (tag) =>
+                !excludedTags.has(
+                  tag,
+                ),
+            ),
+        ),
       ),
-    ),
-  ].sort()
-})
+    ].sort()
+  })
 
 const dayOrder = [
   'Monday',
@@ -98,11 +118,13 @@ const dayOrder = [
 ]
 
 const days = computed(() => {
-  const availableDays = new Set(
-    activities.value.map(
-      (activity) => activity.day,
-    ),
-  )
+  const availableDays =
+    new Set(
+      activities.value.map(
+        (activity) =>
+          activity.day,
+      ),
+    )
 
   return dayOrder.filter(
     (day) =>
@@ -110,162 +132,303 @@ const days = computed(() => {
   )
 })
 
-const recurrenceOptions = computed(() => {
-  return [
-    ...new Set(
-      activities.value.map(
-        (activity) =>
-          activity.recurrence,
+const recurrenceOptions =
+  computed(() => {
+    return [
+      ...new Set(
+        activities.value.map(
+          (activity) =>
+            activity.recurrence,
+        ),
       ),
-    ),
-  ].sort()
-})
+    ].sort()
+  })
 
-const filteredActivities = computed(() => {
-  const search =
-    filters.value.search
-      .trim()
-      .toLowerCase()
+const hasSavedPreferences =
+  computed(() => {
+    return Boolean(
+      preferences.value.generalArea ||
+        preferences.value
+          .interests.length ||
+        preferences.value
+          .preferredDays.length ||
+        preferences.value
+          .activityTypes.length,
+    )
+  })
 
-  return activities.value.filter(
-    (activity) => {
-      if (search) {
-        const searchableText = [
-          activity.name,
-          activity.venue,
-          activity.suburb,
-          ...activity.tags,
-        ]
-          .join(' ')
-          .toLowerCase()
+const getPreferenceScore = (
+  activity,
+) => {
+  let score = 0
 
-        if (
-          !searchableText.includes(search)
-        ) {
-          return false
-        }
-      }
+  if (
+    preferences.value.generalArea &&
+    activity.suburb ===
+      preferences.value.generalArea
+  ) {
+    score += 4
+  }
 
-      if (
-        filters.value.area &&
-        activity.suburb !==
-          filters.value.area
-      ) {
-        return false
-      }
+  if (
+    preferences.value.interests.some(
+      (interest) =>
+        activity.tags.includes(
+          interest,
+        ),
+    )
+  ) {
+    score += 3
+  }
 
-      if (
-        filters.value.interest &&
-        !activity.tags.includes(
-          filters.value.interest,
-        )
-      ) {
-        return false
-      }
+  if (
+    preferences.value.preferredDays.includes(
+      activity.day,
+    )
+  ) {
+    score += 2
+  }
 
-      if (
-        filters.value.day &&
-        activity.day !==
-          filters.value.day
-      ) {
-        return false
-      }
+  if (
+    preferences.value.activityTypes.includes(
+      activity.activityType,
+    )
+  ) {
+    score += 3
+  }
 
-      if (
-        filters.value.recurrence &&
-        activity.recurrence !==
-          filters.value.recurrence
-      ) {
-        return false
-      }
+  return score
+}
 
-      if (
-        filters.value.suitability ===
-          'recommended' &&
-        activity.suitability === 'no'
-      ) {
-        return false
-      }
+const filteredActivities =
+  computed(() => {
+    const search =
+      filters.value.search
+        .trim()
+        .toLowerCase()
 
-      if (
-        filters.value.suitability ===
-          'yes' &&
-        activity.suitability !== 'yes'
-      ) {
-        return false
-      }
+    const results =
+      activities.value.filter(
+        (activity) => {
+          if (search) {
+            const searchableText = [
+              activity.name,
+              activity.venue,
+              activity.suburb,
+              activity.activityType,
+              ...activity.tags,
+            ]
+              .join(' ')
+              .toLowerCase()
 
-      if (
-        filters.value.suitability ===
-          'partial' &&
-        activity.suitability !==
-          'partial'
-      ) {
-        return false
-      }
+            if (
+              !searchableText.includes(
+                search,
+              )
+            ) {
+              return false
+            }
+          }
 
-      return true
-    },
-  )
-})
+          if (
+            filters.value.area &&
+            activity.suburb !==
+              filters.value.area
+          ) {
+            return false
+          }
+
+          if (
+            filters.value.interest &&
+            !activity.tags.includes(
+              filters.value.interest,
+            )
+          ) {
+            return false
+          }
+
+          if (
+            filters.value.day &&
+            activity.day !==
+              filters.value.day
+          ) {
+            return false
+          }
+
+          if (
+            filters.value.recurrence &&
+            activity.recurrence !==
+              filters.value.recurrence
+          ) {
+            return false
+          }
+
+          if (
+            filters.value
+              .suitability ===
+              'recommended' &&
+            activity.suitability ===
+              'no'
+          ) {
+            return false
+          }
+
+          if (
+            filters.value
+              .suitability ===
+              'yes' &&
+            activity.suitability !==
+              'yes'
+          ) {
+            return false
+          }
+
+          if (
+            filters.value
+              .suitability ===
+              'partial' &&
+            activity.suitability !==
+              'partial'
+          ) {
+            return false
+          }
+
+          return true
+        },
+      )
+
+    if (
+      !hasSavedPreferences.value
+    ) {
+      return results
+    }
+
+    return [...results].sort(
+      (activityA, activityB) =>
+        getPreferenceScore(
+          activityB,
+        ) -
+        getPreferenceScore(
+          activityA,
+        ),
+    )
+  })
 
 const updateFilters = (
   nextFilters,
 ) => {
-  filters.value = nextFilters
+  filters.value =
+    nextFilters
 }
 
 const clearFilters = () => {
-  filters.value = defaultFilters()
+  filters.value =
+    defaultFilters()
 }
 
-const isSaved = (activityId) => {
+const isSaved = (
+  activityId,
+) => {
   return savedActivityIds.value.includes(
     String(activityId),
   )
 }
 
-const toggleSave = (activityId) => {
+const toggleSave = (
+  activityId,
+) => {
   savedActivityIds.value =
-    toggleSavedActivityId(activityId)
+    toggleSavedActivityId(
+      activityId,
+    )
 }
 </script>
 
 <template>
   <div class="activities-page">
-    <section class="activity-page-hero">
+    <section
+      class="activity-page-hero"
+    >
       <div class="page-container">
-        <div class="activity-page-hero-inner">
+        <div
+          class="activity-page-hero-inner"
+        >
           <div>
             <p class="section-kicker">
               Local activities
             </p>
 
             <h1>
-              Find something that interests you.
+              Find something that
+              interests you.
             </h1>
 
             <p>
-              Search activities by general area,
-              interests and preferred schedule using
-              simple, optional choices.
+              Search activities by
+              general area, interests
+              and preferred schedule
+              using simple, optional
+              choices.
             </p>
           </div>
 
-          <div class="activity-page-privacy">
-            <span aria-hidden="true">✓</span>
+          <div
+            class="activity-page-privacy"
+          >
+            <span aria-hidden="true">
+              ✓
+            </span>
 
             <p>
-              General area and interest selections
-              are used only to improve your results.
+              General area and interest
+              selections are used only
+              to improve your results.
             </p>
           </div>
         </div>
       </div>
     </section>
 
-    <section class="activities-main">
+    <section
+      class="activities-main"
+    >
       <div class="page-container">
+        <div
+          v-if="
+            hasSavedPreferences
+          "
+          class="activity-preference-banner"
+        >
+          <div
+            class="activity-preference-banner-icon"
+            aria-hidden="true"
+          >
+            ✓
+          </div>
+
+          <div>
+            <strong>
+              Your preferences are
+              helping organise these
+              results.
+            </strong>
+
+            <p>
+              Activities that match
+              your saved general area,
+              interests, preferred days
+              or activity types appear
+              first.
+            </p>
+          </div>
+
+          <RouterLink
+            to="/preferences"
+          >
+            Edit preferences
+          </RouterLink>
+        </div>
+
         <ActivityFilters
           :filters="filters"
           :areas="areas"
@@ -280,7 +443,9 @@ const toggleSave = (activityId) => {
           @clear="clearFilters"
         />
 
-        <div class="activity-data-note">
+        <div
+          class="activity-data-note"
+        >
           <span
             class="activity-data-note-icon"
             aria-hidden="true"
@@ -289,14 +454,18 @@ const toggleSave = (activityId) => {
           </span>
 
           <p>
-            Current pilot records may provide a
-            recurring schedule rather than an exact
-            event date. Availability and access details
-            are shown only when supplied by the source.
+            Current pilot records may
+            provide a recurring schedule
+            rather than an exact event
+            date. Availability and access
+            details are shown only when
+            supplied by the source.
           </p>
         </div>
 
-        <div class="activity-results-heading">
+        <div
+          class="activity-results-heading"
+        >
           <div>
             <p class="section-kicker">
               Results
@@ -323,8 +492,9 @@ const toggleSave = (activityId) => {
             "
             class="activity-results-note"
           >
-            Showing results marked suitable or
-            potentially suitable for older adults.
+            Showing results marked
+            suitable or potentially
+            suitable for older adults.
           </p>
         </div>
 
@@ -347,12 +517,15 @@ const toggleSave = (activityId) => {
         </div>
 
         <div
-          v-else-if="errorMessage"
+          v-else-if="
+            errorMessage
+          "
           class="activity-state-card"
           role="alert"
         >
           <h2>
-            Unable to load activities
+            Unable to load
+            activities
           </h2>
 
           <p>
@@ -362,7 +535,8 @@ const toggleSave = (activityId) => {
 
         <div
           v-else-if="
-            filteredActivities.length === 0
+            filteredActivities.length ===
+            0
           "
           class="activity-state-card"
         >
@@ -371,8 +545,9 @@ const toggleSave = (activityId) => {
           </h2>
 
           <p>
-            Try changing one or more filters to
-            see more results.
+            Try changing one or more
+            filters to see more
+            results.
           </p>
 
           <button
@@ -390,12 +565,17 @@ const toggleSave = (activityId) => {
         >
           <ActivityCard
             v-for="
-              activity in filteredActivities
+              activity in
+              filteredActivities
             "
             :key="activity.id"
             :activity="activity"
-            :saved="isSaved(activity.id)"
-            @toggle-save="toggleSave"
+            :saved="
+              isSaved(activity.id)
+            "
+            @toggle-save="
+              toggleSave
+            "
           />
         </div>
       </div>

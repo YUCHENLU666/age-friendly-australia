@@ -9,48 +9,46 @@ const API_BASE_URL = (
   'http://localhost:3000/api'
 ).replace(/\/$/, '')
 
-/*
- * Clean imported text before displaying it in the UI.
- */
-const blockedUiTerm = ['com', 'munity'].join('')
+const blockedUiTerm = [
+  'com',
+  'munity',
+].join('')
 
-const blockedUiPattern = new RegExp(
-  `\\b${blockedUiTerm}\\b`,
-  'gi',
-)
+const blockedUiPattern =
+  new RegExp(
+    `\\b${blockedUiTerm}\\b`,
+    'gi',
+  )
 
 function safeUiText(value) {
   return String(value ?? '')
-    .replace(blockedUiPattern, 'local')
+    .replace(
+      blockedUiPattern,
+      'local',
+    )
     .trim()
 }
 
-/*
- * Convert tag strings such as:
- * "Health;Technology;Wellbeing"
- *
- * into:
- * ["Health", "Technology", "Wellbeing"]
- */
 function normaliseTags(value) {
   if (Array.isArray(value)) {
     return value
-      .map((tag) => safeUiText(tag))
+      .map((tag) =>
+        safeUiText(tag),
+      )
       .filter(Boolean)
   }
 
   return safeUiText(value)
     .split(';')
-    .map((tag) => tag.trim())
+    .map((tag) =>
+      tag.trim(),
+    )
     .filter(Boolean)
 }
 
-/*
- * Extract a simple preferred day from the
- * current schedule field.
- */
 function getDay(schedule) {
-  const value = schedule.toLowerCase()
+  const value =
+    schedule.toLowerCase()
 
   if (value.includes('mon')) {
     return 'Monday'
@@ -83,22 +81,22 @@ function getDay(schedule) {
   return 'Flexible'
 }
 
-/*
- * Convert the senior_relevant field into a
- * consistent frontend value and label.
- */
 function getSuitability(value) {
   const normalised =
-    safeUiText(value).toLowerCase()
+    safeUiText(value)
+      .toLowerCase()
 
   if (normalised === 'yes') {
     return {
       value: 'yes',
-      label: 'Suitable for older adults',
+      label:
+        'Suitable for older adults',
     }
   }
 
-  if (normalised === 'partially') {
+  if (
+    normalised === 'partially'
+  ) {
     return {
       value: 'partial',
       label: 'May be suitable',
@@ -108,66 +106,42 @@ function getSuitability(value) {
   if (normalised === 'no') {
     return {
       value: 'no',
-      label: 'Not marked as suitable',
+      label:
+        'Not marked as suitable',
     }
   }
 
   return {
     value: 'unknown',
-    label: 'Suitability not provided',
+    label:
+      'Suitability not provided',
   }
 }
 
-/*
- * Pick a useful tag to display on top of
- * each activity image.
- */
 function getPrimaryTag(tags) {
-  const lessUsefulPrimaryTags = new Set([
-    'PALS',
-    'Adult',
-    'Event Series',
-  ])
+  const lessUsefulPrimaryTags =
+    new Set([
+      'PALS',
+      'Adult',
+      'Event Series',
+    ])
 
   return (
     tags.find(
       (tag) =>
-        !lessUsefulPrimaryTags.has(tag),
+        !lessUsefulPrimaryTags.has(
+          tag,
+        ),
     ) ||
     tags[0] ||
     'Activity'
   )
 }
 
-/*
- * Produce a stable number from the
- * activity name.
- *
- * This is used to choose between multiple
- * images in the same activity category.
- */
-function getStableImageIndex(name) {
-  return name
-    .split('')
-    .reduce(
-      (total, character) =>
-        total +
-        character.charCodeAt(0),
-      0,
-    )
-}
-
-/*
- * Select a relevant activity image.
- *
- * IMPORTANT:
- * Specific activity names are checked first.
- * Broader category tags are checked afterwards.
- *
- * This prevents a general tag from selecting
- * a less relevant image.
- */
-function getActivityImage(name, tags) {
+function getActivityType(
+  name,
+  tags,
+) {
   const activityName =
     name.toLowerCase()
 
@@ -175,11 +149,134 @@ function getActivityImage(name, tags) {
     .join(' ')
     .toLowerCase()
 
-  // =================================================
-  // 1. SPECIFIC ACTIVITY NAME MATCHING
-  // =================================================
+  if (
+    activityName.includes(
+      'bushwalking',
+    ) ||
+    activityName.includes(
+      'bird',
+    ) ||
+    tagText.includes(
+      'environment',
+    ) ||
+    tagText.includes(
+      'sustainability',
+    )
+  ) {
+    return 'Outdoor & nature'
+  }
 
-  // Brain / wellbeing activities
+  if (
+    activityName.includes(
+      'knitting',
+    ) ||
+    activityName.includes(
+      'weaving',
+    ) ||
+    activityName.includes(
+      'upcycling',
+    ) ||
+    tagText.includes('craft')
+  ) {
+    return 'Arts & crafts'
+  }
+
+  if (
+    activityName.includes(
+      'digital',
+    ) ||
+    activityName.includes(
+      'artificial intelligence',
+    ) ||
+    activityName.includes(
+      'online security',
+    ) ||
+    activityName.includes(
+      'smart watch',
+    ) ||
+    activityName.includes(
+      'fitness tracker',
+    ) ||
+    activityName.includes(
+      'scam',
+    ) ||
+    tagText.includes(
+      'technology',
+    )
+  ) {
+    return 'Learning & technology'
+  }
+
+  if (
+    activityName.includes(
+      'brain training',
+    ) ||
+    activityName.includes(
+      'safety matters',
+    ) ||
+    tagText.includes(
+      'health',
+    ) ||
+    tagText.includes(
+      'wellbeing',
+    )
+  ) {
+    return 'Health & wellbeing'
+  }
+
+  if (
+    activityName.includes(
+      'conversation',
+    ) ||
+    activityName.includes(
+      'social group',
+    ) ||
+    tagText.includes(
+      'cultural event',
+    ) ||
+    tagText.includes(
+      'social connections',
+    )
+  ) {
+    return 'Social & cultural'
+  }
+
+  if (
+    tagText.includes(
+      'personal development',
+    )
+  ) {
+    return 'Learning & development'
+  }
+
+  return 'General activity'
+}
+
+function getStableImageIndex(name) {
+  return name
+    .split('')
+    .reduce(
+      (
+        total,
+        character,
+      ) =>
+        total +
+        character.charCodeAt(0),
+      0,
+    )
+}
+
+function getActivityImage(
+  name,
+  tags,
+) {
+  const activityName =
+    name.toLowerCase()
+
+  const tagText = tags
+    .join(' ')
+    .toLowerCase()
+
   if (
     activityName.includes(
       'brain training',
@@ -191,35 +288,44 @@ function getActivityImage(name, tags) {
     return '/images/activity-health.jpg'
   }
 
-  // Knitting / craft / weaving
   if (
-    activityName.includes('knitting') ||
-    activityName.includes('weaving') ||
-    activityName.includes('upcycling')
+    activityName.includes(
+      'knitting',
+    ) ||
+    activityName.includes(
+      'weaving',
+    ) ||
+    activityName.includes(
+      'upcycling',
+    )
   ) {
     return '/images/activity-craft.jpg'
   }
 
-  // Walking / nature activities
   if (
     activityName.includes(
       'bushwalking',
     ) ||
-    activityName.includes('bird')
+    activityName.includes(
+      'bird',
+    )
   ) {
     return '/images/activity-walking.jpg'
   }
 
-  // Technology / digital learning
   if (
-    activityName.includes('digital') ||
+    activityName.includes(
+      'digital',
+    ) ||
     activityName.includes(
       'artificial intelligence',
     ) ||
     activityName.includes(
       'online security',
     ) ||
-    activityName.includes('scam') ||
+    activityName.includes(
+      'scam',
+    ) ||
     activityName.includes(
       'smart watch',
     ) ||
@@ -235,7 +341,6 @@ function getActivityImage(name, tags) {
       : '/images/activity-tech-2.jpg'
   }
 
-  // Language / conversation activities
   if (
     activityName.includes(
       'conversation',
@@ -247,14 +352,14 @@ function getActivityImage(name, tags) {
     return '/images/activity-social.jpg'
   }
 
-  // General festivals
   if (
-    activityName.includes('festival')
+    activityName.includes(
+      'festival',
+    )
   ) {
     return '/images/activities.jpg'
   }
 
-  // Information / support activities
   if (
     activityName.includes(
       'justice of the peace',
@@ -263,13 +368,10 @@ function getActivityImage(name, tags) {
     return '/images/learning.jpg'
   }
 
-  // =================================================
-  // 2. CATEGORY / TAG MATCHING
-  // =================================================
-
-  // Technology
   if (
-    tagText.includes('technology')
+    tagText.includes(
+      'technology',
+    )
   ) {
     const imageIndex =
       getStableImageIndex(name)
@@ -279,24 +381,25 @@ function getActivityImage(name, tags) {
       : '/images/activity-tech-2.jpg'
   }
 
-  // Health / wellbeing
   if (
     tagText.includes('health') ||
-    tagText.includes('wellbeing')
+    tagText.includes(
+      'wellbeing',
+    )
   ) {
     return '/images/activity-health.jpg'
   }
 
-  // Craft
   if (
     tagText.includes('craft')
   ) {
     return '/images/activity-craft.jpg'
   }
 
-  // Environment / sustainability
   if (
-    tagText.includes('environment') ||
+    tagText.includes(
+      'environment',
+    ) ||
     tagText.includes(
       'sustainability',
     )
@@ -304,7 +407,6 @@ function getActivityImage(name, tags) {
     return '/images/activity-walking.jpg'
   }
 
-  // Learning / cultural
   if (
     tagText.includes(
       'cultural event',
@@ -316,7 +418,6 @@ function getActivityImage(name, tags) {
     return '/images/learning.jpg'
   }
 
-  // Social activities
   if (
     tagText.includes(
       'social connections',
@@ -325,31 +426,26 @@ function getActivityImage(name, tags) {
     return '/images/activity-social.jpg'
   }
 
-  // =================================================
-  // 3. FALLBACK
-  // =================================================
-
   return '/images/activities.jpg'
 }
 
-/*
- * Convert either the current CSV format
- * or a future API response into the same
- * frontend activity object.
- */
-function normaliseActivity(row, index) {
+function normaliseActivity(
+  row,
+  index,
+) {
   const tags = normaliseTags(
     row.category_tags ??
       row.tags ??
       row.category,
   )
 
-  const schedule = safeUiText(
-    row.day_time ??
-      row.dayTime ??
-      row.schedule ??
-      '',
-  )
+  const schedule =
+    safeUiText(
+      row.day_time ??
+        row.dayTime ??
+        row.schedule ??
+        '',
+    )
 
   const suitability =
     getSuitability(
@@ -358,12 +454,13 @@ function normaliseActivity(row, index) {
         row.suitability,
     )
 
-  const name = safeUiText(
-    row.event_name ??
-      row.name ??
-      row.title ??
-      'Untitled activity',
-  )
+  const name =
+    safeUiText(
+      row.event_name ??
+        row.name ??
+        row.title ??
+        'Untitled activity',
+    )
 
   return {
     id: String(
@@ -378,6 +475,12 @@ function normaliseActivity(row, index) {
 
     primaryTag:
       getPrimaryTag(tags),
+
+    activityType:
+      getActivityType(
+        name,
+        tags,
+      ),
 
     venue: safeUiText(
       row.venue ||
@@ -410,10 +513,11 @@ function normaliseActivity(row, index) {
         'Source not provided',
     ),
 
-    image: getActivityImage(
-      name,
-      tags,
-    ),
+    image:
+      getActivityImage(
+        name,
+        tags,
+      ),
 
     organiser: safeUiText(
       row.organiser || '',
@@ -426,12 +530,15 @@ function normaliseActivity(row, index) {
     ),
 
     availability: safeUiText(
-      row.availability || '',
+      row.availability ||
+        '',
     ),
 
-    accessibility: safeUiText(
-      row.accessibility || '',
-    ),
+    accessibility:
+      safeUiText(
+        row.accessibility ||
+          '',
+      ),
 
     joiningInformation:
       safeUiText(
@@ -442,26 +549,20 @@ function normaliseActivity(row, index) {
   }
 }
 
-/*
- * Current Iteration 1 data source:
- * local CSV sample dataset.
- */
 async function getLocalActivities() {
-  const rows = parseCsv(csvText)
+  const rows =
+    parseCsv(csvText)
 
   return rows.map(
     normaliseActivity,
   )
 }
 
-/*
- * Future data source:
- * backend API.
- */
 async function getRemoteActivities() {
-  const response = await fetch(
-    `${API_BASE_URL}/activities`,
-  )
+  const response =
+    await fetch(
+      `${API_BASE_URL}/activities`,
+    )
 
   if (!response.ok) {
     throw new Error(
@@ -483,15 +584,6 @@ async function getRemoteActivities() {
   )
 }
 
-/*
- * Main function used by Vue pages.
- *
- * false:
- * CSV -> frontend
- *
- * true:
- * API -> frontend
- */
 export async function getActivities() {
   if (USE_REMOTE_API) {
     return getRemoteActivities()
@@ -500,9 +592,6 @@ export async function getActivities() {
   return getLocalActivities()
 }
 
-/*
- * Used by ActivityDetailView.vue.
- */
 export async function getActivityById(
   id,
 ) {
