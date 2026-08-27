@@ -45,6 +45,15 @@ const router = createRouter({
     },
 
     {
+      path: '/services/:id',
+      name: 'service-detail',
+      component: () =>
+        import(
+          '@/views/ServiceDetailView.vue'
+        ),
+    },
+
+    {
       path: '/saved',
       name: 'saved',
       component: () =>
