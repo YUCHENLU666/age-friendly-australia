@@ -68,6 +68,25 @@ function normalisePreferences(value) {
   }
 }
 
+function notifyPreferencesUpdated(
+  preferences,
+) {
+  if (
+    typeof window === 'undefined'
+  ) {
+    return
+  }
+
+  window.dispatchEvent(
+    new CustomEvent(
+      'age-friendly-preferences-updated',
+      {
+        detail: preferences,
+      },
+    ),
+  )
+}
+
 export function getPreferences() {
   try {
     const stored =
@@ -91,7 +110,9 @@ export function savePreferences(
   preferences,
 ) {
   const cleanedPreferences =
-    normalisePreferences(preferences)
+    normalisePreferences(
+      preferences,
+    )
 
   localStorage.setItem(
     PREFERENCES_KEY,
@@ -102,6 +123,10 @@ export function savePreferences(
 
   applyTextSizePreference(
     cleanedPreferences.textSize,
+  )
+
+  notifyPreferencesUpdated(
+    cleanedPreferences,
   )
 
   return cleanedPreferences
@@ -119,6 +144,10 @@ export function clearPreferences() {
     defaults.textSize,
   )
 
+  notifyPreferencesUpdated(
+    defaults,
+  )
+
   return defaults
 }
 
@@ -126,8 +155,7 @@ export function applyTextSizePreference(
   value,
 ) {
   if (
-    typeof document ===
-    'undefined'
+    typeof document === 'undefined'
   ) {
     return
   }

@@ -4699,3 +4699,829 @@ select:focus {
     display: block;
   }
 }
+
+/* =========================================================
+   40. GLOBAL NAVBAR + TEXT SIZE CONTROL
+   ========================================================= */
+
+.app-header {
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+
+  width: 100%;
+
+  background:
+    rgb(255 255 255 / 96%);
+
+  border-bottom:
+    1px solid #e0e8e5;
+
+  box-shadow:
+    0 2px 12px
+      rgb(29 65 60 / 4%);
+
+  backdrop-filter:
+    blur(14px);
+}
+
+.app-navbar {
+  width: 100%;
+}
+
+.navbar-inner {
+  width:
+    min(
+      calc(100% - 48px),
+      1280px
+    );
+
+  min-height: 82px;
+
+  display: flex;
+
+  align-items: center;
+  justify-content: space-between;
+
+  gap: 34px;
+
+  margin: 0 auto;
+}
+
+/* =========================================================
+   41. BRAND
+   ========================================================= */
+
+.navbar-brand {
+  min-width: max-content;
+
+  display: inline-flex;
+
+  align-items: center;
+
+  gap: 13px;
+
+  color: inherit;
+
+  text-decoration: none;
+}
+
+.navbar-logo {
+  width: 46px;
+  height: 46px;
+
+  flex: 0 0 46px;
+
+  display: inline-flex;
+
+  align-items: center;
+  justify-content: center;
+
+  color: #ffffff;
+
+  background:
+    linear-gradient(
+      135deg,
+      #3f786f,
+      #609a8e
+    );
+
+  border-radius: 50%;
+
+  box-shadow:
+    0 7px 17px
+      rgb(49 101 92 / 18%);
+
+  font-size: 0.74rem;
+
+  font-weight: 850;
+
+  letter-spacing:
+    0.01em;
+}
+
+.navbar-brand-copy {
+  display: flex;
+
+  flex-direction: column;
+
+  gap: 3px;
+
+  line-height: 1.15;
+}
+
+.navbar-brand-copy strong {
+  color: var(--navy-900);
+
+  font-size: 0.89rem;
+
+  font-weight: 820;
+
+  letter-spacing:
+    -0.015em;
+}
+
+.navbar-brand-copy small {
+  color: var(--grey-500);
+
+  font-size: 0.61rem;
+
+  font-weight: 500;
+}
+
+/* =========================================================
+   42. RIGHT SIDE
+   ========================================================= */
+
+.navbar-right {
+  min-width: 0;
+
+  display: flex;
+
+  align-items: center;
+
+  justify-content: flex-end;
+
+  gap: 15px;
+}
+
+.navbar-links {
+  display: flex;
+
+  align-items: center;
+
+  gap: 4px;
+}
+
+.navbar-link {
+  min-height: 42px;
+
+  display: inline-flex;
+
+  align-items: center;
+  justify-content: center;
+
+  padding:
+    9px 13px;
+
+  color: var(--grey-700);
+
+  border-radius: 10px;
+
+  font-size: 0.72rem;
+
+  font-weight: 760;
+
+  white-space: nowrap;
+
+  text-decoration: none;
+
+  transition:
+    color var(--transition),
+    background var(--transition),
+    transform var(--transition);
+}
+
+.navbar-link:hover {
+  color: var(--green-900);
+
+  background: #f3f7f5;
+}
+
+/*
+ * Vue Router adds this class
+ * to the currently active link.
+ */
+.navbar-link.router-link-exact-active {
+  color: var(--green-900);
+
+  background:
+    #edf4f1;
+
+  box-shadow:
+    inset 0 0 0 1px
+      #dde9e4;
+}
+
+/* =========================================================
+   43. TEXT SIZE AREA
+   ========================================================= */
+
+.navbar-text-size {
+  position: relative;
+
+  flex-shrink: 0;
+
+  margin-left: 4px;
+  padding-left: 15px;
+
+  border-left:
+    1px solid #e0e8e5;
+}
+
+.navbar-text-trigger {
+  min-height: 50px;
+
+  display: flex;
+
+  align-items: center;
+
+  gap: 9px;
+
+  padding:
+    6px 10px 6px 7px;
+
+  color: var(--navy-900);
+
+  background:
+    linear-gradient(
+      180deg,
+      #f7faf8,
+      #f1f6f3
+    );
+
+  border:
+    1px solid
+    #d8e5e0;
+
+  border-radius: 13px;
+
+  cursor: pointer;
+
+  box-shadow:
+    0 2px 6px
+      rgb(33 72 66 / 3%);
+
+  transition:
+    transform var(--transition),
+    background var(--transition),
+    border-color var(--transition),
+    box-shadow var(--transition);
+}
+
+.navbar-text-trigger:hover {
+  transform:
+    translateY(-1px);
+
+  background: #ffffff;
+
+  border-color:
+    #aac4bb;
+
+  box-shadow:
+    0 7px 16px
+      rgb(36 78 70 / 8%);
+}
+
+.navbar-text-icon {
+  width: 35px;
+  height: 35px;
+
+  flex: 0 0 35px;
+
+  display: inline-flex;
+
+  align-items: center;
+  justify-content: center;
+
+  color: #ffffff;
+
+  background:
+    linear-gradient(
+      135deg,
+      #3d776d,
+      #60998d
+    );
+
+  border-radius: 10px;
+
+  font-size: 0.7rem;
+
+  font-weight: 850;
+}
+
+.navbar-text-trigger-copy {
+  min-width: 68px;
+
+  display: flex;
+
+  flex-direction: column;
+
+  align-items: flex-start;
+
+  gap: 3px;
+
+  line-height: 1;
+}
+
+.navbar-text-trigger-copy > span {
+  color: var(--navy-900);
+
+  font-size: 0.65rem;
+
+  font-weight: 800;
+}
+
+.navbar-text-trigger-copy small {
+  color: var(--grey-500);
+
+  font-size: 0.53rem;
+
+  font-weight: 550;
+}
+
+.navbar-text-chevron {
+  color: var(--grey-500);
+
+  font-size: 0.6rem;
+
+  transition:
+    transform var(--transition);
+}
+
+.navbar-text-chevron--open {
+  transform:
+    rotate(180deg);
+}
+
+/* =========================================================
+   44. TEXT SIZE DROPDOWN
+   ========================================================= */
+
+.navbar-text-menu {
+  position: absolute;
+
+  top:
+    calc(100% + 13px);
+
+  right: 0;
+
+  z-index: 1200;
+
+  width: 330px;
+
+  padding: 18px;
+
+  background:
+    rgb(255 255 255 / 98%);
+
+  border:
+    1px solid
+    #d7e3df;
+
+  border-radius: 17px;
+
+  box-shadow:
+    0 20px 50px
+      rgb(24 61 56 / 17%);
+
+  backdrop-filter:
+    blur(16px);
+}
+
+.navbar-text-menu::before {
+  position: absolute;
+
+  top: -6px;
+  right: 25px;
+
+  width: 11px;
+  height: 11px;
+
+  content: "";
+
+  background: #ffffff;
+
+  border-top:
+    1px solid
+    #d7e3df;
+
+  border-left:
+    1px solid
+    #d7e3df;
+
+  transform:
+    rotate(45deg);
+}
+
+.navbar-text-menu-header {
+  display: flex;
+
+  align-items: flex-start;
+  justify-content: space-between;
+
+  gap: 16px;
+
+  margin-bottom: 15px;
+  padding-bottom: 14px;
+
+  border-bottom:
+    1px solid #e5ece9;
+}
+
+.navbar-text-menu-header strong {
+  display: block;
+
+  margin-bottom: 5px;
+
+  color: var(--navy-900);
+
+  font-size: 0.82rem;
+}
+
+.navbar-text-menu-header p {
+  margin: 0;
+
+  color: var(--grey-500);
+
+  font-size: 0.61rem;
+}
+
+.navbar-text-close {
+  width: 30px;
+  height: 30px;
+
+  flex: 0 0 30px;
+
+  display: inline-flex;
+
+  align-items: center;
+  justify-content: center;
+
+  color: var(--grey-600);
+
+  background: #f4f7f6;
+
+  border:
+    1px solid #dfe8e4;
+
+  border-radius: 8px;
+
+  cursor: pointer;
+
+  font-size: 1rem;
+}
+
+.navbar-text-close:hover {
+  color: var(--navy-900);
+
+  background: #edf4f1;
+}
+
+/* =========================================================
+   45. TEXT SIZE OPTIONS
+   ========================================================= */
+
+.navbar-text-options {
+  display: flex;
+
+  flex-direction: column;
+
+  gap: 8px;
+}
+
+.navbar-text-option {
+  width: 100%;
+
+  min-height: 64px;
+
+  display: grid;
+
+  grid-template-columns:
+    44px 1fr 25px;
+
+  align-items: center;
+
+  gap: 11px;
+
+  padding:
+    9px 11px;
+
+  text-align: left;
+
+  color: var(--grey-700);
+
+  background:
+    #fafcfb;
+
+  border:
+    1.5px solid
+    #dfe7e4;
+
+  border-radius: 12px;
+
+  cursor: pointer;
+
+  transition:
+    transform var(--transition),
+    background var(--transition),
+    border-color var(--transition),
+    box-shadow var(--transition);
+}
+
+.navbar-text-option:hover {
+  transform:
+    translateX(2px);
+
+  background: #f5f9f7;
+
+  border-color:
+    #aac4bb;
+}
+
+.navbar-text-option--selected {
+  background:
+    linear-gradient(
+      135deg,
+      #e8f4ef,
+      #f5faf7
+    );
+
+  border-color:
+    #60988d;
+
+  box-shadow:
+    0 4px 12px
+      rgb(46 97 88 / 7%);
+}
+
+.navbar-text-preview {
+  width: 44px;
+  height: 44px;
+
+  display: flex;
+
+  align-items: center;
+  justify-content: center;
+
+  color: var(--navy-900);
+
+  background: #ffffff;
+
+  border:
+    1px solid #d5e1dd;
+
+  border-radius: 10px;
+
+  font-weight: 850;
+}
+
+.navbar-text-preview--standard {
+  font-size: 0.78rem;
+}
+
+.navbar-text-preview--large {
+  font-size: 0.98rem;
+}
+
+.navbar-text-preview--extra-large {
+  font-size: 1.16rem;
+}
+
+.navbar-text-option-copy {
+  display: flex;
+
+  flex-direction: column;
+
+  gap: 4px;
+}
+
+.navbar-text-option-copy strong {
+  color: var(--navy-900);
+
+  font-size: 0.69rem;
+}
+
+.navbar-text-option-copy small {
+  color: var(--grey-500);
+
+  font-size: 0.56rem;
+}
+
+.navbar-text-option-state {
+  width: 24px;
+  height: 24px;
+
+  display: flex;
+
+  align-items: center;
+  justify-content: center;
+
+  color: #ffffff;
+
+  border-radius: 50%;
+
+  font-size: 0.61rem;
+
+  font-weight: 900;
+}
+
+.navbar-text-option--selected
+.navbar-text-option-state {
+  background: #427b71;
+}
+
+/* =========================================================
+   46. ACCESSIBILITY SETTINGS LINK
+   ========================================================= */
+
+.navbar-text-manage {
+  display: flex;
+
+  align-items: center;
+  justify-content: space-between;
+
+  gap: 10px;
+
+  margin-top: 14px;
+  padding:
+    14px 4px 2px;
+
+  color: var(--green-800);
+
+  border-top:
+    1px solid #e4ebe8;
+
+  font-size: 0.63rem;
+
+  font-weight: 800;
+
+  text-decoration: none;
+}
+
+.navbar-text-manage:hover {
+  color: var(--green-950);
+}
+
+/* =========================================================
+   47. NAVBAR RESPONSIVE
+   ========================================================= */
+
+@media (max-width: 1200px) {
+  .navbar-inner {
+    width:
+      min(
+        calc(100% - 32px),
+        1180px
+      );
+
+    gap: 20px;
+  }
+
+  .navbar-link {
+    padding:
+      9px 9px;
+  }
+
+  .navbar-text-trigger-copy {
+    display: none;
+  }
+
+  .navbar-text-trigger {
+    padding: 7px;
+  }
+
+  .navbar-text-chevron {
+    display: none;
+  }
+}
+
+@media (max-width: 980px) {
+  .navbar-inner {
+    min-height: 76px;
+
+    flex-wrap: wrap;
+
+    padding:
+      12px 0;
+  }
+
+  .navbar-brand {
+    flex: 1;
+  }
+
+  .navbar-right {
+    width: 100%;
+
+    justify-content:
+      space-between;
+  }
+
+  .navbar-links {
+    min-width: 0;
+
+    overflow-x: auto;
+
+    flex: 1;
+
+    padding-bottom: 2px;
+
+    scrollbar-width: none;
+  }
+
+  .navbar-links::-webkit-scrollbar {
+    display: none;
+  }
+
+  .navbar-text-size {
+    margin-left: 8px;
+    padding-left: 12px;
+  }
+}
+
+@media (max-width: 600px) {
+  .navbar-inner {
+    width:
+      calc(100% - 24px);
+  }
+
+  .navbar-logo {
+    width: 42px;
+    height: 42px;
+
+    flex-basis: 42px;
+  }
+
+  .navbar-brand-copy strong {
+    font-size: 0.78rem;
+  }
+
+  .navbar-brand-copy small {
+    font-size: 0.55rem;
+  }
+
+  .navbar-link {
+    min-height: 39px;
+
+    padding:
+      8px 9px;
+
+    font-size: 0.65rem;
+  }
+
+  .navbar-text-size {
+    padding-left: 8px;
+
+    border-left: 0;
+  }
+
+  .navbar-text-menu {
+    position: fixed;
+
+    top: 76px;
+    right: 12px;
+    left: 12px;
+
+    width: auto;
+  }
+
+  .navbar-text-menu::before {
+    display: none;
+  }
+}
+
+/* Final navbar polish */
+
+.navbar-links {
+  gap: 2px;
+}
+
+.navbar-link {
+  padding:
+    9px 11px;
+}
+
+.navbar-link.router-link-exact-active {
+  background: #e8f1ed;
+
+  box-shadow:
+    inset 0 0 0 1px
+    #cfded8;
+}
+
+.navbar-text-size {
+  margin-left: 2px;
+  padding-left: 13px;
+}
+
+.navbar-text-trigger {
+  min-height: 46px;
+
+  padding:
+    5px 9px 5px 6px;
+
+  border-radius: 11px;
+}
+
+.navbar-text-icon {
+  width: 32px;
+  height: 32px;
+
+  flex-basis: 32px;
+
+  border-radius: 9px;
+}
+
+.navbar-text-trigger-copy {
+  min-width: 62px;
+}
