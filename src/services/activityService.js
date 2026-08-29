@@ -1,5 +1,6 @@
 import csvText from '../../data/sample/EP1_sample_events_dataset.csv?raw'
 import { parseCsv } from '@/utils/csvParser'
+import { getVenueCoordinates } from './venueCoordinates'
 
 const USE_REMOTE_API =
   import.meta.env.VITE_USE_REMOTE_API === 'true'
@@ -485,6 +486,10 @@ function normaliseActivity(
     venue: safeUiText(
       row.venue ||
         'Venue not provided',
+    ),
+        
+    coordinates: getVenueCoordinates(
+      safeUiText(row.venue || 'Venue not provided'),
     ),
 
     suburb: safeUiText(
