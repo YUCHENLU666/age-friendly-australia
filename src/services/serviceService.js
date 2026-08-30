@@ -1,3 +1,6 @@
+import csvText from '../../data/sample/EP2_aged_care_services_sample.csv?raw'
+import { parseCsv } from '@/utils/csvParser'
+
 const USE_REMOTE_API =
   import.meta.env.VITE_USE_REMOTE_API === 'true'
 
@@ -5,18 +8,6 @@ const API_BASE_URL = (
   import.meta.env.VITE_API_BASE_URL ||
   'http://localhost:3000/api'
 ).replace(/\/$/, '')
-
-/*
- * Iteration 1:
- *
- * We do not currently have a complete local
- * service-provider dataset containing all fields
- * required by the acceptance criteria.
- *
- * Do not insert fictional healthcare or aged-care
- * provider information here.
- */
-const localServices = []
 
 function cleanText(value) {
   return String(value ?? '').trim()
@@ -43,6 +34,17 @@ function normaliseAccessibility(value) {
     .filter(Boolean)
 }
 
+function normaliseCoordinates(row) {
+  const lat = Number(row.latitude)
+  const lon = Number(row.longitude)
+
+  if (Number.isNaN(lat) || Number.isNaN(lon)) {
+    return null
+  }
+
+  return { latitude: lat, longitude: lon }
+}
+
 function normaliseService(
   row,
   index,
@@ -62,17 +64,21 @@ function normaliseService(
     ),
 
     provider: cleanText(
-      row.provider || '',
+      row.provider ??
+        row.provider_name ??
+        '',
     ),
 
     type: cleanText(
       row.type ??
+        row.care_type ??
         row.service_type ??
         'Essential service',
     ),
 
     purpose: cleanText(
       row.purpose ??
+        row.organisation_type ??
         row.description ??
         '',
     ),
@@ -99,6 +105,13 @@ function normaliseService(
         '',
     ),
 
+    postcode: cleanText(
+      row.postcode || '',
+    ),
+
+    coordinates:
+      normaliseCoordinates(row),
+
     phone: cleanText(
       row.phone ??
         row.contact_phone ??
@@ -118,6 +131,7 @@ function normaliseService(
 
     source: cleanText(
       row.source ??
+        row.source_note ??
         row.source_name ??
         '',
     ),
@@ -143,7 +157,9 @@ function normaliseService(
 }
 
 async function getLocalServices() {
-  return localServices.map(
+  const rows = parseCsv(csvText)
+
+  return rows.map(
     normaliseService,
   )
 }
