@@ -259,6 +259,21 @@ const toggleSave = () => {
               {{ activity.source }}
             </p>
 
+            <div
+              v-if="activity.nearestTransportStop"
+              class="service-detail-transport"
+            >
+              <strong>
+                Nearby transport
+              </strong>
+
+              <p>
+                {{ activity.nearestTransportStop.stopName }}
+                <span aria-hidden="true">·</span>
+                {{ activity.nearestTransportStop.distanceLabel }}
+              </p>
+            </div>  
+            
             <div class="activity-source-notice">
               Details that are not supplied by the
               current source are not guessed or
