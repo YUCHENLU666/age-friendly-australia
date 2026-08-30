@@ -17,6 +17,9 @@ import {
   toggleSavedServiceId,
 } from '@/services/savedItemsService'
 
+import { calculateDistanceKm } from '@/services/distanceService'
+import { getSuburbCoordinates } from '@/services/suburbCoordinates'
+
 const services = ref([])
 
 const savedServiceIds =
@@ -124,7 +127,7 @@ const filteredServices =
         .trim()
         .toLowerCase()
 
-    return services.value.filter(
+    const results = services.value.filter(
       (service) => {
         if (search) {
           const searchableText = [
@@ -177,6 +180,27 @@ const filteredServices =
         return true
       },
     )
+
+    const referenceCoordinates =
+      filters.value.area
+        ? getSuburbCoordinates(filters.value.area)
+        : null
+
+    if (!referenceCoordinates) {
+      return results
+    }
+
+    return [...results].sort((serviceA, serviceB) => {
+      const distanceA = serviceA.coordinates
+        ? calculateDistanceKm(referenceCoordinates, serviceA.coordinates)
+        : Infinity
+
+      const distanceB = serviceB.coordinates
+        ? calculateDistanceKm(referenceCoordinates, serviceB.coordinates)
+        : Infinity
+
+      return distanceA - distanceB
+    })
   })
 
 const updateFilters = (
