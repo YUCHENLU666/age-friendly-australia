@@ -67,6 +67,14 @@ defineEmits([
     </p>
 
     <dl class="service-card-details">
+      <div v-if="service.distanceLabel">
+        <dt>Distance</dt>
+
+        <dd>
+          {{ service.distanceLabel }}
+        </dd>
+      </div>
+
       <div>
         <dt>Location</dt>
 
@@ -111,7 +119,7 @@ defineEmits([
           }}
         </dd>
       </div>
-    </dl>
+    </dl>   
 
     <div
       v-if="
