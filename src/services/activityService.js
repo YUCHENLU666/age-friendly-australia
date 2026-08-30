@@ -1,6 +1,7 @@
 import csvText from '../../data/sample/EP1_sample_events_dataset.csv?raw'
 import { parseCsv } from '@/utils/csvParser'
 import { getVenueCoordinates } from './venueCoordinates'
+import { findNearestStop } from '@/services/transitStopsService'
 
 const USE_REMOTE_API =
   import.meta.env.VITE_USE_REMOTE_API === 'true'
@@ -551,6 +552,23 @@ function normaliseActivity(
           row.registration ??
           '',
       ),
+
+    nearestTransportStop:
+      (() => {
+        const coordinates = getVenueCoordinates(
+          safeUiText(row.venue || 'Venue not provided'),
+        )
+        const nearestStop = coordinates
+          ? findNearestStop(coordinates)
+          : null
+
+        return nearestStop
+          ? {
+              stopName: nearestStop.stopName,
+              distanceLabel: nearestStop.distanceLabel,
+            }
+          : null
+      })(),
   }
 }
 
