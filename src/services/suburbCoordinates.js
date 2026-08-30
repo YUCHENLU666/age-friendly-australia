@@ -1,0 +1,61 @@
+// Suburb centroid coordinates (South-East Melbourne)
+// Used as a reference point for distance-based sorting when a user
+// selects a General area filter (not a precise address, just the
+// suburb's approximate centre). Coordinates verified via Google Places, Aug 2026.
+
+export const SUBURB_COORDINATES = {
+  'Ashwood': { latitude: -37.8683075, longitude: 145.1054275 },
+  'Bentleigh': { latitude: -37.9188435, longitude: 145.0417166 },
+  'Bentleigh East': { latitude: -37.9211594, longitude: 145.0590176 },
+  'Blackburn': { latitude: -37.8197129, longitude: 145.1530529 },
+  'Blackburn South': { latitude: -37.8388667, longitude: 145.151231 },
+  'Box Hill': { latitude: -37.8181073, longitude: 145.1238563 },
+  'Box Hill North': { latitude: -37.8017621, longitude: 145.1268438 },
+  'Braeside': { latitude: -37.9987562, longitude: 145.1189431 },
+  'Burwood': { latitude: -37.8494981, longitude: 145.1090089 },
+  'Burwood East': { latitude: -37.8526163, longitude: 145.1519822 },
+  'Carnegie': { latitude: -37.8891994, longitude: 145.0570577 },
+  'Caulfield': { latitude: -37.8831621, longitude: 145.0295877 },
+  'Caulfield North': { latitude: -37.8726442, longitude: 145.0247002 },
+  'Caulfield South': { latitude: -37.8945334, longitude: 145.0205148 },
+  'Chadstone': { latitude: -37.8810091, longitude: 145.0959519 },
+  'Chelsea': { latitude: -38.051641, longitude: 145.1160848 },
+  'Cheltenham': { latitude: -37.9656436, longitude: 145.0578515 },
+  'Clarinda': { latitude: -37.9412163, longitude: 145.1024233 },
+  'Clayton': { latitude: -37.9145479, longitude: 145.127492 },
+  'Clayton South': { latitude: -37.9414172, longitude: 145.1261833 },
+  'Dandenong': { latitude: -37.9847811, longitude: 145.2139907 },
+  'Dandenong North': { latitude: -37.9592436, longitude: 145.206837 },
+  'Elsternwick': { latitude: -37.8849536, longitude: 145.0059691 },
+  'Forest Hill': { latitude: -37.8347413, longitude: 145.1727369 },
+  'Glen Waverley': { latitude: -37.8743502, longitude: 145.1668205 },
+  'Highett': { latitude: -37.9490959, longitude: 145.0460123 },
+  'Keysborough': { latitude: -37.9989202, longitude: 145.1743519 },
+  'Malvern': { latitude: -37.852403, longitude: 145.0357348 },
+  'Malvern East': { latitude: -37.8773116, longitude: 145.059272 },
+  'Mckinnon': { latitude: -37.9104488, longitude: 145.0337951 },
+  'Mentone': { latitude: -37.9812197, longitude: 145.064387 },
+  'Moorabbin': { latitude: -37.941898, longitude: 145.0601734 },
+  'Mordialloc': { latitude: -37.9995418, longitude: 145.0940302 },
+  'Mount Waverley': { latitude: -37.8749614, longitude: 145.1291077 },
+  'Mulgrave': { latitude: -37.9187107, longitude: 145.158814 },
+  'Murrumbeena': { latitude: -37.8978307, longitude: 145.070895 },
+  'Noble Park': { latitude: -37.9650097, longitude: 145.1733926 },
+  'Notting Hill': { latitude: -37.9048347, longitude: 145.1458611 },
+  'Nunawading': { latitude: -37.8184273, longitude: 145.1760206 },
+  'Oakleigh': { latitude: -37.9016644, longitude: 145.091857 },
+  'Oakleigh South': { latitude: -37.9255978, longitude: 145.0951545 },
+  'Ormond': { latitude: -37.9044154, longitude: 145.0439649 },
+  'Parkdale': { latitude: -37.9937732, longitude: 145.0767488 },
+  'Prahran': { latitude: -37.8507947, longitude: 145.0027616 },
+  'Springvale': { latitude: -37.9487211, longitude: 145.1529433 },
+  'Springvale South': { latitude: -37.9709927, longitude: 145.1485377 },
+  'Surrey Hills': { latitude: -37.8259381, longitude: 145.0972417 },
+  'Vermont': { latitude: -37.8359978, longitude: 145.1954531 },
+  'Vermont South': { latitude: -37.856512, longitude: 145.1836152 },
+  'Wheelers Hill': { latitude: -37.9067871, longitude: 145.1890123 },
+}
+
+export function getSuburbCoordinates(suburbName) {
+  return SUBURB_COORDINATES[suburbName] ?? null
+}
