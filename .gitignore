@@ -39,3 +39,7 @@ __screenshots__/
 *.timestamp-*-*.mjs
 
 .env
+
+# Data
+__pycache__/
+data/raw/*.json
