@@ -1,5 +1,6 @@
 import csvText from '../../data/sample/EP2_aged_care_services_sample.csv?raw'
 import { parseCsv } from '@/utils/csvParser'
+import { findNearestStop } from '@/services/transitStopsService'
 
 const USE_REMOTE_API =
   import.meta.env.VITE_USE_REMOTE_API === 'true'
@@ -142,17 +143,21 @@ function normaliseService(
         '',
     ),
 
-    nearestTransportStop:
-      cleanText(
-        row.nearest_transport_stop ??
-          '',
-      ),
+    ...(() => {
+      const coordinates = normaliseCoordinates(row)
+      const nearestStop = coordinates
+        ? findNearestStop(coordinates)
+        : null
 
-    transportDistance:
-      cleanText(
-        row.transport_distance ??
-          '',
-      ),
+      return {
+        nearestTransportStop: nearestStop
+          ? nearestStop.stopName
+          : '',
+        transportDistance: nearestStop
+          ? nearestStop.distanceLabel
+          : '',
+      }
+    })(),
   }
 }
 
