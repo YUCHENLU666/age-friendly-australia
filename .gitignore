@@ -9,6 +9,7 @@ lerna-debug.log*
 
 node_modules
 .env
+data/sample/VIC_Service_List_2025.xlsx
 .DS_Store
 dist
 dist-ssr
