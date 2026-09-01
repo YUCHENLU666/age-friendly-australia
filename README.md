@@ -1,33 +1,73 @@
 # Age Friendly Australia
 
-Age Friendly Australia is a Vue-based web application designed to help older adults living independently in Greater Melbourne discover useful local activities, healthcare services, aged-care support and essential everyday services through a simple, accessible and privacy-aware interface.
+Age Friendly Australia is an accessible web application designed to help older adults living independently in Greater Melbourne discover trusted local activities, aged-care and essential services, supporting transport information, senior-friendly community venues, and live public transport information through one consistent interface.
 
-The project focuses on reducing the need to search across multiple websites by bringing relevant information into one consistent interface.
+The project focuses on reducing the need to search across multiple websites while maintaining a simple, readable and privacy-aware experience for users with varying levels of digital confidence.
 
 ---
 
-## Project Goals
+# 1. Project Goals
 
 The application aims to:
 
 - Help older adults discover suitable local activities and services.
 - Present information using clear language and an age-friendly interface.
 - Support filtering using broad, non-sensitive preferences.
-- Allow users to save useful information for later.
+- Allow users to save useful activities and services for later.
 - Provide adjustable text size and clear navigation.
 - Present location, accessibility and supporting transport information when verified data is available.
 - Improve activity relevance using voluntarily selected preferences.
-- Support older adults in making more confident decisions about local activities and services.
+- Provide dynamically retrieved Victorian community-facility information.
+- Provide live public transport vehicle information.
 - Avoid requiring unnecessary sensitive personal information.
 - Avoid storing health records, diagnosis information or detailed location history.
+- Separate frontend presentation logic from backend data-access logic.
+- Use verified public/open data sources and avoid fabricating unavailable information.
 
 ---
 
-# Current Iteration
+# 2. Current Iteration Summary
 
-The current implementation focuses on the completed Iteration 1 frontend architecture, activity discovery, service discovery, personalisation, saved items, distance-based service ordering and supporting transport information.
+The current implementation includes activity discovery, service discovery, saved items, preference-based personalisation, accessibility support, nearest-public-transport-stop support, a SQLite database, an Express backend, dynamic Vicmap integration and PTV GTFS-Realtime integration.
 
-### Current Status
+The major technical improvement in the current build is that the Vue frontend no longer directly reads the project CSV datasets at runtime.
+
+The current runtime architecture is:
+
+```text
+Vue Frontend
+     |
+     | REST API requests
+     v
+Express Backend
+     |
+     +---------------------------+
+     |                           |
+     v                           v
+SQLite Database            External APIs
+     |                           |
+     |                           +--> Vicmap Features of Interest
+     |                           |
+     |                           +--> PTV GTFS-Realtime
+     |
+     +--> Activities
+     +--> Services
+     +--> Transit Stops
+```
+
+This architecture provides clear separation between:
+
+- User interface
+- Frontend service layer
+- Backend REST API
+- Stored application data
+- External open-data services
+- Realtime transport data
+- Private API credentials
+
+---
+
+# 3. Current Implementation Status
 
 | Area | Status |
 | --- | --- |
@@ -40,35 +80,124 @@ The current implementation focuses on the completed Iteration 1 frontend archite
 | Global text-size accessibility | ✅ Implemented |
 | Saved activities | ✅ Implemented |
 | Saved services | ✅ Implemented |
-| Service discovery interface | ✅ Implemented |
+| Service discovery | ✅ Implemented |
 | Service search | ✅ Implemented |
 | General-area service filtering | ✅ Implemented |
 | Service-type filtering | ✅ Implemented |
-| Accessibility service filter | 🟡 UI implemented; current dataset has limited accessibility data |
-| Verified aged-care service dataset | ✅ Connected |
+| Accessibility service filter | 🟡 UI implemented; source coverage is limited |
 | Service detail page | ✅ Implemented |
 | Service distance sorting | ✅ Implemented |
 | Nearest public transport stop lookup | ✅ Implemented |
 | Approximate transport-stop distance | ✅ Implemented |
+| SQLite database | ✅ Implemented |
+| Express backend | ✅ Implemented |
+| Activities REST API | ✅ Implemented |
+| Services REST API | ✅ Implemented |
+| Transit stops REST API | ✅ Implemented |
+| Vicmap external API integration | ✅ Implemented |
+| PTV GTFS-Realtime integration | ✅ Implemented |
+| Live Information page | ✅ Implemented |
+| Live venue refresh | ✅ Implemented |
+| Live bus route filtering | ✅ Implemented |
+| Live bus refresh | ✅ Implemented |
+| External map links | ✅ Implemented |
+| Backend API-key protection | ✅ Implemented |
 | National Public Toilet Map integration | ⏳ Planned |
-| Additional Vicmap facility integration | ⏳ Planned |
-| Weather integration | ⏳ Iteration 2 |
-| UV Index integration | ⏳ Iteration 2 |
-| Air Quality integration | ⏳ Iteration 2 |
-| Outdoor activity suitability indicator | ⏳ Iteration 2 |
-| Scheduled backend data refresh | ⏳ Future implementation |
-
-Iteration 1 currently includes a verified aged-care service dataset containing **198 service records** for South-East Melbourne.
-
-The project also includes a filtered PTV GTFS bus-stop lookup containing approximately **4,994 bus stops** for South-East Melbourne. This data supports nearest-public-transport-stop calculations for both activity and service detail pages.
-
-Service results can be searched, filtered and ordered using available verified information.
-
-Missing information is not fabricated. If a verified source does not provide accessibility details, phone numbers, opening hours, eligibility information or another field, the application does not invent those values.
+| Weather integration | ⏳ Future work |
+| UV Index integration | ⏳ Future work |
+| Air Quality integration | ⏳ Future work |
+| Scheduled backend data refresh | ⏳ Future work |
+| Production deployment | ⏳ Required before final iteration submission |
 
 ---
 
-# User Stories
+# 4. Architecture Improvement
+
+An earlier implementation used local frontend datasets directly.
+
+## Previous Approach
+
+```text
+Vue Frontend
+     |
+     v
+Local CSV Datasets
+```
+
+This was useful for early frontend prototyping but provided limited separation between presentation and data access.
+
+## Current Approach
+
+```text
+Vue Frontend
+     |
+     v
+Frontend Service Layer
+     |
+     v
+Express REST API
+     |
+     +--> SQLite Database
+     |
+     +--> Vicmap Features of Interest API
+     |
+     +--> PTV GTFS-Realtime API
+```
+
+The current architecture improves:
+
+- Maintainability
+- Data-source separation
+- Centralised backend error handling
+- API credential protection
+- External API integration
+- Realtime-data support
+- Future deployment flexibility
+- Future database-refresh capability
+
+---
+
+# 5. Technology Stack
+
+## Frontend
+
+- Vue 3
+- Vue Router
+- Vite
+- JavaScript
+- HTML5
+- CSS
+- LocalStorage
+
+## Backend
+
+- Node.js
+- Express
+- CORS
+- dotenv
+
+## Database
+
+- SQLite
+- sqlite3
+
+## Data and External Services
+
+- Australian Government aged-care service data
+- PTV GTFS Schedule data
+- Vicmap Features of Interest REST API
+- PTV GTFS-Realtime API
+- Public library and council event information used to prepare the activity sample
+
+## Development and Version Control
+
+- Git
+- GitHub
+- Feature-branch workflow
+
+---
+
+# 6. User Stories
 
 ## User Story 1 — Wang Yu
 
@@ -95,17 +224,16 @@ Wang Yu is an older adult living independently who wants to remain active while 
 The system should allow the user to use:
 
 - General area
-- Date
+- Date or preferred day
 - Interest
 - Result type
 
-to discover matching:
+to discover relevant:
 
 - Local activities
-- Healthcare services
+- Healthcare or aged-care services
 - Senior support
 - Essential services
-- Public toilets
 
 Recommendations should use only voluntarily selected, non-sensitive preferences.
 
@@ -115,11 +243,11 @@ Each result should display relevant available information including:
 
 - Name
 - Type
-- Description
-- Date or opening hours
+- Description where available
+- Date, schedule or opening information where available
 - Location
-- Contact information
-- Accessibility information
+- Contact information where available
+- Accessibility information where available
 - Data source
 
 Where joined transport and location data is available, the platform should also provide:
@@ -181,13 +309,7 @@ The user should be able to select:
 - Service type
 - Accessibility needs
 
-and receive relevant:
-
-- Healthcare services
-- Aged-care support
-- Essential local services
-
-The application should not require medical records or diagnosis information to provide these results.
+and receive relevant service results without being required to provide medical records or diagnosis information.
 
 #### AC2 — Clear and Trusted Service Information
 
@@ -195,11 +317,11 @@ Each service result should display verified available information including:
 
 - Provider
 - Service purpose
-- Eligibility
-- Opening hours
+- Eligibility when available
+- Opening hours when available
 - Location
-- Contact details
-- Accessibility information
+- Contact details when available
+- Accessibility information when available
 - Data source
 
 Where joined location and transport data is available, the system should also display:
@@ -256,7 +378,7 @@ She wants relevant results based on voluntarily provided preferences and wants t
 The user should be able to select:
 
 - General area
-- Preferred date
+- Preferred day
 - Interest
 - Activity type
 
@@ -264,12 +386,12 @@ The system should use only these voluntarily provided preferences to improve act
 
 #### AC2 — Activity and Participation Information
 
-Where supplied by the source dataset, activity results should provide:
+Where supplied by the verified source data, activity results should provide:
 
 - Activity name
 - Category
 - Organiser
-- Date and time
+- Date or schedule
 - Venue
 - Availability
 - Accessibility details
@@ -289,13 +411,6 @@ Margaret should be able to:
 - View saved activities
 - Remove saved activities
 
-The application should use:
-
-- Readable text
-- Large labelled controls
-- Simple language
-- Clear navigation
-
 The platform does not require:
 
 - Public user profiles
@@ -306,673 +421,857 @@ The platform does not require:
 
 ---
 
-# Epic Mapping
+# 7. Epic Mapping
 
 | Epic | Description | Current Implementation |
 | --- | --- | --- |
 | **EP1 — Local Activity Discovery** | Discover activities, classes and events with filtering | ✅ Implemented |
-| **EP2 — Health & Essential Services** | Discover healthcare, aged-care support and essential services | ✅ Aged-care service discovery implemented with verified data |
+| **EP2 — Health & Essential Services** | Discover aged-care and essential services | ✅ Implemented with verified service data |
 | **EP3 — Age-Friendly Accessibility** | Adjustable text size, clear navigation and readable interface | ✅ Implemented |
 | **EP4 — Preference-Based Personalisation** | Use voluntary non-sensitive preferences to improve relevance | ✅ Implemented |
 | **EP5 — Saved & Recent Items** | Save useful activities/services for later | ✅ Implemented |
-| **EP6 — Location & Access Information** | Location, accessibility and supporting transport information | 🟡 Partially implemented; nearest-stop lookup completed and additional facility/accessibility integration planned |
+| **EP6 — Location & Access Information** | Location and supporting transport information | ✅ Nearest-stop support implemented; some accessibility data remains source-dependent |
+| **Dynamic and Live Data Support** | Use current external and realtime data | ✅ Vicmap + PTV GTFS-Realtime implemented |
 
 ---
 
-# Requirements Traceability
-
-The table below connects the project requirements with the current implementation.
+# 8. Requirements Traceability
 
 | Feature | Related User Story | Related AC | Status |
 | --- | --- | --- | --- |
-| Activity search | Wang / Margaret | Wang AC1, Margaret AC1 | ✅ Implemented |
-| General-area activity filtering | Wang / Margaret | Wang AC1, Margaret AC1 | ✅ Implemented |
-| Interest filtering | Wang / Margaret | Wang AC1, Margaret AC1 | ✅ Implemented |
-| Activity-type filtering | Margaret | Margaret AC1 | ✅ Implemented |
-| Activity information cards | Wang / Margaret | Wang AC2, Margaret AC2 | 🟡 Limited by available source fields |
-| Activity details | Wang / Margaret | Wang AC2, Margaret AC2 | ✅ Implemented with source-aware missing-field handling |
-| Activity preference scoring | Wang / Margaret | Wang AC1, Margaret AC1 | ✅ Implemented |
-| Preferences | Wang / Margaret | Wang AC1, Margaret AC1 | ✅ Implemented |
-| Global text-size control | All personas | AC3 | ✅ Implemented |
-| Clear navigation | All personas | AC3 | ✅ Implemented |
-| Save activities | Wang / Margaret | Wang AC3, Margaret AC3 | ✅ Implemented |
-| View saved activities | Wang / Margaret | Wang AC3, Margaret AC3 | ✅ Implemented |
-| Remove saved activities | Wang / Margaret | Wang AC3, Margaret AC3 | ✅ Implemented |
-| Service search | Wang / Robert | Wang AC1, Robert AC1 | ✅ Implemented |
-| General-area service filtering | Wang / Robert | Wang AC1, Robert AC1 | ✅ Implemented |
-| Service-type filtering | Robert | Robert AC1 | ✅ Implemented |
-| Accessibility service filtering | Robert | Robert AC1 | 🟡 UI implemented; current source has limited accessibility attributes |
-| Service information cards | Robert | Robert AC2 | ✅ Implemented with verified aged-care records |
-| Service detail page | Robert | Robert AC2 | ✅ Implemented |
-| Service distance sorting | Robert | Robert AC1 / AC2 | ✅ Implemented |
-| Save services | Wang / Robert | Wang AC3, Robert AC3 | ✅ Implemented |
-| View saved services | Wang / Robert | Wang AC3, Robert AC3 | ✅ Implemented |
-| Remove saved services | Wang / Robert | Wang AC3, Robert AC3 | ✅ Implemented |
-| Public toilet discovery | Wang | Wang AC1 | ⏳ Dataset integration planned |
-| Nearest transport stop | Wang / Robert / Margaret | AC2 | ✅ Implemented |
-| Approximate transport-stop distance | Wang / Robert / Margaret | AC2 | ✅ Implemented |
-| No sensitive health information required | Wang / Robert | AC3 | ✅ Supported by design |
-| No detailed location history | All personas | AC3 | ✅ Supported by design |
+| Activity search | Wang / Margaret | Wang AC1, Margaret AC1 | ✅ |
+| General-area activity filtering | Wang / Margaret | Wang AC1, Margaret AC1 | ✅ |
+| Interest filtering | Wang / Margaret | Wang AC1, Margaret AC1 | ✅ |
+| Activity-type filtering | Margaret | Margaret AC1 | ✅ |
+| Activity information cards | Wang / Margaret | Wang AC2, Margaret AC2 | ✅ with source-aware missing fields |
+| Activity detail page | Wang / Margaret | Wang AC2, Margaret AC2 | ✅ |
+| Activity preference scoring | Wang / Margaret | Wang AC1, Margaret AC1 | ✅ |
+| Preferences | Wang / Margaret | Wang AC1, Margaret AC1 | ✅ |
+| Global text-size control | All personas | AC3 | ✅ |
+| Clear navigation | All personas | AC3 | ✅ |
+| Save activities | Wang / Margaret | Wang AC3, Margaret AC3 | ✅ |
+| View saved activities | Wang / Margaret | Wang AC3, Margaret AC3 | ✅ |
+| Remove saved activities | Wang / Margaret | Wang AC3, Margaret AC3 | ✅ |
+| Service search | Wang / Robert | Wang AC1, Robert AC1 | ✅ |
+| General-area service filtering | Wang / Robert | Wang AC1, Robert AC1 | ✅ |
+| Service-type filtering | Robert | Robert AC1 | ✅ |
+| Accessibility service filtering | Robert | Robert AC1 | 🟡 limited by source attributes |
+| Service information cards | Robert | Robert AC2 | ✅ |
+| Service detail page | Robert | Robert AC2 | ✅ |
+| Service distance sorting | Robert | Robert AC1 / AC2 | ✅ |
+| Save services | Wang / Robert | Wang AC3, Robert AC3 | ✅ |
+| View saved services | Wang / Robert | Wang AC3, Robert AC3 | ✅ |
+| Remove saved services | Wang / Robert | Wang AC3, Robert AC3 | ✅ |
+| Nearest transport stop | Wang / Robert / Margaret | AC2 | ✅ |
+| Approximate transport-stop distance | Wang / Robert / Margaret | AC2 | ✅ |
+| Dynamic community venues | Wang / Robert / Margaret | Location and access support | ✅ |
+| Live bus positions | Wang / Robert / Margaret | Location and access support | ✅ |
+| No sensitive health information required | Wang / Robert | AC3 | ✅ |
+| No detailed location history | All personas | AC3 | ✅ |
+| Public toilet discovery | Wang | Wang AC1 | ⏳ Planned |
 
 ---
 
-# Implemented Features
+# 9. Database
 
-## Home
+The project includes a SQLite database located at:
 
-The Home page provides:
+```text
+age-friendly-database/age-friendly.db
+```
 
-- Clear project introduction
-- Direct navigation to activities and services
-- Age-friendly content hierarchy
-- Accessibility and privacy information
-- Consistent access to the application's main functions
+The database currently contains three main tables.
+
+## 9.1 Activities
+
+Table:
+
+```text
+activities
+```
+
+Current records:
+
+```text
+20
+```
+
+Fields include:
+
+- Event name
+- Category tags
+- Venue
+- Suburb
+- Day and time
+- Recurrence
+- Older-adult relevance
+- Source information
+
+Activity records are served through:
+
+```http
+GET /api/activities
+```
+
+## 9.2 Services
+
+Table:
+
+```text
+services
+```
+
+Current records:
+
+```text
+198
+```
+
+The current dataset contains aged-care service records focused on South-East Melbourne.
+
+Fields include:
+
+- Service name
+- Provider
+- Care type
+- Organisation type
+- Address
+- Suburb
+- Postcode
+- Latitude
+- Longitude
+- Source information
+
+Service records are served through:
+
+```http
+GET /api/services
+```
+
+Where information is unavailable from the verified source, the application does not fabricate it.
+
+## 9.3 Transit Stops
+
+Table:
+
+```text
+transit_stops
+```
+
+Current records:
+
+```text
+4,994
+```
+
+Fields include:
+
+- Stop ID
+- Stop name
+- Latitude
+- Longitude
+
+Transit stops are served through:
+
+```http
+GET /api/transit-stops
+```
+
+The frontend uses these records to calculate the nearest stop for activities and services.
 
 ---
 
-## Activities
+# 10. Open Data Sources
 
-The Activities feature currently supports:
+The project uses more than three relevant open/public data sources.
 
-- Loading activity records from the project dataset
+| Dataset / Service | Source / Coverage | Format | Current Use |
+| --- | --- | --- | --- |
+| Aged Care Service List | Australian Government | XLSX / CSV → SQLite | Service discovery |
+| PTV GTFS Schedule | Victoria | GTFS → prepared stop data → SQLite | Nearest public transport stop |
+| Vicmap Features of Interest | Victoria | REST / GeoJSON | Dynamic senior-friendly community venues |
+| PTV GTFS-Realtime | Victoria | GTFS-Realtime | Live bus vehicle positions |
+| Public library / council event information | Local areas | Public web information → prepared sample | Activity discovery |
+| National Public Toilet Map | Australia | Open data | Planned |
+| Open-Meteo | Weather coverage | API | Future work |
+| EPA Victoria environmental monitoring | Victoria | API | Future work |
+
+---
+
+# 11. Data Preparation and Data Governance
+
+The project distinguishes between:
+
+1. Source datasets
+2. Prepared or cleaned datasets
+3. Stored application data
+4. Dynamic external API data
+5. Realtime data
+
+## 11.1 Stored Data Flow
+
+Activities, services and transit stops follow this flow:
+
+```text
+Source Dataset
+      |
+      v
+Preparation / Cleaning / Filtering
+      |
+      v
+Import Scripts
+      |
+      v
+SQLite Database
+      |
+      v
+Express Backend API
+      |
+      v
+Vue Frontend Service Layer
+      |
+      v
+Vue Views
+```
+
+Relevant backend files include:
+
+```text
+age-friendly-database/initDb.js
+age-friendly-database/importData.js
+```
+
+The prepared source files remain useful for reproducibility and database rebuilding but are not directly loaded by the Vue frontend during normal runtime.
+
+## 11.2 External API Data Flow
+
+Vicmap:
+
+```text
+Vicmap Features of Interest
+      |
+      v
+vicmapFoiService.js
+      |
+      v
+Express Backend
+      |
+      v
+GET /api/realtime/community-venues
+      |
+      v
+Vue Live Information Page
+```
+
+PTV Realtime:
+
+```text
+PTV GTFS-Realtime
+      |
+      v
+ptvRealtimeService.js
+      |
+      v
+Express Backend
+      |
+      v
+GET /api/realtime/bus-positions
+      |
+      v
+Vue Live Information Page
+```
+
+---
+
+# 12. Data Freshness Strategy
+
+Different datasets have different freshness characteristics.
+
+| Data | Freshness Type | Current Strategy |
+| --- | --- | --- |
+| Activities | Prepared dataset / periodically maintainable | Stored in SQLite |
+| Services | Prepared dataset / periodically maintainable | Stored in SQLite |
+| Transit stops | GTFS schedule snapshot | Stored in SQLite |
+| Vicmap venues | Dynamic external API | Requested when Live page loads or refreshes |
+| PTV vehicle positions | Realtime feed | Requested through backend with short cache |
+| Weather / UV / Air Quality | Rapidly changing | Future work |
+
+The project therefore avoids describing all datasets as realtime.
+
+Only the PTV GTFS-Realtime vehicle feed is treated as true realtime transport data in the current build.
+
+Vicmap venue information is dynamically retrieved external data.
+
+---
+
+# 13. Backend REST API
+
+The backend runs locally at:
+
+```text
+http://localhost:3000
+```
+
+## 13.1 Health Check
+
+```http
+GET /api/health
+```
+
+Example response:
+
+```json
+{
+  "status": "ok",
+  "message": "Age-Friendly Australia backend is running."
+}
+```
+
+## 13.2 Activities
+
+```http
+GET /api/activities
+```
+
+Returns activity records stored in SQLite.
+
+## 13.3 Services
+
+```http
+GET /api/services
+```
+
+Returns service records stored in SQLite.
+
+## 13.4 Transit Stops
+
+```http
+GET /api/transit-stops
+```
+
+Returns transit-stop records stored in SQLite.
+
+## 13.5 Vicmap Community Venues
+
+```http
+GET /api/realtime/community-venues
+```
+
+Optional query parameters:
+
+```text
+type
+subtype
+limit
+```
+
+Example:
+
+```text
+/api/realtime/community-venues?subtype=senior%20citizens&limit=10
+```
+
+## 13.6 PTV Live Bus Positions
+
+```http
+GET /api/realtime/bus-positions
+```
+
+Optional query parameters:
+
+```text
+routeId
+limit
+```
+
+Example:
+
+```text
+/api/realtime/bus-positions?routeId=200&limit=10
+```
+
+Returned information includes:
+
+- Vehicle ID
+- Route ID
+- Latitude
+- Longitude
+- Bearing
+- Timestamp
+
+The backend applies a short cache to reduce unnecessary repeated requests to the external realtime service.
+
+---
+
+# 14. Frontend Service Architecture
+
+Frontend data access is separated from Vue views through service modules.
+
+Important modules include:
+
+```text
+src/services/activityService.js
+src/services/serviceService.js
+src/services/transitStopsService.js
+src/services/liveDataService.js
+src/services/distanceService.js
+src/services/preferencesService.js
+src/services/savedItemsService.js
+```
+
+The main application flow is:
+
+```text
+Vue View
+   |
+   v
+Frontend Service
+   |
+   v
+Backend REST API
+   |
+   v
+SQLite Database or External API
+```
+
+This prevents individual Vue views from containing direct database or external API integration logic.
+
+---
+
+# 15. Activities
+
+The Activities feature supports:
+
 - Keyword search
 - General-area filtering
 - Interest filtering
-- Day filtering
-- Recurrence filtering
+- Preferred-day filtering
+- Schedule or recurrence filtering
 - Older-adult relevance filtering
-- Preference-based relevance scoring
+- Preference-based ranking
 - Activity cards
 - Activity detail pages
-- Source attribution
 - Saved activities
-- Nearest public transport stop information on detail pages
-- Approximate distance to the nearest available transport stop
+- Source attribution
+- Nearest public transport stop
+- Approximate distance to transport
 
-Activity information is normalised through the application's data service layer.
+Activity records are retrieved from:
 
-If a field is not provided by the original dataset, the interface does not invent the missing information.
+```http
+GET /api/activities
+```
+
+The frontend does not directly load the activity CSV at runtime.
 
 ---
 
-## Activity Preference Scoring
+# 16. Activity Preference Scoring
 
-The application supports preference-based activity ranking.
+The application supports preference-based activity ranking using voluntarily supplied, non-sensitive preferences.
 
-The current scoring mechanism uses four voluntarily provided, non-sensitive preference factors:
+Current preference factors include:
 
 1. General area
 2. Interests
 3. Preferred days
 4. Activity type
 
-The scoring mechanism improves the relevance of activity ordering without requiring sensitive personal information.
-
-This feature is implemented through the current activity filtering and preference architecture.
+The scoring mechanism improves result ordering without requiring medical or other sensitive personal information.
 
 ---
 
-## Preferences
+# 17. Services
 
-Users can voluntarily save non-sensitive preferences including:
+The Services feature supports:
 
-- General area
-- Interests
-- Preferred days
-- Activity types
-- Text size
+- Keyword search
+- General-area filtering
+- Service-type filtering
+- Accessibility-filter architecture
+- Distance-based ordering
+- Service cards
+- Service detail pages
+- Saved services
+- Source information
+- Missing-data handling
+- Nearest public transport stop
+- Approximate transport distance
 
-These preferences are used to improve activity relevance.
+Service records are retrieved from:
 
-Preferences are stored locally in the browser.
+```http
+GET /api/services
+```
 
-The application does not require private health information or detailed location history for personalisation.
+The frontend does not directly load the services CSV at runtime.
 
 ---
 
-## Accessibility
+# 18. Public Transport Access
 
-A global text-size control is available through the navigation bar.
+PTV GTFS schedule stop information is stored in SQLite and accessed through:
 
-Available settings are:
+```http
+GET /api/transit-stops
+```
 
-- Standard
-- Large
-- Extra large
+The frontend loads transit stops through:
 
-The selected text size applies across the application.
+```text
+src/services/transitStopsService.js
+```
 
-Other accessibility design considerations include:
+Transit-stop data is cached in the frontend after the first backend request to avoid repeatedly downloading all 4,994 stops.
 
+Nearest-stop calculations support:
+
+- Activity detail pages
+- Service detail pages
+
+Approximate flow:
+
+```text
+Activity / Service Coordinates
+        |
+        v
+Transit Stops from Backend
+        |
+        v
+Distance Calculation
+        |
+        v
+Nearest Transport Stop
+```
+
+Transport support is supplementary. Age Friendly Australia is not intended to replace a full journey-planning application.
+
+---
+
+# 19. Live Information
+
+The application includes a dedicated route:
+
+```text
+/live
+```
+
+The page presents two current external data sources.
+
+## 19.1 Senior-Friendly Community Venues
+
+Data source:
+
+```text
+Vicmap Features of Interest
+```
+
+The interface displays:
+
+- Venue name
+- Facility type
+- Facility subtype
+- Latitude
+- Longitude
+- External map location
+
+Users can manually refresh the data.
+
+The current Vicmap query returns relevant Victorian facilities. It is not yet a strict user-GPS nearest-venue feature.
+
+## 19.2 Live Bus Positions
+
+Data source:
+
+```text
+PTV GTFS-Realtime
+```
+
+The interface displays:
+
+- Bus vehicle ID
+- Route number
+- Current reported coordinates
+- Vehicle bearing
+- Latest reported time
+- External map position
+
+Users can:
+
+- View vehicles from multiple routes
+- Enter a specific route number
+- Refresh the latest vehicle information
+- Clear the route filter
+- Open the current vehicle position in an external map
+
+---
+
+# 20. Distance Calculation
+
+The application uses approximate geographic distance calculations to support local discovery.
+
+Relevant modules include:
+
+```text
+src/services/distanceService.js
+src/services/suburbCoordinates.js
+```
+
+The distance service uses geographic coordinates and the Haversine formula.
+
+The calculations are intended for approximate local discovery rather than exact door-to-door navigation.
+
+---
+
+# 21. Accessibility
+
+The application is designed for older users and includes:
+
+- Adjustable global text size
+- Standard, Large and Extra Large text modes
 - Large interactive controls
-- Clear visual hierarchy
+- Clear navigation
 - High readability
-- Simple navigation
-- Clear labels
-- Responsive layout
-- Consistent interaction patterns
-- Source-aware presentation of accessibility information
+- Simple labels
+- Consistent page layouts
+- Responsive design
+- Clear loading and error states
 
-Accessibility information for individual services depends on the verified source dataset.
+Accessibility information for individual services remains dependent on available verified source data.
 
-The current aged-care source does not provide complete accessibility attributes for every record. The interface therefore does not fabricate unavailable accessibility information.
+The application does not invent missing accessibility information.
 
 ---
 
-## Saved Items
+# 22. Saved Items and Preferences
 
-The Saved page supports a shared saved-item structure for:
+Users can save:
 
 - Activities
 - Services
 
-Saved item IDs are stored locally in the browser.
+Saved-item identifiers are stored locally in the browser.
 
 Users can:
 
 - Save an item
 - View saved items
 - Remove saved items
-- Filter the Saved page by item type
+- Filter saved items by type
 
-The saved-item architecture supports both activity and service records.
-
----
-
-## Services
-
-The Services feature currently supports:
-
-- Loading verified aged-care service records
-- Keyword search
-- General-area filtering
-- Service-type filtering
-- Accessibility filter architecture
-- Distance-based service sorting
-- Service cards
-- Service detail pages
-- Saved-service support
-- Data-source fields
-- Missing-data handling
-- Privacy-aware messaging
-- Nearest public transport stop lookup
-- Approximate distance to the nearest available transport stop
-
-### Current Service Data State
-
-Iteration 1 uses:
-
-```text
-data/sample/EP2_aged_care_services_sample.csv
-```
-
-The dataset contains **198 aged-care service records**.
-
-The records were filtered and deduplicated from an Australian Government aged-care service dataset.
-
-The Iteration 1 sample focuses on South-East Melbourne, including:
-
-- Monash
-- Glen Eira
-- Greater Dandenong
-- Whitehorse
-- Kingston
-- Relevant surrounding and edge suburbs
-
-Latitude and longitude are available for retained records and support distance-based calculations.
-
-The current service dataset contains different aged-care service categories, including examples such as:
-
-- Residential
-- Home Care
-- Short-Term Restorative Care
-- Transition Care
-
-Some information required by the final acceptance criteria is not consistently supplied by the current source.
-
-This may include:
-
-- Accessibility information
-- Phone numbers
-- Opening hours
-- Eligibility details
-- Additional provider information
-
-Where information is unavailable from the verified source, the interface does not fabricate it.
-
----
-
-# Service Distance Sorting
-
-Iteration 1 includes distance-based service ordering.
-
-The implementation uses:
-
-```text
-src/services/suburbCoordinates.js
-src/services/distanceService.js
-```
-
-`suburbCoordinates.js` stores approximate coordinates for supported general areas.
-
-`distanceService.js` calculates approximate geographic distance using the Haversine formula.
-
-The basic calculation flow is:
-
-```text
-Selected general area
-        ↓
-Approximate suburb centroid
-        ↓
-Service latitude / longitude
-        ↓
-Haversine distance calculation
-        ↓
-Service results sorted nearest-first
-```
-
-Distance information is designed to support general local discovery rather than exact door-to-door navigation.
-
----
-
-# Public Transport Access
-
-Iteration 1 includes a filtered PTV GTFS bus-stop lookup dataset:
-
-```text
-data/sample/gtfs_stops_southeast_melbourne.csv
-```
-
-The lookup contains approximately **4,994 South-East Melbourne bus stops**.
-
-It was prepared from the PTV GTFS Schedule dataset and is used programmatically rather than for direct manual browsing.
-
-Nearest-stop functionality is implemented through:
-
-```text
-src/services/transitStopsService.js
-```
-
-The application uses a nearest-stop lookup for both:
-
-- Activity detail pages
-- Service detail pages
-
-A typical result may be presented in the form:
-
-```text
-Nearest public transport stop:
-Nepean Hwy / Centre Dandenong Rd
-0.2 km away
-```
-
-This information is supplementary.
-
-Transport journey planning is not the main purpose of Age Friendly Australia.
-
-The current GTFS data is a static snapshot.
-
-It does not provide:
-
-- Live arrival times
-- Live vehicle locations
-- Delays
-- Real-time disruption information
-
-Those features would require additional real-time transport feeds and are outside the current Iteration 1 scope.
-
----
-
-# Iteration 1 Technical Deliverables
-
-The latest Iteration 1 technical work includes three key data-related features.
-
-## AC-02 — Activity Preference Scoring
-
-Activity relevance uses a four-factor weighted approach based on:
+Users can also voluntarily save non-sensitive preferences including:
 
 - General area
 - Interests
 - Preferred days
 - Activity type
+- Text size
 
-Status:
-
-```text
-✅ Implemented
-```
+No user account is required in the current implementation.
 
 ---
 
-## AC-03 — Service Distance Sorting
+# 23. Privacy and Security
 
-Service distance sorting uses:
+The application follows a minimal-data and privacy-aware design.
+
+The current system does not require:
+
+- Medical records
+- Diagnosis information
+- Exact home addresses
+- Public user profiles
+- Private messages
+- Detailed user location history
+
+## 23.1 API Key Protection
+
+PTV realtime access requires a private API key.
+
+The key is stored only in:
 
 ```text
-suburbCoordinates.js
-+
-distanceService.js
-+
-Haversine distance calculation
+age-friendly-database/.env
 ```
 
-Results can be ordered nearest-first using the selected general area as an approximate reference point.
+Example:
 
-Status:
-
-```text
-✅ Implemented and verified
+```env
+PTV_API_KEY=YOUR_PRIVATE_API_KEY
 ```
 
----
+The backend `.env` file is excluded from Git using `.gitignore`.
 
-## AC-06 — Nearest Transport Stop
+The credential is not stored in a frontend `VITE_` variable and is not returned to the browser.
 
-Nearest public transport stop lookup uses:
-
-```text
-gtfs_stops_southeast_melbourne.csv
-+
-transitStopsService.js
-+
-findNearestStop()
-```
-
-The functionality is applied to:
-
-- Activity detail pages
-- Service detail pages
-
-Status:
+The frontend therefore follows:
 
 ```text
-✅ Implemented and verified
-```
-
----
-
-# Data Sources
-
-The Iteration 1 open-data research has confirmed the following core datasets.
-
-| Dataset | Source / Coverage | Format | Intended Use | Current Status |
-| --- | --- | --- | --- | --- |
-| Aged Care Service List | Australian Government; statewide source filtered to South-East Melbourne | XLSX / CSV | Aged-care service discovery | ✅ Integrated |
-| PTV GTFS Schedule | Victoria | GTFS | Public transport stops and nearest-stop lookup | ✅ Integrated as filtered snapshot |
-| Vicmap Features of Interest | Victoria | GIS / Shapefile / REST API | Hospitals, libraries, community centres, aged-care facilities and other facilities | 🟡 Verified; further frontend integration planned |
-| National Public Toilet Map | Australia | CSV / JSON / XML / API | Public toilets, essential facilities and accessibility support | 🟡 Verified; integration planned |
-| Public library and council event sources | Local areas | Public web information / sample dataset | Community activity discovery | ✅ Used for Iteration 1 activity sample |
-| Open-Meteo | Weather coverage | API | Weather and UV-related information | ⏳ Iteration 2 |
-| EPA Victoria Environment Monitoring | Victoria | API | Air-quality information | ⏳ Iteration 2 |
-
----
-
-# Iteration 1 Sample Datasets
-
-## EP1 Activity Sample
-
-Repository path:
-
-```text
-data/sample/EP1_sample_events_dataset.csv
-```
-
-Records:
-
-```text
-20
-```
-
-The activity sample was manually compiled using publicly available library and council event information.
-
-It is used to validate:
-
-- Activity discovery
-- Filtering
-- Personalisation
-- Activity cards
-- Activity detail pages
-- Saved activities
-- Preference scoring
-- Transport-stop enrichment
-
-The sample is considered final for Iteration 1.
-
----
-
-## EP2 Aged-Care Services
-
-Repository path:
-
-```text
-data/sample/EP2_aged_care_services_sample.csv
-```
-
-Records:
-
-```text
-198
-```
-
-The dataset was:
-
-- Filtered from a statewide aged-care service source
-- Deduplicated
-- Focused on South-East Melbourne
-- Prepared with latitude and longitude for retained records
-
-The service dataset is considered final for Iteration 1.
-
----
-
-## GTFS Bus Stops
-
-Repository path:
-
-```text
-data/sample/gtfs_stops_southeast_melbourne.csv
-```
-
-Records:
-
-```text
-Approximately 4,994
-```
-
-The data was:
-
-- Extracted from the PTV GTFS Schedule
-- Filtered to relevant South-East Melbourne bus stops
-- Deduplicated
-- Prepared as a lookup table for nearest-stop calculations
-
-This dataset supports AC-06 and is not intended for direct user browsing.
-
----
-
-# Excluded or Replaced Data Sources
-
-Some initially investigated sources were not suitable for direct implementation within the current student-project scope.
-
-## Monash Public Library Events
-
-The initially investigated Monash Public Library events source uses a commercial SaaS platform rather than a directly accessible public/open API suitable for the project.
-
-For Iteration 1, the team therefore uses a manually compiled activity sample based on publicly available library and council event information.
-
----
-
-## HealthDirect / NHSD
-
-HealthDirect health-facility data was investigated.
-
-However, the relevant National Health Services Directory access requires additional formal access arrangements such as:
-
-- Registration
-- API credentials
-- Authentication
-- OAuth Bearer Token access
-
-This was not considered practical within the Iteration 1 student-project scope.
-
-The project therefore uses or plans to use:
-
-- **Aged Care Service List** for detailed aged-care records
-- **Vicmap Features of Interest** for general facility discovery where appropriate
-
----
-
-# Data Freshness Strategy
-
-The project distinguishes between:
-
-1. External APIs
-2. Periodically updated datasets
-3. Dynamic presentation
-4. True real-time information
-
-The core Iteration 1 datasets are generally published as periodically refreshed releases rather than continuous real-time streams.
-
-The longer-term planned architecture is:
-
-```text
-External Open Data Sources
-        ↓
-Scheduled Backend Refresh
-        ↓
-Team Database
-        ↓
-Backend API
-        ↓
 Vue Frontend
+     |
+     v
+Express Backend
+     |
+     v
+PTV API
 ```
 
-The backend may periodically retrieve updated CSV or API records and refresh the application's own data store.
-
-The frontend could then use the team's backend rather than depending directly on several external services.
-
-Potential advantages include:
-
-- Faster frontend responses
-- More predictable data formats
-- Improved reliability
-- Centralised error handling
-- Controlled refresh frequency
-- Reduced dependency on third-party availability
-- Easier caching
-- Easier dataset joining
-
-The current prototype still supports local Iteration datasets.
-
----
-
-# Application Architecture
+rather than:
 
 ```text
-Vue Views
-   │
-   ├── HomeView
-   ├── ActivitiesView
-   ├── ActivityDetailView
-   ├── ServicesView
-   ├── ServiceDetailView
-   ├── SavedView
-   └── PreferencesView
-   │
-   ↓
-Service Layer
-   │
-   ├── activityService
-   ├── serviceService
-   ├── preferencesService
-   ├── savedItemsService
-   ├── distanceService
-   └── transitStopsService
-   │
-   ↓
-Supporting Location Data
-   │
-   ├── suburbCoordinates
-   ├── venueCoordinates
-   └── GTFS stop lookup
-   │
-   ↓
-Normalised Application Data
-   │
-   ↓
-Local Iteration Dataset / Future Backend API
+Vue Frontend
+     |
+     v
+PTV API + Exposed Credential
 ```
 
-This structure allows the current frontend data source to be replaced or supplemented by a backend API without requiring a complete redesign of the user interface.
+## 23.2 Security Measures Currently Implemented
+
+- PTV API key kept server-side.
+- Backend `.env` excluded from Git.
+- Frontend does not receive the PTV credential.
+- Backend validates external API responses.
+- Vicmap response structure is checked before use.
+- Request result limits are bounded.
+- Missing or invalid external responses return controlled API errors.
+- Backend CORS middleware is enabled.
+- SQLite database access is separated from the frontend.
+- Application does not store sensitive health information.
 
 ---
 
-# Technology Stack
+# 24. Security Risk Summary
 
-- Vue 3
-- Vue Router
-- Vite
-- JavaScript
-- HTML5
-- CSS
-- LocalStorage
-- Git
-- GitHub
+| Risk | Potential Impact | Current Mitigation |
+| --- | --- | --- |
+| API credential exposure | Unauthorised API use or quota abuse | Store PTV key in backend `.env`; exclude from Git |
+| External API outage | Live page may temporarily lack data | Backend error handling and user-visible error states |
+| Invalid external API response | Runtime errors or bad UI data | Response validation before mapping |
+| Excessive realtime requests | External service load or quota use | Short backend PTV cache and request limits |
+| Sensitive-data collection | Privacy risk | Minimal-data design; no health records or detailed location history |
+| Missing source fields | Misleading information | Do not fabricate unavailable provider or service information |
+
+A fuller project-specific risk assessment should be maintained in the Project Governance Portfolio security documentation.
 
 ---
 
-# Environment Configuration
+# 25. Environment Configuration
+
+## 25.1 Frontend
 
 Create a `.env` file in the project root:
 
 ```env
 VITE_API_BASE_URL=http://localhost:3000/api
-VITE_USE_REMOTE_API=false
 ```
 
-`VITE_USE_REMOTE_API=false` currently allows the application to use local Iteration datasets.
+Example configuration is provided in:
 
-A future backend implementation could switch the application to:
+```text
+.env.example
+```
+
+## 25.2 Backend
+
+Create:
+
+```text
+age-friendly-database/.env
+```
+
+and add:
 
 ```env
-VITE_USE_REMOTE_API=true
+PTV_API_KEY=YOUR_PRIVATE_PTV_API_KEY
 ```
 
-without requiring major redesign of the frontend pages.
+Do not commit this file.
 
 ---
 
-# Running the Project
+# 26. Local Development
 
-Install dependencies:
+The application requires two development processes:
+
+1. Vue frontend
+2. Express backend
+
+## 26.1 Install Frontend Dependencies
+
+From the project root:
 
 ```bash
 npm install
 ```
 
-Start the development server:
+On Windows PowerShell:
+
+```powershell
+npm.cmd install
+```
+
+Start the frontend:
 
 ```bash
 npm run dev
 ```
 
-On Windows PowerShell, if script execution prevents the normal npm command, use:
+or:
 
 ```powershell
 npm.cmd run dev
 ```
 
-The development server will normally be available at:
+Frontend URL:
 
 ```text
-http://localhost:5173/
+http://localhost:5173
+```
+
+## 26.2 Install Backend Dependencies
+
+Open another terminal:
+
+```powershell
+cd age-friendly-database
+npm.cmd install
+```
+
+Start the backend in development mode:
+
+```powershell
+npm.cmd run dev
+```
+
+Backend URL:
+
+```text
+http://localhost:3000
+```
+
+The backend development script uses:
+
+```text
+node --watch server.js
+```
+
+## 26.3 Production-Style Backend Start
+
+```powershell
+npm.cmd start
+```
+
+which runs:
+
+```text
+node server.js
 ```
 
 ---
 
-# Production Build
+# 27. Production Build
 
-Run:
+From the project root:
 
 ```bash
 npm run build
@@ -984,27 +1283,29 @@ or on Windows:
 npm.cmd run build
 ```
 
-A successful build creates the production files in:
+A successful frontend build creates:
 
 ```text
 dist/
 ```
 
-Preview the production build with:
+Preview locally:
 
 ```bash
 npm run preview
 ```
 
-or on Windows:
+or:
 
 ```powershell
 npm.cmd run preview
 ```
 
+The iteration submission should use the deployed production build URL required by the unit rather than localhost.
+
 ---
 
-# Main Routes
+# 28. Main Routes
 
 | Route | Purpose |
 | --- | --- |
@@ -1013,312 +1314,268 @@ npm.cmd run preview
 | `/activities/:id` | Activity details |
 | `/services` | Service discovery |
 | `/services/:id` | Service details |
+| `/live` | Vicmap and PTV current/live information |
 | `/saved` | Saved items |
 | `/preferences` | Preferences and accessibility settings |
 
 ---
 
-# Privacy Principles
+# 29. Project Structure
 
-The project follows a minimal-data approach.
-
-The application currently stores only voluntary non-sensitive settings and saved-item references required for the user experience.
-
-Examples include:
-
-- General area preference
-- Activity interests
-- Preferred activity days
-- Activity types
-- Text-size preference
-- Saved activity IDs
-- Saved service IDs
-
-The design does not require:
-
-- Medical records
-- Diagnosis information
-- Exact home address
-- Detailed location history
-- Public profiles
-- User-generated social posts
-- Private messaging
-
-The application should use verified source information and avoid fabricating unavailable provider or service details.
+```text
+age-friendly-australia/
+│
+├── src/
+│   ├── components/
+│   │   └── AppNavbar.vue
+│   │
+│   ├── router/
+│   │   └── index.js
+│   │
+│   ├── services/
+│   │   ├── activityService.js
+│   │   ├── serviceService.js
+│   │   ├── transitStopsService.js
+│   │   ├── liveDataService.js
+│   │   ├── distanceService.js
+│   │   ├── preferencesService.js
+│   │   ├── savedItemsService.js
+│   │   ├── suburbCoordinates.js
+│   │   └── venueCoordinates.js
+│   │
+│   └── views/
+│       ├── HomeView.vue
+│       ├── ActivitiesView.vue
+│       ├── ActivityDetailView.vue
+│       ├── ServicesView.vue
+│       ├── ServiceDetailView.vue
+│       ├── LiveInformationView.vue
+│       ├── SavedView.vue
+│       └── PreferencesView.vue
+│
+├── age-friendly-database/
+│   ├── age-friendly.db
+│   ├── server.js
+│   ├── initDb.js
+│   ├── importData.js
+│   ├── vicmapFoiService.js
+│   ├── ptvRealtimeService.js
+│   ├── testVicmapService.js
+│   ├── testPtvRealtimeService.js
+│   ├── package.json
+│   └── .env
+│
+├── data/
+│   └── sample/
+│
+├── .env.example
+├── package.json
+└── README.md
+```
 
 ---
 
-# Known Limitations
+# 30. Backend Data Services
 
-The current Iteration 1 implementation has several known limitations.
+## 30.1 Vicmap Service
 
-1. The activity sample dataset does not provide every field required by the final acceptance criteria.
-2. Some activity records do not contain complete accessibility information, organiser details, availability or registration instructions.
-3. The activity sample does not provide complete Greater Melbourne coverage.
-4. The current service dataset focuses primarily on aged-care services rather than every healthcare and essential-service category.
-5. Accessibility information is limited by the current aged-care source fields.
-6. Phone numbers are not consistently supplied by the current service source.
-7. Opening hours are not consistently supplied by the current service source.
-8. Eligibility information is not consistently supplied by the current service source.
-9. National Public Toilet Map records have not yet been integrated into the frontend.
-10. Selected Vicmap facility records have not yet been fully integrated into the Services interface.
-11. The GTFS stop dataset is a static snapshot.
-12. Current transport support focuses on nearest-stop information rather than complete journey planning.
-13. Real-time vehicle arrivals and service disruptions are outside the current scope.
-14. Environmental information such as weather, UV and air quality has been deferred to Iteration 2.
+Implemented in:
+
+```text
+age-friendly-database/vicmapFoiService.js
+```
+
+Responsibilities include:
+
+- Constructing Vicmap queries
+- Escaping query values used in the ArcGIS WHERE clause
+- Requesting GeoJSON
+- Validating HTTP responses
+- Handling ArcGIS error responses
+- Validating returned feature arrays
+- Validating coordinates
+- Converting GeoJSON features into application-friendly objects
+
+## 30.2 PTV Realtime Service
+
+Implemented in:
+
+```text
+age-friendly-database/ptvRealtimeService.js
+```
+
+Responsibilities include:
+
+- Reading the private backend PTV API key
+- Requesting GTFS-Realtime vehicle information
+- Parsing transport data
+- Returning simplified bus-position objects
+
+The private API key is not exposed to frontend code.
+
+---
+
+# 31. Testing
+
+The current build has been manually verified through backend endpoint tests and frontend functional checks.
+
+## 31.1 Backend Verification
+
+| Test | Expected Result | Current Result |
+| --- | --- | --- |
+| `GET /api/health` | Backend reports running | ✅ Pass |
+| `GET /api/activities` | Activity records returned | ✅ 20 records |
+| `GET /api/services` | Service records returned | ✅ 198 records |
+| `GET /api/transit-stops` | Transit stops returned | ✅ 4,994 records |
+| Vicmap request | Valid venue array returned | ✅ Pass |
+| PTV realtime request | Live vehicle objects returned | ✅ Pass |
+
+## 31.2 Frontend Verification
+
+| Feature | Current Result |
+| --- | --- |
+| Activities load through backend | ✅ Pass |
+| Services load through backend | ✅ Pass |
+| Transit stops load through backend | ✅ Pass |
+| Activity filters | ✅ Pass |
+| Service filters | ✅ Pass |
+| Saved items | ✅ Pass |
+| Preferences | ✅ Pass |
+| Text-size control | ✅ Pass |
+| Live venue display | ✅ Pass |
+| Live venue refresh | ✅ Pass |
+| External venue map link | ✅ Pass |
+| Live bus display | ✅ Pass |
+| Bus route filter | ✅ Pass |
+| Live bus refresh | ✅ Pass |
+| External bus-position map link | ✅ Pass |
+
+Dedicated external-service test files include:
+
+```text
+age-friendly-database/testVicmapService.js
+age-friendly-database/testPtvRealtimeService.js
+```
+
+Formal test cases, screenshots and acceptance-test evidence should also be maintained in the Project Governance Portfolio and aligned with current LeanKit acceptance criteria.
+
+---
+
+# 32. Iteration Alignment and Acceptance
+
+The build should remain aligned with:
+
+- Current LeanKit epics
+- Current user stories
+- Current acceptance criteria
+- Test cases
+- Project Governance Portfolio documentation
+- Mentor feedback and requirement changes
+
+When requirements change, the corresponding LeanKit cards, acceptance criteria, testing artefacts and project documentation should also be updated so that the build and governance artefacts remain consistent.
+
+The backend/database change should therefore be reflected in the current iteration documentation rather than being treated as an undocumented implementation change.
+
+---
+
+# 33. Data Management Plan Alignment
+
+The Project Governance Portfolio data-management documentation should describe, for each relevant dataset:
+
+- Data source
+- Access format such as API, CSV, XLSX, GTFS or GeoJSON
+- Source update frequency where known
+- Application update frequency
+- Cleaning and filtering steps
+- Transformation and normalisation
+- Storage method
+- Archiving or reproducibility approach
+- How the data supports user needs
+- Ethical, legal and privacy considerations
+- Licensing or attribution requirements
+
+The README summarises the technical implementation, but the formal Data Management Plan should contain the detailed governance evidence for each iteration.
+
+---
+
+# 34. Data Quality Principles
+
+## Verified Information
+
+Information should be derived from identified datasets or external services.
+
+## No Fabrication
+
+If a source does not provide a field, the application should not invent a value.
+
+## Separation of Source and Presentation
+
+Raw data is normalised before being displayed in the user interface.
+
+## Source-Aware Behaviour
+
+The interface acknowledges that external data can change when providers update their records.
+
+## Appropriate Freshness Claims
+
+The project distinguishes between:
+
+- Stored data
+- Dynamic external data
+- Realtime data
+
+and does not describe static snapshots as realtime.
+
+---
+
+# 35. Known Limitations
+
+The current implementation has several known limitations.
+
+1. The activity sample does not provide every field required by the final acceptance criteria.
+2. Some activities do not contain complete organiser, accessibility, availability or registration information.
+3. The current activity sample does not provide complete Greater Melbourne coverage.
+4. The service dataset focuses primarily on aged-care services rather than every healthcare or essential-service category.
+5. Accessibility information is limited by current service-source fields.
+6. Phone numbers are not consistently available in the current service source.
+7. Opening hours are not consistently available in the current service source.
+8. Eligibility information is not consistently available in the current service source.
+9. National Public Toilet Map data has not yet been integrated.
+10. The transit-stop table is based on prepared GTFS schedule data rather than live arrival information.
+11. Vicmap venues are dynamically retrieved but are not yet ordered by the user's precise GPS location.
+12. PTV vehicle availability depends on the current GTFS-Realtime feed.
+13. External APIs may temporarily be unavailable.
+14. Local development requires both frontend and backend processes to be running.
+15. Production deployment is still required for final iteration submission and review.
 
 Missing source information is not fabricated by the application.
 
 ---
 
-# Iteration 2 Plan
+# 36. Future Development
 
-Iteration 2 will build on the current local-discovery platform by adding environmental decision-support information and expanding verified service coverage.
+Potential future work includes:
 
-The main planned environmental features are:
-
-- Weather
-- UV Index
-- Air Quality
-
-These features were investigated during Iteration 1 but intentionally deferred to Iteration 2.
-
----
-
-## Weather and Forecast Information
-
-Weather information is planned to be obtained using:
-
-```text
-Open-Meteo
-```
-
-Potential information includes:
-
-- Current temperature
-- Forecast temperature
-- Weather conditions
-- Precipitation
-- Wind
-- Daily forecast information
-
-Weather data should support activity decisions rather than turning the platform into a dedicated weather application.
+- User-location-based venue ordering
+- Additional Vicmap facility categories
+- National Public Toilet Map integration
+- Weather information
+- UV Index information
+- Air-quality information
+- Outdoor activity suitability indicators
+- Scheduled server-side data refresh
+- Improved automated backend testing
+- Improved accessibility-source coverage
+- Wider healthcare and essential-service coverage
+- Production deployment configuration
+- Additional backend monitoring and logging
+- More robust API timeout and retry behaviour where appropriate
 
 ---
 
-## UV Index
+# 37. Iteration Roadmap Summary
 
-UV information is especially relevant to older users considering outdoor activities.
-
-Potential information includes:
-
-- Current UV Index
-- Forecast UV Index
-- Simple risk category
-- Basic sun-protection reminder where appropriate
-
-For example:
-
-```text
-UV Index
-7 · High
-
-Consider sun protection for outdoor activities.
-```
-
-UV information may be displayed alongside activity information where it provides useful decision support.
-
----
-
-## Air Quality
-
-Air-quality information is planned to be investigated and integrated using relevant EPA Victoria environmental monitoring data.
-
-Potential information includes:
-
-- Air-quality status
-- Monitoring information
-- Simple activity-support messages
-
-The feature should avoid presenting medical diagnoses or personalised medical advice.
-
-Its purpose is to provide general environmental context for local activity planning.
-
----
-
-# Outdoor Activity Suitability
-
-Rather than presenting Weather, UV and Air Quality as three unrelated technical datasets, Iteration 2 may combine them into a supplementary:
-
-## Outdoor Activity Suitability Indicator
-
-The purpose is to help older adults quickly understand whether environmental conditions appear suitable for an outdoor activity.
-
-Potential presentation:
-
-```text
-Outdoor Conditions
-
-Weather
-22°C · Partly cloudy
-
-UV Index
-7 · High
-
-Air Quality
-Good
-
-Outdoor Activity Guidance
-Conditions are generally suitable.
-Consider sun protection because UV is high.
-```
-
-This information would remain secondary to the activity itself.
-
-The main platform purpose continues to be:
-
-- Local activity discovery
-- Service discovery
-- Accessibility
-- Independent living support
-
-rather than weather forecasting.
-
----
-
-# Iteration 2 Data Architecture
-
-Weather, UV and air-quality information changes more rapidly than the static service and GTFS datasets.
-
-A possible architecture is:
-
-```text
-Open-Meteo
-      +
-EPA Victoria
-      ↓
-Short Refresh Interval
-(e.g. every few hours)
-      ↓
-Backend / Cache
-      ↓
-Normalised Environmental Data
-      ↓
-Vue Frontend
-      ↓
-Outdoor Activity Suitability
-```
-
-The exact refresh strategy will depend on the final Iteration 2 implementation.
-
----
-
-# Planned Next Steps — Iteration 2
-
-The next implementation stage may include:
-
-1. Integrate weather data using Open-Meteo.
-2. Add weather forecast information to relevant activity experiences.
-3. Integrate UV Index information.
-4. Add simple UV decision-support messaging.
-5. Investigate and integrate EPA Victoria air-quality information.
-6. Combine Weather, UV and Air Quality into an optional outdoor activity suitability indicator.
-7. Integrate National Public Toilet Map data for essential facilities.
-8. Use available public-toilet accessibility attributes where appropriate.
-9. Integrate selected Vicmap Features of Interest.
-10. Expand healthcare and community-facility discovery.
-11. Improve aged-care service details if supplementary verified datasets become available.
-12. Add verified phone, opening-hour, eligibility or accessibility information where supported.
-13. Expand transport/location coverage beyond the current South-East Melbourne GTFS snapshot where appropriate.
-14. Investigate scheduled backend refreshing for external datasets.
-15. Introduce a team-managed database if required by later technical scope.
-16. Connect the Vue frontend to the backend API while preserving the current frontend service-layer architecture.
-
----
-
-# Potential Iteration 2–3 Extensions
-
-## Pedestrian Crowd Information
-
-The City of Melbourne Pedestrian Counting System may be investigated as a future enhancement.
-
-Potential uses include:
-
-- Crowd-level estimation
-- Quieter-time recommendations
-- Off-peak activity suggestions
-- Additional decision support for users who prefer less crowded environments
-
-This would be supplementary rather than a core platform requirement.
-
----
-
-## Wider Service Coverage
-
-Future service discovery may include additional verified records for:
-
-- Hospitals
-- Community health facilities
-- Libraries
-- Community centres
-- Public toilets
-- Government services
-- Other essential local services
-
-Potential sources include:
-
-- Vicmap Features of Interest
-- National Public Toilet Map
-- Other verified Victorian Government or council open datasets
-
----
-
-## Additional Provider Information
-
-If suitable verified open datasets become available, future iterations may add:
-
-- Phone numbers
-- Opening hours
-- Eligibility information
-- Accessibility information
-- Additional provider details
-- More detailed service descriptions
-
-Only verified source information should be displayed.
-
----
-
-## Backend Data Refresh
-
-Future iterations may move data preparation away from static frontend files.
-
-Potential workflow:
-
-```text
-External Dataset / API
-        ↓
-Scheduled Fetch
-        ↓
-Validation
-        ↓
-Normalisation
-        ↓
-Team Database
-        ↓
-Backend API
-        ↓
-Vue Application
-```
-
-This would allow data to be refreshed without manually rebuilding frontend sample files.
-
----
-
-# Iteration Roadmap Summary
-
-## Iteration 1
-
-### Completed
+## Current Completed Work
 
 - Core Vue frontend
 - Home page
@@ -1334,67 +1591,57 @@ This would allow data to be refreshed without manually rebuilding frontend sampl
 - Service filtering
 - Service distance calculation
 - Service distance ordering
-- PTV GTFS bus-stop lookup
+- PTV GTFS stop lookup
 - Nearest-stop calculation
 - Activity nearest-stop information
 - Service nearest-stop information
 - Global text-size control
 - Privacy-aware design
 - Source-aware missing-field handling
+- SQLite database
+- Express backend
+- Frontend-to-backend REST integration
+- Vicmap dynamic facility integration
+- PTV GTFS-Realtime integration
+- Live Information page
+- Live bus route filtering
+- Backend credential protection
 
-### Partially Implemented
+## Planned or Future Work
 
-- Complete accessibility metadata
-- Complete healthcare/essential-service coverage
-- Wider Greater Melbourne activity coverage
-
----
-
-## Iteration 2
-
-### Planned
-
+- National Public Toilet Map
+- Additional Vicmap categories
 - Weather integration
-- Weather forecast
 - UV Index
 - Air Quality
 - Outdoor Activity Suitability
-- National Public Toilet Map integration
-- Additional Vicmap facilities
-- Improved service accessibility information
 - Wider service coverage
-- Further data-refresh architecture
+- Improved accessibility data
+- Scheduled backend data refresh
+- Production deployment and production environment configuration
 
 ---
 
-## Iteration 2–3 Possibilities
+# 38. Requirement Source Documents
 
-- Crowd-level information
-- Off-peak activity recommendations
-- Wider transport coverage
-- Backend refresh scheduling
-- Team database
-- Additional formal API/data-sharing integrations
+Project requirements, implementation decisions and future plans should remain aligned with:
 
----
-
-# Requirement Source Documents
-
-Project requirements, implementation decisions and future plans are based on:
-
-- User Stories & Epic Mapping
+- User Stories and Epic Mapping
 - Acceptance Criteria
+- LeanKit
 - Updated Personas
-- Open Data Research — Iteration 1 Dataset List
-- Open Data → Epic Mapping — Iteration 1 Final
+- Open Data Research
+- Data Governance / Data Management Plan
+- Security Plan
+- Testing Artefacts
+- Mentor Feedback and Meeting Minutes
+- Iteration Build Documentation
 
-These documents should remain the source of truth when project scope, implementation status or future iteration plans change.
+These artefacts should remain consistent with the current build.
 
 ---
 
-# Project Principles
-
-The project should continue to follow the following principles across future iterations.
+# 39. Project Principles
 
 ## Accessibility First
 
@@ -1420,8 +1667,24 @@ Missing provider information should not be guessed or fabricated.
 
 ## Simple Decision Support
 
-Additional features such as transport, Weather, UV and Air Quality should support the user's main task without overwhelming the interface.
+Additional features such as transport, live venue information and future environmental data should support the user's main task without overwhelming the interface.
+
+## Maintainable Architecture
+
+The project should keep frontend, backend, database and external-service responsibilities clearly separated.
 
 ## Incremental Development
 
-New datasets and features should be introduced gradually across iterations while preserving the existing frontend architecture and core user experience.
+New datasets and features should be introduced gradually across iterations while preserving the existing user experience and keeping LeanKit, acceptance criteria, tests and governance artefacts aligned with the build.
+
+---
+
+# 40. Repository
+
+Repository:
+
+```text
+YUCHENLU666/age-friendly-australia
+```
+
+The development workflow uses feature branches before integration into `main`.
