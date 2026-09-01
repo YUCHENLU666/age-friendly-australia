@@ -224,6 +224,13 @@ onBeforeUnmount(() => {
             </RouterLink>
 
             <RouterLink
+              to="/live"
+              class="navbar-link"
+            >
+              Live
+            </RouterLink>
+
+            <RouterLink
               to="/saved"
               class="navbar-link"
             >
