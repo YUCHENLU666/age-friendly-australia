@@ -12,6 +12,8 @@
   "type": "commonjs",
   "dependencies": {
     "csv-parser": "^3.2.1",
+    "dotenv": "^17.4.2",
+    "gtfs-realtime-bindings": "^2.2.0",
     "sqlite3": "^6.0.1"
   }
 }
