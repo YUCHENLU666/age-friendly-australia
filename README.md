@@ -71,17 +71,63 @@ The primary target users are older adults living independently in Greater Melbou
 
 The project uses three complementary personas:
 
-| Persona | Primary need |
-| --- | --- |
-| **Wang Yu** | Find, understand and revisit everyday activity and service information independently |
-| **Robert Wilson** | Find and understand healthcare, aged-care and essential support |
-| **Margaret Evans** | Discover suitable local activities and events without repeatedly checking multiple websites |
+| Persona | Primary epic(s) | Supporting epic(s) | Primary need |
+| --- | --- | --- | --- |
+| **Wang Yu** | EP1, EP2, EP6 | EP3, EP4, EP5 | Find, understand and revisit local activity and essential-service information independently |
+| **Robert Wilson** | EP2 | EP3, EP5, EP6 | Understand and access healthcare, aged-care and essential support |
+| **Margaret Evans** | EP1, EP4 | EP3, EP5, EP6 | Discover relevant local activities and events with less repeated searching |
 
 These personas represent different combinations of digital confidence, service-access needs, activity-discovery needs and accessibility concerns.
 
 ---
 
-## 3. Design Principles
+## 3. Design Thinking and Design Principles
+
+### 3.1 Updated Lotus Blossom process
+
+The requirements were refined through two linked Lotus Blossom activities rather than starting from a predetermined feature list.
+
+#### Stage 1 — Problem exploration
+
+The first Lotus Blossom placed **Age-Friendly Australia** at the centre and explored eight recurring problem areas:
+
+| Problem theme | Examples identified |
+| --- | --- |
+| **Information Fragmentation** | Multiple sources, scattered activity/service information and difficult comparison |
+| **Healthcare Access** | Finding nearby healthcare, providers, opening hours and contact information |
+| **Aged-Care Complexity** | Unclear terminology, eligibility, providers, costs and support options |
+| **Activity Discovery** | Activities spread across websites, unclear schedules and difficulty matching interests |
+| **Digital Accessibility** | Small text/buttons, complex navigation, unclear icons and inconsistent layouts |
+| **Information Trust** | Unclear sources/update dates, conflicting details and potentially outdated information |
+| **Location & Access** | Unclear venue/service locations, directions, distance and mobility information |
+| **Privacy Concerns** | Unnecessary personal details, health-information concerns and location tracking |
+
+These findings were consolidated into three focused problem directions:
+
+1. Local Activity Discovery
+2. Healthcare & Aged-Care Service Access
+3. Digital Accessibility & Information Fragmentation
+
+They were then combined into the overarching problem statement and How Might We question used by the project.
+
+#### Stage 2 — Solution exploration
+
+The second Lotus Blossom placed the How Might We question at the centre. Eight solution clusters were generated and evaluated against user value, problem alignment, data availability and implementation feasibility.
+
+| Solution cluster | Requirements outcome |
+| --- | --- |
+| **Activity Discovery** | EP1 — Local Activities & Events Discovery |
+| **Health & Service Discovery** | EP2 — Health & Essential Services Discovery |
+| **Clear Information** | Cross-cutting principle integrated mainly across EP2 and EP3 |
+| **Age-Friendly Accessibility** | EP3 — Age-Friendly Accessibility |
+| **Relevant Discovery** | EP4 — Preference-Based Personalisation |
+| **Privacy & User Control** | Cross-cutting principle across EP3, EP4 and EP5 |
+| **Save & Revisit** | EP5 — Saved & Recent Items |
+| **Location & Access** | EP6 — Location & Access Information |
+
+This process produced six final epics. **Clear Information** and **Privacy & User Control** were intentionally retained as cross-cutting principles rather than being turned into separate epics.
+
+### 3.2 Design principles
 
 The interface is designed around age-friendly interaction principles:
 
@@ -110,6 +156,21 @@ The final requirements were organised into six epics.
 | **EP4** | Preference-Based Personalisation | ✅ Implemented for supported activity preferences |
 | **EP5** | Saved & Recent Items | 🟡 Saving implemented; recently viewed remains future work |
 | **EP6** | Location & Access Information | ✅ Implemented where source/location data is available |
+
+### Requirements baseline
+
+The refined baseline contains **14 Detailed User Stories**: **9 Must** priorities and **5 Should** priorities.
+
+| Epic | Detailed User Stories | Priority split |
+| --- | --- | --- |
+| **EP1** | US1.1–US1.3 | 3 Must |
+| **EP2** | US2.1–US2.3 | 2 Must, 1 Should |
+| **EP3** | US3.1–US3.2 | 2 Must |
+| **EP4** | US4.1–US4.2 | 2 Should |
+| **EP5** | US5.1–US5.2 | 1 Must, 1 Should |
+| **EP6** | US6.1–US6.2 | 1 Must, 1 Should |
+
+Acceptance Criteria are maintained as checklist tasks inside the corresponding Detailed User Story cards on LeanKit. They should only be marked complete when the current build and testing evidence demonstrate the required behaviour.
 
 ### EP1 — Local Activities & Events Discovery
 
@@ -995,24 +1056,32 @@ The explicit SQLite build-from-source step is used to avoid native binary compat
 
 ## 21. Requirements Traceability Summary
 
-The project follows this traceability chain:
+The updated requirements and project-work traceability chain is:
 
 ```text
 Research evidence
       ↓
-Problem statement
+Problem Exploration Lotus Blossom
       ↓
-Personas and user needs
+Three focused problem directions
       ↓
-Lotus Blossom ideation
+Overarching problem statement and HMW
       ↓
-Epics
+Personas and empathy maps
       ↓
-Detailed user stories
+Solution Exploration Lotus Blossom
       ↓
-Acceptance criteria
+Eight solution clusters
       ↓
-Implementation
+Six epics + cross-cutting principles
+      ↓
+Epic Stories
+      ↓
+14 Detailed User Stories
+      ↓
+Acceptance Criteria in LeanKit Tasks
+      ↓
+Implementation and evidence
       ↓
 Testing / Definition of Done
 ```
@@ -1029,6 +1098,60 @@ Current examples:
 | Unclear location and access | EP6 | Location, distance and nearest-stop support; dedicated detail-page Directions action remains future work |
 
 Acceptance criteria should be interpreted against the data the current verified sources actually provide. A requirement for a field does not mean the project should fabricate that field when the source does not contain it.
+
+### LeanKit card hierarchy
+
+The revised LeanKit board uses Parent/Child Cards to preserve traceability without creating a separate card for every Acceptance Criterion.
+
+| Level | Card type | Code example | Relationship |
+| --- | --- | --- | --- |
+| **L0** | Project | `AFA` | Root card |
+| **L1** | Workstream | `AFA-REQ` | Child of project |
+| **L2** | Main artefact or epic | `AFA-REQ-EP1` | Child of workstream |
+| **L3** | Supporting artefact or Epic Story | `AFA-REQ-EP1-ES` | Child of L2 card |
+| **L4** | Detailed User Story | `AFA-REQ-EP1-US1.1` | Child of Epic Story |
+| **Task** | AC, implementation or test checklist | `AC1 – Activity results displayed` | Inside the Detailed User Story card |
+
+The seven L1 workstreams are:
+
+```text
+AFA – Age-Friendly Australia
+├── AFA-DISC  Problem Discovery & Ideation
+├── AFA-PER   Personas & Empathy Maps
+├── AFA-REQ   Requirements Engineering
+├── AFA-DATA  Open Data & Data Mapping
+├── AFA-BUILD Prototype & UI Development
+├── AFA-TEST  Testing & Validation
+└── AFA-GOV   Project Governance Portfolio
+```
+
+Epic Story cards sit between each epic and its Detailed User Stories. Build cards reference the relevant User Story IDs, and testing cards reference the corresponding User Stories and Acceptance Criteria.
+
+### Current documented board snapshot
+
+The revised board plan contains **76 cards** across six team assignments.
+
+| Lane | Cards | Current documented scope |
+| --- | ---: | --- |
+| **DONE** | 11 | Five problem-discovery/ideation artefacts and six persona/empathy-map artefacts |
+| **DOING** | 59 | Board structure, requirements, epic hierarchy, data work, prototype/build work and governance |
+| **TODO** | 6 | Testing, accessibility review, feedback, defect handling and requirements updates |
+| **Total** | **76** | Complete planned card hierarchy |
+
+These LeanKit lanes describe the status of project cards and evidence. They are separate from the coded feature-status tables in Section 5; a feature may already exist in code while its documentation, review or test evidence remains in `DOING`.
+
+### Team assignment
+
+| Member | Assigned scope | Planned cards |
+| --- | --- | ---: |
+| **Member 1** | Root, all L1 workstreams, Problem Discovery & Ideation | 13 |
+| **Member 2** | Personas & Empathy Maps, EP1, initial open-data source identification | 12 |
+| **Member 3** | Epic ideation, EP2 and EP3 | 13 |
+| **Member 4** | EP4, EP5 and EP6 | 12 |
+| **Member 5** | Open Data & Data Mapping, Prototype & UI Development | 13 |
+| **Member 6** | Testing & Validation, Project Governance Portfolio | 13 |
+
+Parent cards must be created before their children. Existing work should only be placed in `DONE` when the corresponding artefact or evidence exists; planned or partially verified work remains in `DOING` or `TODO`.
 
 ---
 
