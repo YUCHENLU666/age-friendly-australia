@@ -18,6 +18,9 @@
     "dotenv": "^17.4.2",
     "express": "^5.2.1",
     "gtfs-realtime-bindings": "^2.2.0",
-    "sqlite3": "^6.0.1"
+    "node-cron": "^4.6.0",
+    "sqlite3": "^6.0.1",
+    "unzipper": "^0.12.5",
+    "xlsx": "https://cdn.sheetjs.com/xlsx-0.20.3/xlsx-0.20.3.tgz"
   }
 }
