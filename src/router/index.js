@@ -54,6 +54,15 @@ const router = createRouter({
     },
 
     {
+      path: '/live',
+      name: 'live-information',
+      component: () =>
+        import(
+          '@/views/LiveInformationView.vue'
+        ),
+    },
+
+    {
       path: '/saved',
       name: 'saved',
       component: () =>

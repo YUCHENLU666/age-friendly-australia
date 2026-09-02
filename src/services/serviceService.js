@@ -1,9 +1,7 @@
-import csvText from '../../data/sample/EP2_aged_care_services_sample.csv?raw'
-import { parseCsv } from '@/utils/csvParser'
-import { findNearestStop } from '@/services/transitStopsService'
-
-const USE_REMOTE_API =
-  import.meta.env.VITE_USE_REMOTE_API === 'true'
+import {
+  findNearestStop,
+  getTransitStops,
+} from '@/services/transitStopsService'
 
 const API_BASE_URL = (
   import.meta.env.VITE_API_BASE_URL ||
@@ -36,20 +34,41 @@ function normaliseAccessibility(value) {
 }
 
 function normaliseCoordinates(row) {
-  const lat = Number(row.latitude)
-  const lon = Number(row.longitude)
+  const latitude =
+    Number(row.latitude)
 
-  if (Number.isNaN(lat) || Number.isNaN(lon)) {
+  const longitude =
+    Number(row.longitude)
+
+  if (
+    Number.isNaN(latitude) ||
+    Number.isNaN(longitude)
+  ) {
     return null
   }
 
-  return { latitude: lat, longitude: lon }
+  return {
+    latitude,
+    longitude,
+  }
 }
 
 function normaliseService(
   row,
   index,
+  transitStops,
 ) {
+  const coordinates =
+    normaliseCoordinates(row)
+
+  const nearestStop =
+    coordinates
+      ? findNearestStop(
+          coordinates,
+          transitStops,
+        )
+      : null
+
   return {
     id: String(
       row.id ??
@@ -85,7 +104,8 @@ function normaliseService(
     ),
 
     eligibility: cleanText(
-      row.eligibility || '',
+      row.eligibility ??
+        '',
     ),
 
     openingHours: cleanText(
@@ -107,11 +127,11 @@ function normaliseService(
     ),
 
     postcode: cleanText(
-      row.postcode || '',
+      row.postcode ??
+        '',
     ),
 
-    coordinates:
-      normaliseCoordinates(row),
+    coordinates,
 
     phone: cleanText(
       row.phone ??
@@ -143,36 +163,28 @@ function normaliseService(
         '',
     ),
 
-    ...(() => {
-      const coordinates = normaliseCoordinates(row)
-      const nearestStop = coordinates
-        ? findNearestStop(coordinates)
-        : null
+    nearestTransportStop:
+      nearestStop
+        ? nearestStop.stopName
+        : '',
 
-      return {
-        nearestTransportStop: nearestStop
-          ? nearestStop.stopName
-          : '',
-        transportDistance: nearestStop
-          ? nearestStop.distanceLabel
-          : '',
-      }
-    })(),
+    transportDistance:
+      nearestStop
+        ? nearestStop.distanceLabel
+        : '',
   }
 }
 
-async function getLocalServices() {
-  const rows = parseCsv(csvText)
-
-  return rows.map(
-    normaliseService,
-  )
-}
-
-async function getRemoteServices() {
-  const response = await fetch(
-    `${API_BASE_URL}/services`,
-  )
+/**
+ * Load services from the backend.
+ *
+ * GET /api/services
+ */
+async function fetchServices() {
+  const response =
+    await fetch(
+      `${API_BASE_URL}/services`,
+    )
 
   if (!response.ok) {
     throw new Error(
@@ -189,17 +201,30 @@ async function getRemoteServices() {
     )
   }
 
-  return data.map(
-    normaliseService,
-  )
+  return data
 }
 
+/**
+ * Load services and transit stops from the backend
+ * at the same time.
+ */
 export async function getServices() {
-  if (USE_REMOTE_API) {
-    return getRemoteServices()
-  }
+  const [
+    serviceRows,
+    transitStops,
+  ] = await Promise.all([
+    fetchServices(),
+    getTransitStops(),
+  ])
 
-  return getLocalServices()
+  return serviceRows.map(
+    (row, index) =>
+      normaliseService(
+        row,
+        index,
+        transitStops,
+      ),
+  )
 }
 
 export async function getServiceById(
@@ -211,7 +236,8 @@ export async function getServiceById(
   return (
     services.find(
       (service) =>
-        service.id === String(id),
+        service.id ===
+        String(id),
     ) ?? null
   )
 }

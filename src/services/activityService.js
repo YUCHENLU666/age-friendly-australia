@@ -1,10 +1,8 @@
-import csvText from '../../data/sample/EP1_sample_events_dataset.csv?raw'
-import { parseCsv } from '@/utils/csvParser'
 import { getVenueCoordinates } from './venueCoordinates'
-import { findNearestStop } from '@/services/transitStopsService'
-
-const USE_REMOTE_API =
-  import.meta.env.VITE_USE_REMOTE_API === 'true'
+import {
+  findNearestStop,
+  getTransitStops,
+} from '@/services/transitStopsService'
 
 const API_BASE_URL = (
   import.meta.env.VITE_API_BASE_URL ||
@@ -101,7 +99,8 @@ function getSuitability(value) {
   ) {
     return {
       value: 'partial',
-      label: 'May be suitable',
+      label:
+        'May be suitable',
     }
   }
 
@@ -147,9 +146,10 @@ function getActivityType(
   const activityName =
     name.toLowerCase()
 
-  const tagText = tags
-    .join(' ')
-    .toLowerCase()
+  const tagText =
+    tags
+      .join(' ')
+      .toLowerCase()
 
   if (
     activityName.includes(
@@ -275,9 +275,10 @@ function getActivityImage(
   const activityName =
     name.toLowerCase()
 
-  const tagText = tags
-    .join(' ')
-    .toLowerCase()
+  const tagText =
+    tags
+      .join(' ')
+      .toLowerCase()
 
   if (
     activityName.includes(
@@ -434,12 +435,14 @@ function getActivityImage(
 function normaliseActivity(
   row,
   index,
+  transitStops,
 ) {
-  const tags = normaliseTags(
-    row.category_tags ??
-      row.tags ??
-      row.category,
-  )
+  const tags =
+    normaliseTags(
+      row.category_tags ??
+        row.tags ??
+        row.category,
+    )
 
   const schedule =
     safeUiText(
@@ -464,6 +467,23 @@ function normaliseActivity(
         'Untitled activity',
     )
 
+  const venue =
+    safeUiText(
+      row.venue ||
+        'Venue not provided',
+    )
+
+  const coordinates =
+    getVenueCoordinates(venue)
+
+  const nearestStop =
+    coordinates
+      ? findNearestStop(
+          coordinates,
+          transitStops,
+        )
+      : null
+
   return {
     id: String(
       row.id ??
@@ -484,28 +504,26 @@ function normaliseActivity(
         tags,
       ),
 
-    venue: safeUiText(
-      row.venue ||
-        'Venue not provided',
-    ),
-        
-    coordinates: getVenueCoordinates(
-      safeUiText(row.venue || 'Venue not provided'),
-    ),
+    venue,
 
-    suburb: safeUiText(
-      row.suburb ||
-        'Area not provided',
-    ),
+    coordinates,
+
+    suburb:
+      safeUiText(
+        row.suburb ||
+          'Area not provided',
+      ),
 
     schedule,
 
-    day: getDay(schedule),
+    day:
+      getDay(schedule),
 
-    recurrence: safeUiText(
-      row.recurrence ||
-        'Not provided',
-    ),
+    recurrence:
+      safeUiText(
+        row.recurrence ||
+          'Not provided',
+      ),
 
     suitability:
       suitability.value,
@@ -513,11 +531,12 @@ function normaliseActivity(
     suitabilityLabel:
       suitability.label,
 
-    source: safeUiText(
-      row.source_note ??
-        row.source ??
-        'Source not provided',
-    ),
+    source:
+      safeUiText(
+        row.source_note ??
+          row.source ??
+          'Source not provided',
+      ),
 
     image:
       getActivityImage(
@@ -525,20 +544,24 @@ function normaliseActivity(
         tags,
       ),
 
-    organiser: safeUiText(
-      row.organiser || '',
-    ),
+    organiser:
+      safeUiText(
+        row.organiser ||
+          '',
+      ),
 
-    exactDate: safeUiText(
-      row.date ??
-        row.exactDate ??
-        '',
-    ),
+    exactDate:
+      safeUiText(
+        row.date ??
+          row.exactDate ??
+          '',
+      ),
 
-    availability: safeUiText(
-      row.availability ||
-        '',
-    ),
+    availability:
+      safeUiText(
+        row.availability ||
+          '',
+      ),
 
     accessibility:
       safeUiText(
@@ -554,34 +577,24 @@ function normaliseActivity(
       ),
 
     nearestTransportStop:
-      (() => {
-        const coordinates = getVenueCoordinates(
-          safeUiText(row.venue || 'Venue not provided'),
-        )
-        const nearestStop = coordinates
-          ? findNearestStop(coordinates)
-          : null
+      nearestStop
+        ? {
+            stopName:
+              nearestStop.stopName,
 
-        return nearestStop
-          ? {
-              stopName: nearestStop.stopName,
-              distanceLabel: nearestStop.distanceLabel,
-            }
-          : null
-      })(),
+            distanceLabel:
+              nearestStop.distanceLabel,
+          }
+        : null,
   }
 }
 
-async function getLocalActivities() {
-  const rows =
-    parseCsv(csvText)
-
-  return rows.map(
-    normaliseActivity,
-  )
-}
-
-async function getRemoteActivities() {
+/**
+ * Load activities from the backend.
+ *
+ * GET /api/activities
+ */
+async function fetchActivities() {
   const response =
     await fetch(
       `${API_BASE_URL}/activities`,
@@ -602,17 +615,30 @@ async function getRemoteActivities() {
     )
   }
 
-  return data.map(
-    normaliseActivity,
-  )
+  return data
 }
 
+/**
+ * Load activities and transit stops from the backend
+ * at the same time.
+ */
 export async function getActivities() {
-  if (USE_REMOTE_API) {
-    return getRemoteActivities()
-  }
+  const [
+    activityRows,
+    transitStops,
+  ] = await Promise.all([
+    fetchActivities(),
+    getTransitStops(),
+  ])
 
-  return getLocalActivities()
+  return activityRows.map(
+    (row, index) =>
+      normaliseActivity(
+        row,
+        index,
+        transitStops,
+      ),
+  )
 }
 
 export async function getActivityById(
