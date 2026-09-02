@@ -54,15 +54,6 @@ const router = createRouter({
     },
 
     {
-      path: '/live',
-      name: 'live-information',
-      component: () =>
-        import(
-          '@/views/LiveInformationView.vue'
-        ),
-    },
-
-    {
       path: '/saved',
       name: 'saved',
       component: () =>
@@ -72,12 +63,8 @@ const router = createRouter({
     },
 
     {
-      path: '/preferences',
-      name: 'preferences',
-      component: () =>
-        import(
-          '@/views/PreferencesView.vue'
-        ),
+      path: '/:pathMatch(.*)*',
+      redirect: '/',
     },
   ],
 

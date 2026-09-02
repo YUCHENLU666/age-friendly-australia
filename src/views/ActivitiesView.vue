@@ -17,18 +17,10 @@ import {
   toggleSavedActivityId,
 } from '@/services/savedItemsService'
 
-import {
-  getPreferences,
-} from '@/services/preferencesService'
-
 const activities = ref([])
 
 const savedActivityIds =
   ref([])
-
-const preferences = ref(
-  getPreferences(),
-)
 
 const loading = ref(true)
 
@@ -41,8 +33,7 @@ const defaultFilters = () => ({
   interest: '',
   day: '',
   recurrence: '',
-  suitability:
-    'recommended',
+  suitability: 'all',
 })
 
 const filters = ref(
@@ -52,9 +43,6 @@ const filters = ref(
 onMounted(async () => {
   savedActivityIds.value =
     getSavedActivityIds()
-
-  preferences.value =
-    getPreferences()
 
   try {
     activities.value =
@@ -143,62 +131,6 @@ const recurrenceOptions =
       ),
     ].sort()
   })
-
-const hasSavedPreferences =
-  computed(() => {
-    return Boolean(
-      preferences.value.generalArea ||
-        preferences.value
-          .interests.length ||
-        preferences.value
-          .preferredDays.length ||
-        preferences.value
-          .activityTypes.length,
-    )
-  })
-
-const getPreferenceScore = (
-  activity,
-) => {
-  let score = 0
-
-  if (
-    preferences.value.generalArea &&
-    activity.suburb ===
-      preferences.value.generalArea
-  ) {
-    score += 4
-  }
-
-  if (
-    preferences.value.interests.some(
-      (interest) =>
-        activity.tags.includes(
-          interest,
-        ),
-    )
-  ) {
-    score += 3
-  }
-
-  if (
-    preferences.value.preferredDays.includes(
-      activity.day,
-    )
-  ) {
-    score += 2
-  }
-
-  if (
-    preferences.value.activityTypes.includes(
-      activity.activityType,
-    )
-  ) {
-    score += 3
-  }
-
-  return score
-}
 
 const filteredActivities =
   computed(() => {
@@ -297,21 +229,7 @@ const filteredActivities =
         },
       )
 
-    if (
-      !hasSavedPreferences.value
-    ) {
-      return results
-    }
-
-    return [...results].sort(
-      (activityA, activityB) =>
-        getPreferenceScore(
-          activityB,
-        ) -
-        getPreferenceScore(
-          activityA,
-        ),
-    )
+    return results
   })
 
 const updateFilters = (
@@ -393,42 +311,6 @@ const toggleSave = (
       class="activities-main"
     >
       <div class="page-container">
-        <div
-          v-if="
-            hasSavedPreferences
-          "
-          class="activity-preference-banner"
-        >
-          <div
-            class="activity-preference-banner-icon"
-            aria-hidden="true"
-          >
-            ✓
-          </div>
-
-          <div>
-            <strong>
-              Your preferences are
-              helping organise these
-              results.
-            </strong>
-
-            <p>
-              Activities that match
-              your saved general area,
-              interests, preferred days
-              or activity types appear
-              first.
-            </p>
-          </div>
-
-          <RouterLink
-            to="/preferences"
-          >
-            Edit preferences
-          </RouterLink>
-        </div>
-
         <ActivityFilters
           :filters="filters"
           :areas="areas"
@@ -485,17 +367,6 @@ const toggleSave = (
             </h2>
           </div>
 
-          <p
-            v-if="
-              filters.suitability ===
-              'recommended'
-            "
-            class="activity-results-note"
-          >
-            Showing results marked
-            suitable or potentially
-            suitable for older adults.
-          </p>
         </div>
 
         <div

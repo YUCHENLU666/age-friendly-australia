@@ -6,10 +6,10 @@ import App from './App.vue'
 import router from './router'
 
 import {
-  applySavedTextSizePreference,
-} from '@/services/preferencesService'
+  applySavedTextSize,
+} from '@/services/textSizeService'
 
-applySavedTextSizePreference()
+applySavedTextSize()
 
 createApp(App)
   .use(router)

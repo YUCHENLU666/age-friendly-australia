@@ -35,7 +35,7 @@ import AppNavbar from '@/components/AppNavbar.vue'
 
           <p>
             Helping older adults discover useful local activities,
-            healthcare, aged-care support and essential services.
+            local activities and verified aged-care support services.
           </p>
         </div>
 
@@ -61,19 +61,6 @@ import AppNavbar from '@/components/AppNavbar.vue'
             </RouterLink>
           </div>
 
-          <div>
-            <p class="footer-nav-title">
-              Your experience
-            </p>
-
-            <RouterLink to="/preferences">
-              Preferences
-            </RouterLink>
-
-            <RouterLink to="/preferences">
-              Accessibility
-            </RouterLink>
-          </div>
         </nav>
       </div>
 

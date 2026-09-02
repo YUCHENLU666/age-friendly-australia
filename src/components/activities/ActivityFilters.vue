@@ -215,8 +215,8 @@ const updateField = (field, value) => {
             )
           "
         >
-          <option value="recommended">
-            Recommended results
+          <option value="all">
+            All relevance levels
           </option>
 
           <option value="yes">
@@ -227,9 +227,6 @@ const updateField = (field, value) => {
             May be suitable
           </option>
 
-          <option value="all">
-            Show all
-          </option>
         </select>
       </div>
     </div>

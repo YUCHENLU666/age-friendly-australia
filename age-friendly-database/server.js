@@ -5,9 +5,6 @@ const cors = require('cors')
 const sqlite3 = require('sqlite3').verbose()
 const path = require('path')
 
-const { getCommunityVenues } = require('./vicmapFoiService')
-const { getBusPositions } = require('./ptvRealtimeService')
-
 const app = express()
 
 const PORT = process.env.PORT || 3000
@@ -52,17 +49,6 @@ function queryAll(sql, params = []) {
       resolve(rows)
     })
   })
-}
-
-// Helper function for validating limit query parameters
-function parseLimit(value, defaultValue = 50, maxValue = 200) {
-  const parsed = Number.parseInt(value, 10)
-
-  if (Number.isNaN(parsed)) {
-    return defaultValue
-  }
-
-  return Math.min(Math.max(parsed, 1), maxValue)
 }
 
 // =========================
@@ -162,108 +148,6 @@ app.get('/api/transit-stops', async (req, res) => {
 })
 
 // =========================
-// Realtime / external APIs
-// =========================
-
-// GET /api/realtime/community-venues
-//
-// Example:
-// /api/realtime/community-venues?subtype=senior%20citizens&limit=10
-app.get('/api/realtime/community-venues', async (req, res) => {
-  try {
-    const featureType =
-      req.query.type || 'community venue'
-
-    const featureSubtype =
-      req.query.subtype || null
-
-    const limit = parseLimit(
-      req.query.limit,
-      50,
-      200,
-    )
-
-    const venues = await getCommunityVenues(
-      featureType,
-      featureSubtype,
-      limit,
-    )
-
-    res.json(venues)
-  } catch (error) {
-    console.error(
-      'Vicmap API endpoint error:',
-      error.message,
-    )
-
-    res.status(502).json({
-      error: 'Unable to retrieve community venues.',
-    })
-  }
-})
-
-// =========================
-// PTV realtime cache
-// =========================
-
-const PTV_CACHE_DURATION_MS = 30 * 1000
-
-const ptvCache = new Map()
-
-// GET /api/realtime/bus-positions
-//
-// Example:
-// /api/realtime/bus-positions?routeId=901&limit=10
-app.get('/api/realtime/bus-positions', async (req, res) => {
-  try {
-    const routeId =
-      req.query.routeId || null
-
-    const limit = parseLimit(
-      req.query.limit,
-      50,
-      100,
-    )
-
-    const cacheKey =
-      `${routeId || 'all'}:${limit}`
-
-    const cached = ptvCache.get(cacheKey)
-
-    const now = Date.now()
-
-    if (
-      cached &&
-      now - cached.timestamp <
-        PTV_CACHE_DURATION_MS
-    ) {
-      return res.json(cached.data)
-    }
-
-    const buses = await getBusPositions(
-      routeId,
-      limit,
-    )
-
-    ptvCache.set(cacheKey, {
-      timestamp: now,
-      data: buses,
-    })
-
-    res.json(buses)
-  } catch (error) {
-    console.error(
-      'PTV realtime API endpoint error:',
-      error.message,
-    )
-
-    res.status(502).json({
-      error: 'Unable to retrieve live bus positions.',
-    })
-  }
-})
-
-// =========================
 // 404
 // =========================
 
@@ -287,12 +171,6 @@ const server = app.listen(PORT, () => {
   console.log(`GET http://localhost:${PORT}/api/activities`)
   console.log(`GET http://localhost:${PORT}/api/services`)
   console.log(`GET http://localhost:${PORT}/api/transit-stops`)
-  console.log(
-    `GET http://localhost:${PORT}/api/realtime/community-venues`,
-  )
-  console.log(
-    `GET http://localhost:${PORT}/api/realtime/bus-positions`,
-  )
 })
 
 // =========================

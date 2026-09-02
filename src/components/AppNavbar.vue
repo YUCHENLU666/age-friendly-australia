@@ -13,16 +13,16 @@ import {
 } from 'vue-router'
 
 import {
-  getPreferences,
-  savePreferences,
-} from '@/services/preferencesService'
+  getTextSize,
+  saveTextSize,
+} from '@/services/textSizeService'
 
 const route = useRoute()
 
 const textMenuOpen = ref(false)
 
 const currentTextSize = ref(
-  getPreferences().textSize,
+  getTextSize(),
 )
 
 const textSizeOptions = [
@@ -63,22 +63,14 @@ const currentTextSizeLabel =
 
 const openTextMenu = () => {
   currentTextSize.value =
-    getPreferences().textSize
+    getTextSize()
 
   textMenuOpen.value =
     !textMenuOpen.value
 }
 
 const setTextSize = (value) => {
-  const preferences =
-    getPreferences()
-
-  preferences.textSize =
-    value
-
-  savePreferences(
-    preferences,
-  )
+  saveTextSize(value)
 
   currentTextSize.value =
     value
@@ -86,12 +78,10 @@ const setTextSize = (value) => {
   textMenuOpen.value = false
 }
 
-const handlePreferencesUpdate = (
+const handleTextSizeUpdate = (
   event,
 ) => {
-  if (
-    event.detail?.textSize
-  ) {
+  if (event.detail?.textSize) {
     currentTextSize.value =
       event.detail.textSize
   }
@@ -137,8 +127,8 @@ watch(
 
 onMounted(() => {
   window.addEventListener(
-    'age-friendly-preferences-updated',
-    handlePreferencesUpdate,
+    'age-friendly-text-size-updated',
+    handleTextSizeUpdate,
   )
 
   document.addEventListener(
@@ -154,8 +144,8 @@ onMounted(() => {
 
 onBeforeUnmount(() => {
   window.removeEventListener(
-    'age-friendly-preferences-updated',
-    handlePreferencesUpdate,
+    'age-friendly-text-size-updated',
+    handleTextSizeUpdate,
   )
 
   document.removeEventListener(
@@ -224,25 +214,12 @@ onBeforeUnmount(() => {
             </RouterLink>
 
             <RouterLink
-              to="/live"
-              class="navbar-link"
-            >
-              Live
-            </RouterLink>
-
-            <RouterLink
               to="/saved"
               class="navbar-link"
             >
               Saved
             </RouterLink>
 
-            <RouterLink
-              to="/preferences"
-              class="navbar-link"
-            >
-              Preferences
-            </RouterLink>
           </div>
 
           <div class="navbar-text-size">
@@ -395,21 +372,6 @@ onBeforeUnmount(() => {
                 </button>
               </div>
 
-              <RouterLink
-                to="/preferences"
-                class="navbar-text-manage"
-                @click="
-                  textMenuOpen = false
-                "
-              >
-                More accessibility settings
-
-                <span
-                  aria-hidden="true"
-                >
-                  →
-                </span>
-              </RouterLink>
             </div>
           </div>
         </div>

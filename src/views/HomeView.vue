@@ -13,24 +13,14 @@ const exploreCards = [
     action: 'Browse activities',
   },
   {
-    title: 'Health & aged-care support',
+    title: 'Aged-care support',
     description:
-      'Find healthcare and aged-care support with clear service, access and contact information.',
+      'Browse verified aged-care support services with clear location and source information.',
     image: '/images/healthcare.jpg',
     alt: 'An older adult accessing healthcare support',
     tag: 'Health & support',
     to: '/services',
     action: 'Find support',
-  },
-  {
-    title: 'Everyday services',
-    description:
-      'Discover useful local services and understand important details before you visit.',
-    image: '/images/learning.jpg',
-    alt: 'Older adults taking part in an organised local activity',
-    tag: 'Essential services',
-    to: '/services',
-    action: 'Explore services',
   },
 ]
 
@@ -49,9 +39,9 @@ const benefits = [
   },
   {
     code: '★',
-    title: 'Relevant results',
+    title: 'Simple filtering',
     description:
-      'Optional interests and general area preferences can make results more useful.',
+      'Use general area, interest and schedule filters to narrow the results yourself.',
   },
   {
     code: '◇',
@@ -268,7 +258,7 @@ const trustItems = [
 
           <p class="benefits-intro">
             Find what matters with fewer steps, understandable information
-            and privacy-aware personalisation.
+              and privacy-aware browsing.
           </p>
         </div>
 
