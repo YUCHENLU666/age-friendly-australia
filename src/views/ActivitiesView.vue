@@ -4,46 +4,80 @@ import {
   onMounted,
   ref,
 } from 'vue'
+// computed: The result is automatically calculated based on other states
+// onMounted: Execute code after page component loads
+// ref: save reactive state
 
+//import components
+// ActivityCard: Activity name, venue, suburb, day, time, recurrence, tags, suitability, savebutton
 import ActivityCard from '@/components/activities/ActivityCard.vue'
+// ActivityFilters: Search, Area, Interest, Day, Recurrence, Suitability
 import ActivityFilters from '@/components/activities/ActivityFilters.vue'
 
+//ActivitiesVies -> activityService -> Backend API -> SQLite
 import {
   getActivities,
 } from '@/services/activityService'
 
 import {
-  getSavedActivityIds,
-  toggleSavedActivityId,
+  getSavedActivityIds,//get the activity IDs which are saved by the user
+  toggleSavedActivityId,//if the activity ID is saved, remove it from the saved list; if not, add it to the saved list
 } from '@/services/savedItemsService'
 
+//why use ref for activities, savedActivityIds, loading, errorMessage, filters
+//because vue must be aware of data changes and automatically re-render the page
 const activities = ref([])
+//[{
+//   id: 1,
+//   name: 'Activity 1',
+//   venue: 'Venue 1',
+//   suburb: 'Suburb 1',
+//   day: 'Monday',
+//   time: '10:00',
+//   recurrence: 'Weekly',
+//   tags: ['Tag 1', 'Tag 2'],
+//   suitability: 'yes'
+// }]
 
 const savedActivityIds =
   ref([])
+//[
+//'1', 
+//'2', 
+//'3']
 
 const loading = ref(true)
+//after API finished, return true: activities are loading
 
 const errorMessage =
   ref('')
+//if API failed, return error message
 
 const defaultFilters = () => ({
-  search: '',
-  area: '',
-  interest: '',
-  day: '',
-  recurrence: '',
-  suitability: 'all',
+  search: '', //walking, swimming, etc.
+  area: '', //clayton, melbourne, etc.
+  interest: '', //craft, music, etc.
+  day: '', //Monday, Tuesday, etc.
+  recurrence: '', // one-off, recurring calendar, series
+  suitability: 'all', //all relevance levels, marked suitable, may be suitable
 })
+//defaultFilters: return an object with default filter values
 
 const filters = ref(
   defaultFilters(),
 )
+// This object will change if the user modifies their selection later
 
+//onMounted: Execute code after page component loads
+//homepage -> click find activities -> route to activitiesView -> ActivitiesView mounted -> onMounted()
 onMounted(async () => {
+  //get the activity IDs which are saved by the user
   savedActivityIds.value =
     getSavedActivityIds()
 
+  //wait getActivities() to finish, then assign the result to activities.value
+  //ActivitiesView -> getActivities() -> activityService.js -> get /api/activities -> Express -> SQLite -> JSON response -> ActivityService nomalise -> return activities -> activities.value
+  //if getActivities() failed, catch the error and show error message
   try {
     activities.value =
       await getActivities()
@@ -53,10 +87,12 @@ onMounted(async () => {
     errorMessage.value =
       'We could not load the activity information. Please try again.'
   } finally {
+    // Set loading to false once the API call is complete whether it was successful or not
     loading.value = false
   }
 })
 
+//Get a list of unique suburbs from all activities
 const areas = computed(() => {
   return [
     ...new Set(
@@ -68,6 +104,7 @@ const areas = computed(() => {
   ].sort()
 })
 
+//Get a list of unique interests from all activities, excluding certain tags
 const interests =
   computed(() => {
     const excludedTags =
@@ -105,6 +142,7 @@ const dayOrder = [
   'Flexible',
 ]
 
+//Get a list of unique days from all activities, sorted in a specific order
 const days = computed(() => {
   const availableDays =
     new Set(
@@ -120,6 +158,7 @@ const days = computed(() => {
   )
 })
 
+//Get a list of unique recurrence options from all activities, sorted alphabetically
 const recurrenceOptions =
   computed(() => {
     return [
@@ -132,14 +171,17 @@ const recurrenceOptions =
     ].sort()
   })
 
+// Filter activities based on the selected filters
 const filteredActivities =
   computed(() => {
     const search =
+    // Get the search term from the filters and normalize it
       filters.value.search
         .trim()
         .toLowerCase()
 
     const results =
+    // normalize the activities and filter them based on the selected filters
       activities.value.filter(
         (activity) => {
           if (search) {
@@ -161,7 +203,7 @@ const filteredActivities =
               return false
             }
           }
-
+          // Check each filter and return false if the activity does not match the filter
           if (
             filters.value.area &&
             activity.suburb !==
@@ -232,6 +274,8 @@ const filteredActivities =
     return results
   })
 
+  // Update the filters based on user input
+  // user chooses a filter option -> ActivityFilters emit new filters -> ActivitiesView get -> updateFilters(nextFilters) -> filters.value = nextFilters -> filteredActivities recomputed
 const updateFilters = (
   nextFilters,
 ) => {
@@ -239,11 +283,14 @@ const updateFilters = (
     nextFilters
 }
 
+// Reset the filters to their default values
+//filters changed -> computed automatically reruns -> all activities are shown
 const clearFilters = () => {
   filters.value =
     defaultFilters()
 }
 
+// Check if an activity is saved by the user (check by the activity ID)
 const isSaved = (
   activityId,
 ) => {
@@ -252,6 +299,7 @@ const isSaved = (
   )
 }
 
+//ActivityCard -> emit toggle-save -> ActivitiesView.toggleSave(id) -> savedItemsService -> update localStorage -> return latest IDs -> savedActivityIds.value updated -> update UI
 const toggleSave = (
   activityId,
 ) => {
