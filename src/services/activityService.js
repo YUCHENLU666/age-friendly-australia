@@ -1,9 +1,12 @@
+//get the Coordinates by activity venue name
 import { getVenueCoordinates } from './venueCoordinates'
+
 import {
-  findNearestStop,
-  getTransitStops,
+  findNearestStop, //find the nearest transit stop to the activity venue (by activity coordinates + all transit stops)
+  getTransitStops, //get the data of all transit stops
 } from '@/services/transitStopsService'
 
+// decide where the frontend should visit the backend
 const API_BASE_URL = (
   import.meta.env.VITE_API_BASE_URL ||
   'http://localhost:3000/api'
@@ -29,13 +32,15 @@ function safeUiText(value) {
     .trim()
 }
 
+// Normalize the backend tags into Array
+//Data normalization
 function normaliseTags(value) {
   if (Array.isArray(value)) {
     return value
       .map((tag) =>
         safeUiText(tag),
       )
-      .filter(Boolean)
+      .filter(Boolean)//remove empty strings
   }
 
   return safeUiText(value)
@@ -46,6 +51,7 @@ function normaliseTags(value) {
     .filter(Boolean)
 }
 
+// Normalize the date of the activity into a day of the week
 function getDay(schedule) {
   const value =
     schedule.toLowerCase()
@@ -77,15 +83,17 @@ function getDay(schedule) {
   if (value.includes('sun')) {
     return 'Sunday'
   }
-
+  // If the schedule does not specify a day, return 'Flexible'
   return 'Flexible'
 }
 
+//Convert the older-adult suitability of the backend into standard value + UI label
 function getSuitability(value) {
   const normalised =
     safeUiText(value)
       .toLowerCase()
 
+  // value for Internal use, label for user
   if (normalised === 'yes') {
     return {
       value: 'yes',
@@ -119,6 +127,7 @@ function getSuitability(value) {
   }
 }
 
+// Get the primary tag for an activity, ignoring less useful tags
 function getPrimaryTag(tags) {
   const lessUsefulPrimaryTags =
     new Set([
@@ -135,10 +144,13 @@ function getPrimaryTag(tags) {
         ),
     ) ||
     tags[0] ||
+    // if cant find any info return Activity as default
     'Activity'
   )
 }
 
+// use the keywords in the acitivity name and tags to determine the activity type for filtering and display
+// we can update NLP classifier in iteration 2
 function getActivityType(
   name,
   tags,
@@ -254,6 +266,7 @@ function getActivityType(
   return 'General activity'
 }
 
+//get a image for the activity by the length of the activity name
 function getStableImageIndex(name) {
   return name
     .split('')
@@ -268,6 +281,8 @@ function getStableImageIndex(name) {
     )
 }
 
+// use the keywords in the acitivity name and tags to determine the activity image for display
+// we can update NLP classifier in iteration 2
 function getActivityImage(
   name,
   tags,
@@ -432,6 +447,7 @@ function getActivityImage(
   return '/images/activities.jpg'
 }
 
+//normalise the activity data from the backend into a standard format for the frontend
 function normaliseActivity(
   row,
   index,
@@ -641,6 +657,7 @@ export async function getActivities() {
   )
 }
 
+// Get a single activity by its ID
 export async function getActivityById(
   id,
 ) {
