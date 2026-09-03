@@ -7,9 +7,9 @@ const exploreCards = [
     description:
       'Browse activities, classes and events by general area, preferred date and interest.',
     image: '/images/activities.jpg',
-    alt: 'Older adults taking part in a group activity',
+    alt: 'Older adults taking part in a group activity', // for screen readers
     tag: 'Activities',
-    to: '/activities',
+    to: '/activities', // Link to the activities page
     action: 'Browse activities',
   },
   {
@@ -17,13 +17,14 @@ const exploreCards = [
     description:
       'Browse verified aged-care support services with clear location and source information.',
     image: '/images/healthcare.jpg',
-    alt: 'An older adult accessing healthcare support',
+    alt: 'An older adult accessing healthcare support', // for screen readers
     tag: 'Health & support',
-    to: '/services',
+    to: '/services', // Link to the services page
     action: 'Find support',
   },
 ]
 
+// third-part for homepage
 const benefits = [
   {
     code: 'Aa',
@@ -55,7 +56,8 @@ const trustItems = [
   'Clear source information',
   'Accessibility details',
   'Simple navigation',
-]
+]//first part of the homepage for the tick items
+//v-for
 </script>
 
 <template>
