@@ -9,13 +9,15 @@ const router = createRouter({
   history: createWebHistory(
     import.meta.env.BASE_URL,
   ),
+  //Make the website use normal browser URLs
 
   routes: [
     {
-      path: '/',
-      name: 'home',
-      component: HomeView,
+      path: '/', //URL
+      name: 'home', //Name of the route
+      component: HomeView, //Component to render when the route is matched
     },
+    //Import Homepage
 
     {
       path: '/activities',
@@ -25,9 +27,10 @@ const router = createRouter({
           '@/views/ActivitiesView.vue'
         ),
     },
+    //Import Activities page
 
     {
-      path: '/activities/:id',
+      path: '/activities/:id', //route with a dynamic segment for activity ID
       name: 'activity-detail',
       component: () =>
         import(
@@ -72,7 +75,7 @@ const router = createRouter({
     return {
       top: 0,
     }
-  },
+  }, //After each route navigation, scroll the page to the top.
 })
 
 export default router
