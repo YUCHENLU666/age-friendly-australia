@@ -3,15 +3,18 @@ import {
   getTransitStops,
 } from '@/services/transitStopsService'
 
+// decide where the frontend should visit the backend
 const API_BASE_URL = (
   import.meta.env.VITE_API_BASE_URL ||
   'http://localhost:3000/api'
 ).replace(/\/$/, '')
 
+// convert all service data from the backend into a consistent format for the frontend
 function cleanText(value) {
   return String(value ?? '').trim()
 }
 
+//Normalise the accessibility field to always be an array of strings, even if the backend returns a single string or null
 function normaliseAccessibility(value) {
   if (Array.isArray(value)) {
     return value
@@ -33,6 +36,7 @@ function normaliseAccessibility(value) {
     .filter(Boolean)
 }
 
+// Normalise the coordinates from the backend to always be an object with latitude and longitude as numbers, or null if invalid
 function normaliseCoordinates(row) {
   const latitude =
     Number(row.latitude)
@@ -53,6 +57,7 @@ function normaliseCoordinates(row) {
   }
 }
 
+// Normalise a service row from the backend into a consistent format for the frontend, including finding the nearest transit stop if coordinates are available
 function normaliseService(
   row,
   index,

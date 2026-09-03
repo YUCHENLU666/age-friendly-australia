@@ -4,6 +4,9 @@ import {
   onMounted,
   ref,
 } from 'vue'
+// computed: The result is automatically calculated based on other states
+// onMounted: Execute code after page component loads
+// ref: save reactive state
 
 import ServiceCard from '@/components/services/ServiceCard.vue'
 import ServiceFilters from '@/components/services/ServiceFilters.vue'
@@ -20,16 +23,31 @@ import {
 import { getSuburbCoordinates } from '@/services/suburbCoordinates'
 import { calculateDistanceKm, formatDistance } from '@/services/distanceService'
 
+//why use ref for activities, savedActivityIds, loading, errorMessage, filters
+//because vue must be aware of data changes and automatically re-render the page
+
 const services = ref([])
+//([
+// service1, 
+// service2, 
+// service3
+//])
 
 const savedServiceIds =
   ref([])
+//([
+// '1',
+// '2',
+// '3'
+// ])
 
 const loading =
   ref(true)
+  //after API finished, return true: services are loading
 
 const errorMessage =
   ref('')
+  //if API failed, return error message
 
 const filters = ref({
   search: '',
@@ -37,11 +55,18 @@ const filters = ref({
   type: '',
   accessibility: '',
 })
+//defaultFilters: return an object with default filter values
 
+//onMounted: Execute code after page component loads
+//homepage -> click find services -> route to ServicesView -> ServicesView mounted -> onMounted()
 onMounted(async () => {
+  //get the service IDs which are saved by the user
   savedServiceIds.value =
     getSavedServiceIds()
 
+    //wait getServices() to finish, then assign the result to services.value
+  //ServicesView -> getServices() -> serviceService.js -> get /api/services -> Express -> SQLite -> JSON response -> ServiceService normalise -> return services -> services.value
+  //if getServices() failed, catch the error and show error message
   try {
     services.value =
       await getServices()
@@ -51,6 +76,7 @@ onMounted(async () => {
     errorMessage.value =
       'We could not load the service directory.'
   } finally {
+    // Set loading to false once the API call is complete whether it was successful or not
     loading.value = false
   }
 })
@@ -87,6 +113,7 @@ const areas = computed(() => {
  * Service types come directly
  * from verified service records.
  */
+//Get a list of unique service types from all services
 const serviceTypes =
   computed(() => {
     return [
@@ -105,6 +132,7 @@ const serviceTypes =
  * Accessibility options are built
  * only from supplied source data.
  */
+//Get a list of unique accessibility options from all services
 const accessibilityOptions =
   computed(() => {
     return [
@@ -120,6 +148,7 @@ const accessibilityOptions =
 /*
  * Apply all search and filter choices.
  */
+// Filter services based on the selected filters
 const filteredServices =
   computed(() => {
     const search =
@@ -130,6 +159,7 @@ const filteredServices =
     const results = services.value.filter(
       (service) => {
         if (search) {
+          //// normalize the services and filter them based on the selected filters
           const searchableText = [
             service.name,
             service.provider,
@@ -149,7 +179,8 @@ const filteredServices =
             return false
           }
         }
-
+        
+        // Check each filter and return false if the service does not match the filter
         if (
           filters.value.area &&
           service.suburb !==
@@ -181,6 +212,7 @@ const filteredServices =
       },
     )
 
+    // If a general area is selected, calculate the distance for each service and sort by distance
     const referenceCoordinates =
       filters.value.area
         ? getSuburbCoordinates(filters.value.area)
@@ -190,6 +222,7 @@ const filteredServices =
       return results
     }
 
+    // Map each service to include suburb center distance from the reference coordinates, then sort by distance
     return results
       .map((service) => {
         const distanceKm = service.coordinates
@@ -208,6 +241,7 @@ const filteredServices =
               : null,
         }
       })
+      // Sort the services by distance, placing those without a distance at the end
       .sort((serviceA, serviceB) => {
         const distanceA =
           serviceA.distanceKm ?? Infinity
@@ -218,6 +252,8 @@ const filteredServices =
       })
   })
 
+  // Update the filters based on user input
+  // user chooses a filter option -> ServiceFilters emit new filters -> ServicesView get -> updateFilters(nextFilters) -> filters.value = nextFilters -> filteredServices recomputed
 const updateFilters = (
   nextFilters,
 ) => {
@@ -225,6 +261,8 @@ const updateFilters = (
     nextFilters
 }
 
+// Reset the filters to their default values
+//filters changed -> computed automatically reruns -> all services are shown
 const clearFilters = () => {
   filters.value = {
     search: '',
@@ -234,6 +272,7 @@ const clearFilters = () => {
   }
 }
 
+// Check if a service is saved by the user (check by the Service ID)
 const isServiceSaved = (
   id,
 ) => {
@@ -242,6 +281,7 @@ const isServiceSaved = (
   )
 }
 
+//ServiceCard -> emit toggle-save -> ServicesView.toggleSave(id) -> savedItemsService -> update localStorage -> return latest IDs -> savedServiceIds.value updated -> update UI
 const toggleServiceSave = (
   id,
 ) => {

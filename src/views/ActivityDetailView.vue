@@ -18,13 +18,16 @@ import {
   toggleSavedActivityId,
 } from '@/services/savedItemsService'
 
+// Get the current route to access the activity ID from the URL
 const route = useRoute()
 
+// used to store the activity data, loading state, error message, and saved state
 const activity = ref(null)
 const loading = ref(true)
 const errorMessage = ref('')
 const saved = ref(false)
 
+//Activity loading begins after the page is mounted.
 onMounted(async () => {
   try {
     activity.value =

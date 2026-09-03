@@ -18,9 +18,11 @@ import {
   toggleSavedServiceId,
 } from '@/services/savedItemsService'
 
+// Get the current route to access the service ID from the URL
 const route =
   useRoute()
 
+// used to store the service data, loading state, error message, and saved state
 const service =
   ref(null)
 
@@ -33,6 +35,7 @@ const errorMessage =
 const saved =
   ref(false)
 
+//Service loading begins after the page is mounted.
 onMounted(async () => {
   try {
     service.value =
