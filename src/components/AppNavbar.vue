@@ -19,12 +19,17 @@ import {
 
 const route = useRoute()
 
+//Controls: Text size menu - currently on or off
 const textMenuOpen = ref(false)
 
+//Modify the option that should be selected in the menu.
 const currentTextSize = ref(
   getTextSize(),
 )
 
+//value for program
+//lable for user
+//description for user
 const textSizeOptions = [
   {
     value: 'standard',
@@ -46,6 +51,7 @@ const textSizeOptions = [
   },
 ]
 
+//Find the label the user should see based on the current value.
 const currentTextSizeLabel =
   computed(() => {
     const option =
@@ -62,9 +68,11 @@ const currentTextSizeLabel =
   })
 
 const openTextMenu = () => {
+  //Reread the current actual saved state
   currentTextSize.value =
     getTextSize()
 
+  //Toggle the menu open or closed
   textMenuOpen.value =
     !textMenuOpen.value
 }
@@ -72,12 +80,15 @@ const openTextMenu = () => {
 const setTextSize = (value) => {
   saveTextSize(value)
 
+  //Update the current value to reflect the saved state
   currentTextSize.value =
     value
 
   textMenuOpen.value = false
 }
 
+//Handle the custom event that is dispatched when the text size is updated
+//get the notify from textSizeService.js function saveTextSize()
 const handleTextSizeUpdate = (
   event,
 ) => {
@@ -87,6 +98,7 @@ const handleTextSizeUpdate = (
   }
 }
 
+//The menu will automatically close when the user clicks anywhere outside the Text Size menu
 const handleDocumentClick = (
   event,
 ) => {
@@ -106,6 +118,7 @@ const handleDocumentClick = (
   }
 }
 
+//The menu will automatically close when the user presses the Escape key
 const handleKeydown = (
   event,
 ) => {
@@ -117,6 +130,7 @@ const handleKeydown = (
   }
 }
 
+//The Text Size menu will automatically close once the user navigates to another URL or page
 watch(
   () => route.fullPath,
   () => {
@@ -125,6 +139,7 @@ watch(
   },
 )
 
+//After Navbar appears on the page, add three event listeners
 onMounted(() => {
   window.addEventListener(
     'age-friendly-text-size-updated',
@@ -142,6 +157,7 @@ onMounted(() => {
   )
 })
 
+//Before the Navbar is removed from the page, remove the three event listeners
 onBeforeUnmount(() => {
   window.removeEventListener(
     'age-friendly-text-size-updated',

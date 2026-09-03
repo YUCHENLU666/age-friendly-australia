@@ -9,9 +9,11 @@ import {
   RouterLink,
 } from 'vue-router'
 
+//Pages that directly reuse ActivityCard.vue and ServiceCard.vue
 import ActivityCard from '@/components/activities/ActivityCard.vue'
 import ServiceCard from '@/components/services/ServiceCard.vue'
 
+// now we have saved IDs for activities and services, but we need to get the full information for each saved item
 import {
   getActivities,
 } from '@/services/activityService'
@@ -27,25 +29,33 @@ import {
   toggleSavedServiceId,
 } from '@/services/savedItemsService'
 
+//This is where complete data on activities and services is stored.
 const activities = ref([])
 const services = ref([])
 
+//ID read from localStorage
 const savedActivityIds =
   ref([])
 
 const savedServiceIds =
   ref([])
 
+//This is the active tab, which can be "all", "activities", or "services"
 const activeTab =
   ref('all')
 
 const loading =
   ref(true)
+  //after API finished, return true: saved are loading
 
 const errorMessage =
   ref('')
+  //if API failed, return error message
 
+//onMounted: Execute code after page component loads
+//homepage -> click find saved -> route to SavedView -> SavedView mounted -> onMounted()
 onMounted(async () => {
+  // Load saved activity and service IDs from local storage
   savedActivityIds.value =
     getSavedActivityIds()
 
@@ -59,6 +69,7 @@ onMounted(async () => {
         getServices(),
       ])
 
+      //check the activities API call result, if fulfilled, store the data in activities.value
     if (
       results[0].status ===
       'fulfilled'
@@ -66,7 +77,7 @@ onMounted(async () => {
       activities.value =
         results[0].value
     }
-
+      //check the services API call result, if fulfilled, store the data in services.value
     if (
       results[1].status ===
       'fulfilled'
@@ -75,6 +86,7 @@ onMounted(async () => {
         results[1].value
     }
 
+    //if both API calls failed, set an error message
     if (
       results.every(
         (result) =>
@@ -90,6 +102,8 @@ onMounted(async () => {
   }
 })
 
+//check the saved activities and services IDs in full data, and return the full data for each saved item
+//that's why we just need to store the IDs in localStorage, and we can get the full data from the API when needed
 const savedActivities =
   computed(() => {
     return activities.value.filter(
@@ -110,6 +124,7 @@ const savedServices =
     )
   })
 
+// calculate the total number of saved items
 const totalSaved =
   computed(() => {
     return (
@@ -118,6 +133,7 @@ const totalSaved =
     )
   })
 
+// define the tabs for the saved items view, including the label and count for each tab
 const tabs = computed(() => [
   {
     id: 'all',
@@ -139,6 +155,9 @@ const tabs = computed(() => [
   },
 ])
 
+// if activeTab is "all" show both activities and services
+// if activeTab is "activities" show only activities, 
+// if activeTab is "services" show only services
 const showActivities =
   computed(() => {
     return (
@@ -157,6 +176,7 @@ const showServices =
     )
   })
 
+// check if the current tab is empty, and return true if there are no saved items for the active tab
 const currentTabEmpty =
   computed(() => {
     if (
@@ -184,6 +204,7 @@ const currentTabEmpty =
     )
   })
 
+//used to toggle the saved state of an activity or service when the user clicks the save button on the card
 const toggleActivitySave = (
   id,
 ) => {
