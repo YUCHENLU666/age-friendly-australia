@@ -1,5 +1,6 @@
 const EARTH_RADIUS_KM = 6371
 
+// Converts degrees to radians.
 function toRadians(degrees) {
   return (degrees * Math.PI) / 180
 }
@@ -10,6 +11,10 @@ export function calculateDistanceKm(pointA, pointB) {
     return null
   }
 
+  // Haversine formula
+  // a = sin²(Δφ/2) + cos φ1 * cos φ2 * sin²(Δλ/2)
+  // c = 2 * atan2(√a, √(1−a))
+  // distance = R * c     (R is earth’s radius)
   const dLat = toRadians(pointB.latitude - pointA.latitude)
   const dLon = toRadians(pointB.longitude - pointA.longitude)
 
@@ -25,6 +30,7 @@ export function calculateDistanceKm(pointA, pointB) {
   return EARTH_RADIUS_KM * c
 }
 
+// Formats a distance in kilometres to a string for display.
 export function formatDistance(distanceKm) {
   if (distanceKm === null || distanceKm === undefined) {
     return 'Distance not available'
