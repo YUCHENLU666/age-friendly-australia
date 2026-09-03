@@ -7,6 +7,9 @@ const CSV_PATH = path.join(__dirname, '..', 'data', 'sample', 'gtfs_stops_southe
 let minLat = Infinity, maxLat = -Infinity
 let minLon = Infinity, maxLon = -Infinity
 
+//read the CSV file and calculate the bounding box for the transit stops
+//find the minimum and maximum latitude and longitude values
+//if the stop's are outside the bounding box, they will be ignored when finding the nearest stop
 fs.createReadStream(CSV_PATH)
   .pipe(csv())
   .on('data', (row) => {
