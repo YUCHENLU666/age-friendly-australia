@@ -44,3 +44,7 @@ __screenshots__/
 *.timestamp-*-*.mjs
 
 .env
+
+# Environment data pipeline
+__pycache__/
+data/raw/*.json
