@@ -1,23 +1,34 @@
 import './assets/main.css'
-// Load the global CSS used throughout the website
+
+// Load the global CSS used throughout the website.
 
 import { createApp } from 'vue'
-// Start VUE
+
+// Start Vue.
 
 import App from './App.vue'
-// Load the main App component
+
+// Load the main App component.
+
 import router from './router'
-// Load the router for page navigation
+
+// Load the router for page navigation.
 
 import {
-  applySavedTextSize,
-} from '@/services/textSizeService'
-// Load the function to apply the saved text size preference
+  applySavedTextSizePreference,
+} from '@/services/preferencesService'
 
-applySavedTextSize()
-// Apply the local saved text size preference when the app starts
+// Load the function that applies the saved
+// text-size setting from the full Preferences system.
 
+// Apply the saved text-size preference
+// when the application starts.
+applySavedTextSizePreference()
+
+// Create the Vue application,
+// install Vue Router,
+// and mount the application
+// to the element with id="app".
 createApp(App)
   .use(router)
   .mount('#app')
-// Create the VUE app, use the router, and mount it to the DOM element with the ID 'app'

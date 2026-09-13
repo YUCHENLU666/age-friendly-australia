@@ -18,6 +18,8 @@ const router = createRouter({
   // /login
   // /activities
   // /services
+  // /saved
+  // /preferences
   //
   // instead of URLs with # symbols.
   history: createWebHistory(
@@ -33,15 +35,13 @@ const router = createRouter({
     // =========================
     {
       // When the browser URL is:
+      //
       // /login
       //
       // Vue Router loads LoginView.vue.
       path: '/login',
 
       // Route name.
-      // We can use this name later for navigation:
-      //
-      // router.push({ name: 'login' })
       name: 'login',
 
       // Lazy-load LoginView.vue.
@@ -76,12 +76,14 @@ const router = createRouter({
 
       name: 'home',
 
-      // HomeView was imported at the top of this file.
+      // HomeView was imported
+      // at the top of this file.
       component: HomeView,
 
       // This route is protected.
       //
-      // The navigation guard below will check this value.
+      // The navigation guard below
+      // will check this value.
       meta: {
         requiresAuth: true,
       },
@@ -117,7 +119,7 @@ const router = createRouter({
     {
       // :id is a dynamic URL parameter.
       //
-      // Example:
+      // Examples:
       //
       // /activities/1
       // /activities/2
@@ -170,7 +172,7 @@ const router = createRouter({
     {
       // Dynamic service URL.
       //
-      // Example:
+      // Examples:
       //
       // /services/1
       // /services/5
@@ -214,13 +216,39 @@ const router = createRouter({
     },
 
     // =========================
+    // Preferences page
+    // =========================
+    {
+      // URL:
+      //
+      // /preferences
+      path: '/preferences',
+
+      name: 'preferences',
+
+      // Load PreferencesView.vue.
+      component: () =>
+        import(
+          '@/views/PreferencesView.vue'
+        ),
+
+      // This page is protected.
+      //
+      // Only logged-in users can access
+      // the preferences page.
+      meta: {
+        requiresAuth: true,
+      },
+    },
+
+    // =========================
     // Unknown URL handling
     // =========================
     {
       // This catches every URL
       // that does not match a route above.
       //
-      // Example:
+      // Examples:
       //
       // /abc
       // /test123
@@ -276,7 +304,7 @@ const router = createRouter({
 //
 // YES → continue to /activities
 //
-// NO  → redirect to /login
+// NO → redirect to /login
 //
 router.beforeEach((to) => {
   // =========================
@@ -309,7 +337,8 @@ router.beforeEach((to) => {
   // Example:
   //
   // User wants:
-  // /activities
+  //
+  // /preferences
   //
   // Then:
   //
@@ -354,7 +383,7 @@ router.beforeEach((to) => {
   }
 
   // If no return happens above,
-  // Vue Router allows the navigation normally.
+  // Vue Router allows navigation normally.
 })
 
 // =========================

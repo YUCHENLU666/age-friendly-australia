@@ -2240,22 +2240,117 @@ p {
 .activity-filter-field input,
 .activity-filter-field select {
   width: 100%;
-  min-height: 52px;
+  min-height: 60px;
 
-  padding: 10px 13px;
+  padding: 12px 18px;
 
   color: var(--grey-900);
-  background: #fbfdfc;
+  background-color: #fbfdfc;
 
-  border: 1.5px solid var(--border-strong);
-  border-radius: 10px;
+  border: 2px solid var(--border-strong);
+  border-radius: 12px;
 
   outline: none;
+
+  font-size: 18px;
+}
+
+
+/* =========================================================
+   Larger and clearer dropdown arrow
+   ========================================================= */
+
+.activity-filter-field select {
+  /* Remove the small browser default arrow */
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+
+  /* Leave enough room for the custom arrow */
+  padding-right: 58px;
+
+  cursor: pointer;
+
+  /* Custom larger dropdown arrow */
+  background-image:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='28' viewBox='0 0 24 24' fill='none' stroke='%2318324e' stroke-width='2.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+
+  background-repeat: no-repeat;
+
+  /* Move arrow slightly away from right edge */
+  background-position:
+    right 18px center;
+
+  /* Make arrow visibly larger */
+  background-size:
+    28px 28px;
+}
+
+ .activity-filter-field input,
+.activity-filter-field select {
+  width: 100%;
+  min-height: 60px;
+
+  padding: 12px 18px;
+
+  color: var(--grey-900);
+  background-color: #fbfdfc;
+
+  border: 2px solid var(--border-strong);
+  border-radius: 12px;
+
+  outline: none;
+
+  font-size: 18px;
 
   transition:
     border-color var(--transition),
     box-shadow var(--transition),
     background var(--transition);
+}
+
+
+/* =========================================================
+   Larger and clearer dropdown arrow
+   ========================================================= */
+
+.activity-filter-field select {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+
+  padding-right: 58px;
+
+  cursor: pointer;
+
+  background-image:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='28' viewBox='0 0 24 24' fill='none' stroke='%2318324e' stroke-width='2.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+
+  background-repeat: no-repeat;
+
+  background-position:
+    right 18px center;
+
+  background-size:
+    28px 28px;
+}
+
+
+.activity-filter-field input:hover,
+.activity-filter-field select:hover {
+  border-color: #a5bcb6;
+}
+
+
+.activity-filter-field input:focus,
+.activity-filter-field select:focus {
+  background-color: var(--white);
+
+  border-color: var(--green-700);
+
+  box-shadow:
+    0 0 0 4px
+    rgb(52 119 111 / 14%);
 }
 
 .activity-filter-field input:hover,
@@ -5977,27 +6072,48 @@ select:focus {
 .service-filter-field select {
   width: 100%;
 
-  min-height: 53px;
+  min-height: 60px;
 
-  padding: 10px 13px;
+  padding: 12px 18px;
 
   color: var(--navy-900);
 
   background: #f9fbfa;
 
   border:
-    1.5px solid #d3dfda;
+    2px solid #d3dfda;
 
-  border-radius: 11px;
+  border-radius: 12px;
 
   outline: none;
 
-  font-size: 0.75rem;
+  font-size: 18px;
 
   transition:
     background var(--transition),
     border-color var(--transition),
     box-shadow var(--transition);
+}
+
+.service-filter-field select {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+
+  padding-right: 58px;
+
+  cursor: pointer;
+
+  background-image:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='28' viewBox='0 0 24 24' fill='none' stroke='%2318324e' stroke-width='2.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+
+  background-repeat: no-repeat;
+
+  background-position:
+    right 18px center;
+
+  background-size:
+    28px 28px;
 }
 
 .service-filter-field input:hover,
@@ -7661,4 +7777,51 @@ select:disabled {
 
     flex-direction: column;
   }
+}
+
+/* =====================================
+   Larger filter controls for accessibility
+   ===================================== */
+
+.filters-panel select,
+.filters-panel input,
+.filters-panel .filter-select,
+.filters-panel .filter-input {
+  min-height: 60px;
+  padding: 0 18px;
+  font-size: 18px;
+  line-height: 1.4;
+  border: 2px solid #b8c7c1;
+  border-radius: 14px;
+  background-color: #fff;
+}
+
+/* Make placeholder easier to read */
+.filters-panel input::placeholder {
+  font-size: 18px;
+  color: #6b7280;
+}
+
+/* Improve label readability */
+.filters-panel label,
+.filters-panel .filter-label {
+  display: inline-block;
+  margin-bottom: 10px;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+/* More obvious focus state */
+.filters-panel select:focus,
+.filters-panel input:focus,
+.filters-panel .filter-select:focus,
+.filters-panel .filter-input:focus {
+  outline: none;
+  border-color: #4f8a78;
+  box-shadow: 0 0 0 4px rgba(79, 138, 120, 0.18);
+}
+
+/* Slightly bigger dropdown arrow area feel */
+.filters-panel select {
+  cursor: pointer;
 }
