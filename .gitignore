@@ -46,3 +46,4 @@ __screenshots__/
 .env
 
 age-friendly-database/eventfinda_*.json
+age-friendly-database/age-friendly.db.backup
