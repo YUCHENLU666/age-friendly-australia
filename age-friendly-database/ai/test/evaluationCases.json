@@ -1,0 +1,1636 @@
+[
+  {
+    "id": "jazz-melbourne-saturday",
+    "preferences": {
+      "generalArea": "Melbourne CBD",
+      "interests": [
+        "Jazz",
+        "Live music"
+      ],
+      "preferredDays": [
+        "Saturday"
+      ],
+      "activityTypes": [
+        "Social & cultural"
+      ]
+    },
+    "judgements": [
+      {
+        "activityId": 584,
+        "relevance": 3
+      },
+      {
+        "activityId": 597,
+        "relevance": 3
+      },
+      {
+        "activityId": 583,
+        "relevance": 2
+      },
+      {
+        "activityId": 575,
+        "relevance": 2
+      }
+    ]
+  },
+  {
+    "id": "creative-southbank-saturday",
+    "preferences": {
+      "generalArea": "Southbank",
+      "interests": [
+        "Art",
+        "Creative activities"
+      ],
+      "preferredDays": [
+        "Saturday"
+      ],
+      "activityTypes": [
+        "Arts & crafts"
+      ]
+    },
+    "judgements": [
+      {
+        "activityId": 588,
+        "relevance": 3
+      },
+      {
+        "activityId": 669,
+        "relevance": 1
+      },
+      {
+        "activityId": 623,
+        "relevance": 1
+      }
+    ]
+  },
+  {
+    "id": "jazz-clayton-sunday",
+    "preferences": {
+      "generalArea": "Clayton South",
+      "interests": [
+        "Jazz",
+        "Dance"
+      ],
+      "preferredDays": [
+        "Sunday"
+      ],
+      "activityTypes": [
+        "Social & cultural"
+      ]
+    },
+    "judgements": [
+      {
+        "activityId": 580,
+        "relevance": 3
+      },
+      {
+        "activityId": 618,
+        "relevance": 2
+      },
+      {
+        "activityId": 634,
+        "relevance": 1
+      },
+      {
+        "activityId": 600,
+        "relevance": 2
+      },
+      {
+        "activityId": 641,
+        "relevance": 1
+      }
+    ]
+  },
+  {
+    "id": "classical-southbank-sunday",
+    "preferences": {
+      "generalArea": "Southbank",
+      "interests": [
+        "Classical music",
+        "Orchestra"
+      ],
+      "preferredDays": [
+        "Sunday"
+      ],
+      "activityTypes": [
+        "Social & cultural"
+      ]
+    },
+    "judgements": [
+      {
+        "activityId": 627,
+        "relevance": 3
+      },
+      {
+        "activityId": 623,
+        "relevance": 2
+      },
+      {
+        "activityId": 669,
+        "relevance": 2
+      },
+      {
+        "activityId": 681,
+        "relevance": 3
+      }
+    ]
+  },
+  {
+    "id": "wellbeing-rosanna-saturday",
+    "preferences": {
+      "generalArea": "Rosanna",
+      "interests": [
+        "Health",
+        "Wellbeing"
+      ],
+      "preferredDays": [
+        "Saturday"
+      ],
+      "activityTypes": [
+        "Health & wellbeing"
+      ]
+    },
+    "judgements": [
+      {
+        "activityId": 615,
+        "relevance": 3
+      },
+      {
+        "activityId": 567,
+        "relevance": 0
+      },
+      {
+        "activityId": 654,
+        "relevance": 0
+      },
+      {
+        "activityId": 583,
+        "relevance": 0
+      }
+    ]
+  },
+  {
+    "id": "theatre-carlton-wednesday",
+    "preferences": {
+      "generalArea": "Carlton",
+      "interests": [
+        "Theatre",
+        "Live performance"
+      ],
+      "preferredDays": [
+        "Wednesday"
+      ],
+      "activityTypes": [
+        "Social & cultural"
+      ]
+    },
+    "judgements": [
+      {
+        "activityId": 573,
+        "relevance": 3
+      },
+      {
+        "activityId": 590,
+        "relevance": 3
+      },
+      {
+        "activityId": 591,
+        "relevance": 3
+      },
+      {
+        "activityId": 622,
+        "relevance": 2
+      },
+      {
+        "activityId": 619,
+        "relevance": 3
+      },
+      {
+        "activityId": 712,
+        "relevance": 1
+      }
+    ]
+  },
+  {
+    "id": "musicals-melbourne-wednesday",
+    "preferences": {
+      "generalArea": "Melbourne CBD",
+      "interests": [
+        "Musical theatre",
+        "Comedy"
+      ],
+      "preferredDays": [
+        "Wednesday"
+      ],
+      "activityTypes": [
+        "Social & cultural"
+      ]
+    },
+    "judgements": [
+      {
+        "activityId": 574,
+        "relevance": 3
+      },
+      {
+        "activityId": 622,
+        "relevance": 2
+      },
+      {
+        "activityId": 630,
+        "relevance": 1
+      },
+      {
+        "activityId": 655,
+        "relevance": 1
+      },
+      {
+        "activityId": 601,
+        "relevance": 1
+      },
+      {
+        "activityId": 711,
+        "relevance": 2
+      }
+    ]
+  },
+  {
+    "id": "jazz-south-melbourne-thursday",
+    "preferences": {
+      "generalArea": "South Melbourne",
+      "interests": [
+        "Jazz",
+        "Live bands"
+      ],
+      "preferredDays": [
+        "Thursday"
+      ],
+      "activityTypes": [
+        "Music"
+      ]
+    },
+    "judgements": [
+      {
+        "activityId": 589,
+        "relevance": 3
+      },
+      {
+        "activityId": 610,
+        "relevance": 3
+      },
+      {
+        "activityId": 621,
+        "relevance": 3
+      },
+      {
+        "activityId": 639,
+        "relevance": 3
+      },
+      {
+        "activityId": 656,
+        "relevance": 3
+      }
+    ]
+  },
+  {
+    "id": "irish-dance-narre-warren-friday",
+    "preferences": {
+      "generalArea": "Narre Warren",
+      "interests": [
+        "Irish culture",
+        "Dance"
+      ],
+      "preferredDays": [
+        "Friday"
+      ],
+      "activityTypes": [
+        "Dance performance"
+      ]
+    },
+    "judgements": [
+      {
+        "activityId": 718,
+        "relevance": 3
+      },
+      {
+        "activityId": 630,
+        "relevance": 2
+      },
+      {
+        "activityId": 620,
+        "relevance": 1
+      },
+      {
+        "activityId": 657,
+        "relevance": 0
+      },
+      {
+        "activityId": 690,
+        "relevance": 0
+      },
+      {
+        "activityId": 579,
+        "relevance": 0
+      }
+    ]
+  },
+  {
+    "id": "classical-melbourne-saturday",
+    "preferences": {
+      "generalArea": "Melbourne CBD",
+      "interests": [
+        "Classical music",
+        "Youth orchestra"
+      ],
+      "preferredDays": [
+        "Saturday"
+      ],
+      "activityTypes": [
+        "Music"
+      ]
+    },
+    "judgements": [
+      {
+        "activityId": 583,
+        "relevance": 3
+      },
+      {
+        "activityId": 623,
+        "relevance": 2
+      },
+      {
+        "activityId": 687,
+        "relevance": 2
+      },
+      {
+        "activityId": 669,
+        "relevance": 2
+      },
+      {
+        "activityId": 642,
+        "relevance": 2
+      },
+      {
+        "activityId": 585,
+        "relevance": 0
+      },
+      {
+        "activityId": 586,
+        "relevance": 0
+      }
+    ]
+  },
+  {
+    "id": "chinese-culture-melbourne-saturday",
+    "preferences": {
+      "generalArea": "Melbourne CBD",
+      "interests": [
+        "Chinese culture",
+        "Multicultural festivals"
+      ],
+      "preferredDays": [
+        "Saturday"
+      ],
+      "activityTypes": [
+        "Community festival"
+      ]
+    },
+    "judgements": [
+      {
+        "activityId": 585,
+        "relevance": 3
+      },
+      {
+        "activityId": 586,
+        "relevance": 3
+      },
+      {
+        "activityId": 714,
+        "relevance": 2
+      },
+      {
+        "activityId": 583,
+        "relevance": 0
+      }
+    ]
+  },
+  {
+    "id": "folk-brunswick-saturday",
+    "preferences": {
+      "generalArea": "Brunswick",
+      "interests": [
+        "Folk music",
+        "Singer-songwriter"
+      ],
+      "preferredDays": [
+        "Saturday"
+      ],
+      "activityTypes": [
+        "Live music"
+      ]
+    },
+    "judgements": [
+      {
+        "activityId": 595,
+        "relevance": 3
+      },
+      {
+        "activityId": 648,
+        "relevance": 2
+      },
+      {
+        "activityId": 617,
+        "relevance": 1
+      },
+      {
+        "activityId": 669,
+        "relevance": 0
+      },
+      {
+        "activityId": 695,
+        "relevance": 0
+      },
+      {
+        "activityId": 645,
+        "relevance": 1
+      },
+      {
+        "activityId": 649,
+        "relevance": 1
+      }
+    ]
+  },
+  {
+    "id": "poetry-albert-park-sunday",
+    "preferences": {
+      "generalArea": "Albert Park",
+      "interests": [
+        "Poetry",
+        "Books",
+        "Literature"
+      ],
+      "preferredDays": [
+        "Sunday"
+      ],
+      "activityTypes": [
+        "Learning & culture"
+      ]
+    },
+    "judgements": [
+      {
+        "activityId": 577,
+        "relevance": 3
+      },
+      {
+        "activityId": 578,
+        "relevance": 1
+      },
+      {
+        "activityId": 685,
+        "relevance": 1
+      },
+      {
+        "activityId": 648,
+        "relevance": 1
+      },
+      {
+        "activityId": 630,
+        "relevance": 0
+      },
+      {
+        "activityId": 582,
+        "relevance": 0
+      }
+    ]
+  },
+  {
+    "id": "family-crafts-albert-park-monday",
+    "preferences": {
+      "generalArea": "Albert Park",
+      "interests": [
+        "Crafts",
+        "Making things with grandchildren"
+      ],
+      "preferredDays": [
+        "Monday"
+      ],
+      "activityTypes": [
+        "Family activity",
+        "Arts & crafts"
+      ]
+    },
+    "judgements": [
+      {
+        "activityId": 582,
+        "relevance": 3
+      },
+      {
+        "activityId": 601,
+        "relevance": 2
+      },
+      {
+        "activityId": 685,
+        "relevance": 1
+      },
+      {
+        "activityId": 633,
+        "relevance": 1
+      },
+      {
+        "activityId": 660,
+        "relevance": 1
+      }
+    ]
+  },
+  {
+    "id": "vocal-music-clayton-wednesday",
+    "preferences": {
+      "generalArea": "Clayton",
+      "interests": [
+        "Singing",
+        "Vocal music",
+        "Bob Dylan"
+      ],
+      "preferredDays": [
+        "Wednesday"
+      ],
+      "activityTypes": [
+        "Live music"
+      ]
+    },
+    "judgements": [
+      {
+        "activityId": 624,
+        "relevance": 3
+      },
+      {
+        "activityId": 634,
+        "relevance": 2
+      },
+      {
+        "activityId": 643,
+        "relevance": 2
+      }
+    ]
+  },
+  {
+    "id": "jazz-elsternwick-saturday",
+    "preferences": {
+      "generalArea": "Elsternwick",
+      "interests": [
+        "Jazz",
+        "Movie music"
+      ],
+      "preferredDays": [
+        "Saturday"
+      ],
+      "activityTypes": [
+        "Live music"
+      ]
+    },
+    "judgements": [
+      {
+        "activityId": 598,
+        "relevance": 3
+      },
+      {
+        "activityId": 587,
+        "relevance": 3
+      },
+      {
+        "activityId": 597,
+        "relevance": 2
+      },
+      {
+        "activityId": 669,
+        "relevance": 1
+      },
+      {
+        "activityId": 584,
+        "relevance": 2
+      }
+    ]
+  },
+  {
+    "id": "jazz-clayton-wednesday",
+    "preferences": {
+      "generalArea": "Clayton",
+      "interests": [
+        "Jazz",
+        "Singing"
+      ],
+      "preferredDays": [
+        "Wednesday"
+      ],
+      "activityTypes": [
+        "Social music"
+      ]
+    },
+    "judgements": [
+      {
+        "activityId": 634,
+        "relevance": 3
+      },
+      {
+        "activityId": 624,
+        "relevance": 2
+      },
+      {
+        "activityId": 580,
+        "relevance": 2
+      },
+      {
+        "activityId": 655,
+        "relevance": 2
+      },
+      {
+        "activityId": 643,
+        "relevance": 2
+      }
+    ]
+  },
+  {
+    "id": "classical-st-kilda-road-thursday",
+    "preferences": {
+      "generalArea": "St Kilda Road",
+      "interests": [
+        "Classical music",
+        "Symphony orchestra"
+      ],
+      "preferredDays": [
+        "Thursday"
+      ],
+      "activityTypes": [
+        "Concert"
+      ]
+    },
+    "judgements": [
+      {
+        "activityId": 683,
+        "relevance": 3
+      },
+      {
+        "activityId": 689,
+        "relevance": 3
+      },
+      {
+        "activityId": 692,
+        "relevance": 3
+      },
+      {
+        "activityId": 693,
+        "relevance": 3
+      },
+      {
+        "activityId": 679,
+        "relevance": 3
+      }
+    ]
+  },
+  {
+    "id": "food-market-box-hill-sunday",
+    "preferences": {
+      "generalArea": "Box Hill South",
+      "interests": [
+        "Food",
+        "Local produce",
+        "Community markets"
+      ],
+      "preferredDays": [
+        "Sunday"
+      ],
+      "activityTypes": [
+        "Market or expo"
+      ]
+    },
+    "judgements": [
+      {
+        "activityId": 606,
+        "relevance": 3
+      },
+      {
+        "activityId": 651,
+        "relevance": 1
+      },
+      {
+        "activityId": 611,
+        "relevance": 1
+      },
+      {
+        "activityId": 596,
+        "relevance": 2
+      },
+      {
+        "activityId": 627,
+        "relevance": 0
+      },
+      {
+        "activityId": 604,
+        "relevance": 0
+      }
+    ]
+  },
+  {
+    "id": "indonesian-culture-springvale-sunday",
+    "preferences": {
+      "generalArea": "Springvale South",
+      "interests": [
+        "Indonesian culture",
+        "Food",
+        "Community festivals"
+      ],
+      "preferredDays": [
+        "Sunday"
+      ],
+      "activityTypes": [
+        "Multicultural festival"
+      ]
+    },
+    "judgements": [
+      {
+        "activityId": 596,
+        "relevance": 3
+      },
+      {
+        "activityId": 714,
+        "relevance": 2
+      },
+      {
+        "activityId": 594,
+        "relevance": 1
+      },
+      {
+        "activityId": 651,
+        "relevance": 1
+      },
+      {
+        "activityId": 606,
+        "relevance": 2
+      },
+      {
+        "activityId": 627,
+        "relevance": 0
+      }
+    ]
+  },
+  {
+    "id": "anime-symphony-south-wharf-sunday",
+    "preferences": {
+      "generalArea": "South Wharf",
+      "interests": [
+        "Anime",
+        "Naruto",
+        "Orchestral music"
+      ],
+      "preferredDays": [
+        "Sunday"
+      ],
+      "activityTypes": [
+        "Concert"
+      ]
+    },
+    "judgements": [
+      {
+        "activityId": 680,
+        "relevance": 3
+      },
+      {
+        "activityId": 604,
+        "relevance": 1
+      },
+      {
+        "activityId": 697,
+        "relevance": 1
+      },
+      {
+        "activityId": 605,
+        "relevance": 1
+      },
+      {
+        "activityId": 613,
+        "relevance": 1
+      },
+      {
+        "activityId": 616,
+        "relevance": 0
+      }
+    ]
+  },
+  {
+    "id": "adventure-film-brighton-thursday",
+    "preferences": {
+      "generalArea": "Brighton East",
+      "interests": [
+        "Adventure",
+        "Travel",
+        "Documentary films"
+      ],
+      "preferredDays": [
+        "Thursday"
+      ],
+      "activityTypes": [
+        "Film screening"
+      ]
+    },
+    "judgements": [
+      {
+        "activityId": 659,
+        "relevance": 3
+      },
+      {
+        "activityId": 594,
+        "relevance": 1
+      },
+      {
+        "activityId": 692,
+        "relevance": 0
+      },
+      {
+        "activityId": 567,
+        "relevance": 1
+      },
+      {
+        "activityId": 575,
+        "relevance": 0
+      },
+      {
+        "activityId": 589,
+        "relevance": 0
+      }
+    ]
+  },
+  {
+    "id": "gaming-expo-south-wharf-friday",
+    "preferences": {
+      "generalArea": "South Wharf",
+      "interests": [
+        "Video games",
+        "Technology",
+        "Gaming"
+      ],
+      "preferredDays": [
+        "Friday"
+      ],
+      "activityTypes": [
+        "Expo"
+      ]
+    },
+    "judgements": [
+      {
+        "activityId": 613,
+        "relevance": 3
+      },
+      {
+        "activityId": 654,
+        "relevance": 2
+      },
+      {
+        "activityId": 626,
+        "relevance": 1
+      },
+      {
+        "activityId": 670,
+        "relevance": 1
+      },
+      {
+        "activityId": 680,
+        "relevance": 1
+      },
+      {
+        "activityId": 616,
+        "relevance": 0
+      }
+    ]
+  },
+  {
+    "id": "design-market-carlton-north-friday",
+    "preferences": {
+      "generalArea": "Carlton North",
+      "interests": [
+        "Design",
+        "Handmade gifts",
+        "Local makers"
+      ],
+      "preferredDays": [
+        "Friday"
+      ],
+      "activityTypes": [
+        "Market or fair"
+      ]
+    },
+    "judgements": [
+      {
+        "activityId": 611,
+        "relevance": 3
+      },
+      {
+        "activityId": 636,
+        "relevance": 2
+      },
+      {
+        "activityId": 715,
+        "relevance": 1
+      },
+      {
+        "activityId": 579,
+        "relevance": 0
+      },
+      {
+        "activityId": 630,
+        "relevance": 0
+      }
+    ]
+  },
+  {
+    "id": "nina-simone-jazz-northcote-saturday",
+    "preferences": {
+      "generalArea": "Northcote",
+      "interests": [
+        "Nina Simone",
+        "Jazz",
+        "Tribute shows"
+      ],
+      "preferredDays": [
+        "Saturday"
+      ],
+      "activityTypes": [
+        "Live music"
+      ]
+    },
+    "judgements": [
+      {
+        "activityId": 640,
+        "relevance": 3
+      },
+      {
+        "activityId": 597,
+        "relevance": 2
+      },
+      {
+        "activityId": 584,
+        "relevance": 2
+      },
+      {
+        "activityId": 669,
+        "relevance": 1
+      },
+      {
+        "activityId": 587,
+        "relevance": 2
+      }
+    ]
+  },
+  {
+    "id": "chamber-music-southbank-tuesday",
+    "preferences": {
+      "generalArea": "Southbank",
+      "interests": [
+        "Chamber music",
+        "Mozart",
+        "Brahms"
+      ],
+      "preferredDays": [
+        "Tuesday"
+      ],
+      "activityTypes": [
+        "Classical concert"
+      ]
+    },
+    "judgements": [
+      {
+        "activityId": 647,
+        "relevance": 3
+      },
+      {
+        "activityId": 673,
+        "relevance": 3
+      },
+      {
+        "activityId": 627,
+        "relevance": 2
+      },
+      {
+        "activityId": 669,
+        "relevance": 2
+      },
+      {
+        "activityId": 672,
+        "relevance": 2
+      }
+    ]
+  },
+  {
+    "id": "community-art-noble-park-friday",
+    "preferences": {
+      "generalArea": "Noble Park",
+      "interests": [
+        "Community art",
+        "Art exhibitions",
+        "Local artists"
+      ],
+      "preferredDays": [
+        "Friday"
+      ],
+      "activityTypes": [
+        "Arts & culture"
+      ]
+    },
+    "judgements": [
+      {
+        "activityId": 715,
+        "relevance": 3
+      },
+      {
+        "activityId": 588,
+        "relevance": 1
+      },
+      {
+        "activityId": 685,
+        "relevance": 1
+      },
+      {
+        "activityId": 611,
+        "relevance": 2
+      },
+      {
+        "activityId": 657,
+        "relevance": 0
+      },
+      {
+        "activityId": 579,
+        "relevance": 0
+      },
+      {
+        "activityId": 630,
+        "relevance": 0
+      }
+    ]
+  },
+  {
+    "id": "opera-southbank-friday",
+    "preferences": {
+      "generalArea": "Southbank",
+      "interests": [
+        "Opera",
+        "Wagner",
+        "Classical singing"
+      ],
+      "preferredDays": [
+        "Friday"
+      ],
+      "activityTypes": [
+        "Concert"
+      ]
+    },
+    "judgements": [
+      {
+        "activityId": 644,
+        "relevance": 3
+      },
+      {
+        "activityId": 674,
+        "relevance": 2
+      },
+      {
+        "activityId": 658,
+        "relevance": 2
+      },
+      {
+        "activityId": 676,
+        "relevance": 2
+      },
+      {
+        "activityId": 669,
+        "relevance": 2
+      }
+    ]
+  },
+  {
+    "id": "gluten-free-expo-south-wharf-saturday",
+    "preferences": {
+      "generalArea": "South Wharf",
+      "interests": [
+        "Gluten-free food",
+        "Cooking",
+        "Food products"
+      ],
+      "preferredDays": [
+        "Saturday"
+      ],
+      "activityTypes": [
+        "Expo"
+      ]
+    },
+    "judgements": [
+      {
+        "activityId": 616,
+        "relevance": 3
+      },
+      {
+        "activityId": 606,
+        "relevance": 2
+      },
+      {
+        "activityId": 611,
+        "relevance": 1
+      },
+      {
+        "activityId": 636,
+        "relevance": 1
+      },
+      {
+        "activityId": 667,
+        "relevance": 0
+      },
+      {
+        "activityId": 680,
+        "relevance": 0
+      },
+      {
+        "activityId": 613,
+        "relevance": 0
+      }
+    ]
+  },
+  {
+    "id": "electric-vehicles-ascot-vale-friday",
+    "preferences": {
+      "generalArea": "Ascot Vale",
+      "interests": [
+        "Electric vehicles",
+        "Cars",
+        "Clean technology"
+      ],
+      "preferredDays": [
+        "Friday"
+      ],
+      "activityTypes": [
+        "Expo"
+      ]
+    },
+    "judgements": [
+      {
+        "activityId": 626,
+        "relevance": 3
+      },
+      {
+        "activityId": 613,
+        "relevance": 1
+      },
+      {
+        "activityId": 667,
+        "relevance": 1
+      },
+      {
+        "activityId": 611,
+        "relevance": 0
+      },
+      {
+        "activityId": 579,
+        "relevance": 0
+      },
+      {
+        "activityId": 630,
+        "relevance": 0
+      }
+    ]
+  },
+  {
+    "id": "blues-melbourne-friday",
+    "preferences": {
+      "generalArea": "Melbourne CBD",
+      "interests": [
+        "Blues",
+        "Soul",
+        "Live bands"
+      ],
+      "preferredDays": [
+        "Friday"
+      ],
+      "activityTypes": [
+        "Live music"
+      ]
+    },
+    "judgements": [
+      {
+        "activityId": 631,
+        "relevance": 3
+      },
+      {
+        "activityId": 637,
+        "relevance": 3
+      },
+      {
+        "activityId": 665,
+        "relevance": 2
+      },
+      {
+        "activityId": 663,
+        "relevance": 2
+      },
+      {
+        "activityId": 579,
+        "relevance": 2
+      },
+      {
+        "activityId": 635,
+        "relevance": 2
+      }
+    ]
+  },
+  {
+    "id": "photography-mooroolbark-sunday",
+    "preferences": {
+      "generalArea": "Mooroolbark",
+      "interests": [
+        "Photography",
+        "Learning camera skills",
+        "Creative hobbies"
+      ],
+      "preferredDays": [
+        "Sunday"
+      ],
+      "activityTypes": [
+        "Class or workshop"
+      ]
+    },
+    "judgements": [
+      {
+        "activityId": 685,
+        "relevance": 3
+      },
+      {
+        "activityId": 588,
+        "relevance": 1
+      },
+      {
+        "activityId": 582,
+        "relevance": 1
+      },
+      {
+        "activityId": 596,
+        "relevance": 0
+      },
+      {
+        "activityId": 580,
+        "relevance": 0
+      },
+      {
+        "activityId": 627,
+        "relevance": 0
+      },
+      {
+        "activityId": 604,
+        "relevance": 0
+      }
+    ]
+  },
+  {
+    "id": "country-music-melbourne-friday",
+    "preferences": {
+      "generalArea": "Melbourne CBD",
+      "interests": [
+        "Country music",
+        "Singer-songwriter",
+        "Live concerts"
+      ],
+      "preferredDays": [
+        "Friday"
+      ],
+      "activityTypes": [
+        "Live music"
+      ]
+    },
+    "judgements": [
+      {
+        "activityId": 638,
+        "relevance": 3
+      },
+      {
+        "activityId": 699,
+        "relevance": 2
+      },
+      {
+        "activityId": 700,
+        "relevance": 1
+      },
+      {
+        "activityId": 663,
+        "relevance": 2
+      },
+      {
+        "activityId": 614,
+        "relevance": 1
+      },
+      {
+        "activityId": 579,
+        "relevance": 1
+      },
+      {
+        "activityId": 631,
+        "relevance": 1
+      }
+    ]
+  },
+  {
+    "id": "jazz-brunswick-friday",
+    "preferences": {
+      "generalArea": "Brunswick",
+      "interests": [
+        "Jazz",
+        "Contemporary jazz",
+        "Live performance"
+      ],
+      "preferredDays": [
+        "Friday"
+      ],
+      "activityTypes": [
+        "Live music"
+      ]
+    },
+    "judgements": [
+      {
+        "activityId": 645,
+        "relevance": 3
+      },
+      {
+        "activityId": 649,
+        "relevance": 2
+      },
+      {
+        "activityId": 579,
+        "relevance": 2
+      },
+      {
+        "activityId": 697,
+        "relevance": 1
+      },
+      {
+        "activityId": 614,
+        "relevance": 2
+      }
+    ]
+  },
+  {
+    "id": "leonard-cohen-brunswick-sunday",
+    "preferences": {
+      "generalArea": "Brunswick",
+      "interests": [
+        "Leonard Cohen",
+        "Folk music",
+        "Tribute shows"
+      ],
+      "preferredDays": [
+        "Sunday"
+      ],
+      "activityTypes": [
+        "Live music"
+      ]
+    },
+    "judgements": [
+      {
+        "activityId": 648,
+        "relevance": 3
+      },
+      {
+        "activityId": 617,
+        "relevance": 2
+      },
+      {
+        "activityId": 595,
+        "relevance": 2
+      },
+      {
+        "activityId": 604,
+        "relevance": 1
+      },
+      {
+        "activityId": 649,
+        "relevance": 2
+      }
+    ]
+  },
+  {
+    "id": "christmas-market-williamstown-saturday",
+    "preferences": {
+      "generalArea": "Williamstown",
+      "interests": [
+        "Christmas gifts",
+        "Handmade products",
+        "Local makers"
+      ],
+      "preferredDays": [
+        "Saturday"
+      ],
+      "activityTypes": [
+        "Market or fair"
+      ]
+    },
+    "judgements": [
+      {
+        "activityId": 636,
+        "relevance": 3
+      },
+      {
+        "activityId": 611,
+        "relevance": 2
+      },
+      {
+        "activityId": 719,
+        "relevance": 1
+      },
+      {
+        "activityId": 694,
+        "relevance": 1
+      },
+      {
+        "activityId": 695,
+        "relevance": 1
+      },
+      {
+        "activityId": 583,
+        "relevance": 0
+      },
+      {
+        "activityId": 567,
+        "relevance": 0
+      }
+    ]
+  },
+  {
+    "id": "opera-melbourne-saturday",
+    "preferences": {
+      "generalArea": "Melbourne CBD",
+      "interests": [
+        "Opera",
+        "Classical singing",
+        "Romantic music"
+      ],
+      "preferredDays": [
+        "Saturday"
+      ],
+      "activityTypes": [
+        "Live performance"
+      ]
+    },
+    "judgements": [
+      {
+        "activityId": 642,
+        "relevance": 3
+      },
+      {
+        "activityId": 674,
+        "relevance": 2
+      },
+      {
+        "activityId": 653,
+        "relevance": 2
+      },
+      {
+        "activityId": 583,
+        "relevance": 2
+      },
+      {
+        "activityId": 584,
+        "relevance": 1
+      },
+      {
+        "activityId": 658,
+        "relevance": 2
+      }
+    ]
+  },
+  {
+    "id": "pet-market-moorabbin-sunday",
+    "preferences": {
+      "generalArea": "Moorabbin",
+      "interests": [
+        "Pets",
+        "Animals",
+        "Community markets"
+      ],
+      "preferredDays": [
+        "Sunday"
+      ],
+      "activityTypes": [
+        "Market or fair"
+      ]
+    },
+    "judgements": [
+      {
+        "activityId": 651,
+        "relevance": 3
+      },
+      {
+        "activityId": 604,
+        "relevance": 1
+      },
+      {
+        "activityId": 636,
+        "relevance": 1
+      },
+      {
+        "activityId": 606,
+        "relevance": 1
+      },
+      {
+        "activityId": 627,
+        "relevance": 0
+      }
+    ]
+  },
+  {
+    "id": "family-christmas-classical-st-kilda-road-saturday",
+    "preferences": {
+      "generalArea": "St Kilda Road",
+      "interests": [
+        "Christmas music",
+        "Family concerts",
+        "Classical music"
+      ],
+      "preferredDays": [
+        "Saturday"
+      ],
+      "activityTypes": [
+        "Family activity",
+        "Concert"
+      ]
+    },
+    "judgements": [
+      {
+        "activityId": 694,
+        "relevance": 3
+      },
+      {
+        "activityId": 695,
+        "relevance": 3
+      },
+      {
+        "activityId": 696,
+        "relevance": 2
+      },
+      {
+        "activityId": 691,
+        "relevance": 2
+      },
+      {
+        "activityId": 682,
+        "relevance": 2
+      },
+      {
+        "activityId": 687,
+        "relevance": 2
+      }
+    ]
+  },
+  {
+    "id": "country-duo-hallam-friday",
+    "preferences": {
+      "generalArea": "Hallam",
+      "interests": [
+        "Australian country music",
+        "Country duos",
+        "Live concerts"
+      ],
+      "preferredDays": [
+        "Friday"
+      ],
+      "activityTypes": [
+        "Live music"
+      ]
+    },
+    "judgements": [
+      {
+        "activityId": 699,
+        "relevance": 3
+      },
+      {
+        "activityId": 700,
+        "relevance": 2
+      },
+      {
+        "activityId": 638,
+        "relevance": 1
+      },
+      {
+        "activityId": 663,
+        "relevance": 2
+      },
+      {
+        "activityId": 650,
+        "relevance": 1
+      },
+      {
+        "activityId": 645,
+        "relevance": 1
+      },
+      {
+        "activityId": 579,
+        "relevance": 0
+      },
+      {
+        "activityId": 630,
+        "relevance": 0
+      }
+    ]
+  }
+]

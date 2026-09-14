@@ -7,6 +7,7 @@ const path = require('path')
 
 const { getCommunityVenues } = require('./vicmapFoiService')
 const { getBusPositions } = require('./ptvRealtimeService')
+const { recommendActivities,} = require('./ai/recommendationService',)
 
 const app = express()
 
@@ -262,6 +263,123 @@ app.get('/api/realtime/bus-positions', async (req, res) => {
     })
   }
 })
+
+// POST /api/recommendations
+app.post(
+  '/api/recommendations',
+  async (req, res) => {
+    try {
+      const requestBody =
+        req.body ?? {}
+
+      const preferences = {
+        generalArea:
+          String(
+            requestBody.generalArea ??
+              '',
+          ).trim(),
+
+        interests:
+          Array.isArray(
+            requestBody.interests,
+          )
+            ? requestBody.interests
+            : [],
+
+        preferredDays:
+          Array.isArray(
+            requestBody.preferredDays,
+          )
+            ? requestBody.preferredDays
+            : [],
+
+        activityTypes:
+          Array.isArray(
+            requestBody.activityTypes,
+          )
+            ? requestBody.activityTypes
+            : [],
+      }
+
+      const activities =
+        await queryAll(`
+          SELECT
+            id,
+            event_name,
+            category_tags,
+            description,
+            suburb,
+            day_time,
+            recurrence,
+            restrictions,
+            url
+          FROM activities
+          WHERE
+            datetime(day_time) >=
+            datetime('now')
+          ORDER BY day_time
+        `)
+
+      const recommendations =
+        await recommendActivities(
+          preferences,
+          activities,
+          3,
+        )
+
+      res.json({
+        recommendations:
+          recommendations.map(
+            (recommendation) => ({
+              activityId:
+                String(
+                  recommendation
+                    .activityId,
+                ),
+
+              score:
+                Number(
+                  recommendation
+                    .score
+                    .toFixed(4),
+                ),
+
+              reasons:
+                recommendation
+                  .reasons,
+
+              breakdown: {
+                semanticScore:
+                  Number(
+                    recommendation
+                      .semanticScore
+                      .toFixed(4),
+                  ),
+
+                areaMatch:
+                  recommendation
+                    .areaMatch,
+
+                dayMatch:
+                  recommendation
+                    .dayMatch,
+              },
+            }),
+          ),
+      })
+    } catch (error) {
+      console.error(
+        'Recommendation error:',
+        error,
+      )
+
+      res.status(500).json({
+        error:
+          'Unable to generate recommendations.',
+      })
+    }
+  },
+)
 
 // =========================
 // 404
