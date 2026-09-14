@@ -330,6 +330,8 @@ async function loadRecommendations() {
 onMounted(() => {
   loadRecommendations()
 })
+
+//loading circle in line 579 and main.css 8038
 </script>
 
 <template>
