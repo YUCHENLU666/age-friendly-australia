@@ -7922,18 +7922,6 @@ select:disabled {
   object-fit: cover;
 }
 
-/* AI matching score */
-.ai-match-badge {
-  position: absolute;
-  top: 16px;
-  right: 16px;
-  padding: 8px 12px;
-  border-radius: 999px;
-  background: white;
-  font-size: 0.9rem;
-  font-weight: 800;
-}
-
 .ai-card-content {
   display: flex;
   flex: 1;

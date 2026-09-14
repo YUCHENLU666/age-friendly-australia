@@ -22,7 +22,7 @@ import {
 } from '@/services/recommendationService'
 
 // ======================================================
-// Existing homepage cards
+// Homepage explore cards
 // ======================================================
 
 const exploreCards = [
@@ -51,7 +51,7 @@ const exploreCards = [
 ]
 
 // ======================================================
-// Existing homepage benefits
+// Homepage benefits
 // ======================================================
 
 const benefits = [
@@ -81,6 +81,10 @@ const benefits = [
   },
 ]
 
+// ======================================================
+// Hero trust items
+// ======================================================
+
 const trustItems = [
   'Clear source information',
   'Accessibility details',
@@ -88,18 +92,19 @@ const trustItems = [
 ]
 
 // ======================================================
-// AI Recommendation state
+// AI recommendation state
 // ======================================================
 //
 // recommendations:
-// Raw recommendation results returned by the backend.
+// Raw ranking results returned by the backend.
 //
 // activities:
-// Full normalised activity objects returned by
+// Normalised activity objects returned by
 // activityService.js.
 //
-// We combine them later using the activity ID.
-//
+// We combine both datasets later using activity IDs.
+// ======================================================
+
 const recommendations =
   ref([])
 
@@ -112,19 +117,21 @@ const recommendationLoading =
 const recommendationError =
   ref('')
 
-// Read the preferences currently saved on this device.
+// Read preferences already saved in localStorage.
 const preferences =
   ref(
     getPreferences(),
   )
 
 // ======================================================
-// Check whether the user has useful recommendation data
+// Check whether useful recommendation preferences exist
 // ======================================================
 //
-// textSize does NOT count because it has nothing to do
-// with which activities the user may enjoy.
-//
+// textSize is deliberately excluded because it only
+// controls the interface and should not affect activity
+// recommendation ranking.
+// ======================================================
+
 const hasPreferences =
   computed(() => {
     return Boolean(
@@ -139,56 +146,20 @@ const hasPreferences =
   })
 
 // ======================================================
-// Convert AI score into a user-friendly percentage
+// Convert recommendation reasons into a safe array
 // ======================================================
 //
-// The backend currently returns scores as decimal values
-// such as 0.87.
+// Backend normally returns:
 //
-// We display that as 87%.
+// [
+//   'Relevant to your selected interests',
+//   'Located in Clayton'
+// ]
 //
-function getMatchPercentage(
-  score,
-) {
-  const numericScore =
-    Number(score)
-
-  if (
-    Number.isNaN(
-      numericScore,
-    )
-  ) {
-    return null
-  }
-
-  // Support both:
-  // 0.87 -> 87
-  // 87   -> 87
-  const percentage =
-    numericScore <= 1
-      ? numericScore * 100
-      : numericScore
-
-  return Math.max(
-    0,
-    Math.min(
-      100,
-      Math.round(
-        percentage,
-      ),
-    ),
-  )
-}
-
+// This helper also protects the frontend if a plain
+// string is returned instead.
 // ======================================================
-// Convert AI reasons into displayable text
-// ======================================================
-//
-// The backend may return:
-// ["Matches your interests", "Preferred area"]
-//
-// or occasionally a plain string.
-//
+
 function normaliseReasons(
   reasons,
 ) {
@@ -212,17 +183,28 @@ function normaliseReasons(
 }
 
 // ======================================================
-// Join AI results with the real activity objects
+// Combine AI ranking results with full activity objects
 // ======================================================
 //
-// AI endpoint returns:
-// activityId + score + reasons
+// Recommendation API returns:
 //
-// activityService returns:
-// name + image + suburb + schedule + etc.
+// activityId
+// score
+// reasons
+// breakdown
 //
-// We combine both here.
+// Activity service returns:
 //
+// name
+// image
+// suburb
+// schedule
+// category
+// etc.
+//
+// The UI needs both, so they are joined by activity ID.
+// ======================================================
+
 const recommendedActivities =
   computed(() => {
     return recommendations.value
@@ -239,8 +221,9 @@ const recommendedActivities =
                 ),
             )
 
-          // If the activity no longer exists,
-          // simply skip that recommendation.
+          // If an activity cannot be found,
+          // skip that recommendation rather than
+          // showing an incomplete card.
           if (!activity) {
             return null
           }
@@ -248,6 +231,9 @@ const recommendedActivities =
           return {
             ...activity,
 
+            // Keep the score internally in case it is
+            // useful later, but do not display it as
+            // a percentage to the user.
             recommendationScore:
               recommendation.score,
 
@@ -265,12 +251,12 @@ const recommendedActivities =
   })
 
 // ======================================================
-// Load recommendations
+// Load AI recommendations
 // ======================================================
 
 async function loadRecommendations() {
-  // Do not call the AI model when the user has not
-  // selected any meaningful preferences yet.
+  // Do not call the AI endpoint until the user has
+  // selected at least one meaningful preference.
   if (
     !hasPreferences.value
   ) {
@@ -284,10 +270,7 @@ async function loadRecommendations() {
     ''
 
   try {
-    // Load activities and AI recommendations together.
-    //
-    // getActivities() gives us all display information.
-    // getRecommendations() gives us ranking information.
+    // Load activity data and AI ranking data together.
     const [
       activityResults,
       recommendationResults,
@@ -321,7 +304,7 @@ async function loadRecommendations() {
 }
 
 // ======================================================
-// Load AI recommendations when homepage opens
+// Load recommendations when the homepage opens
 // ======================================================
 
 onMounted(() => {
@@ -334,6 +317,7 @@ onMounted(() => {
     <!-- =====================================================
          HERO
          ===================================================== -->
+
     <section class="home-hero">
       <div
         class="hero-decoration hero-decoration--one"
@@ -358,6 +342,7 @@ onMounted(() => {
 
           <h1>
             Find activities and essential services
+
             <span>
               with confidence.
             </span>
@@ -491,7 +476,10 @@ onMounted(() => {
       <div class="page-container">
         <div class="ai-recommendation-panel">
 
-          <!-- Recommendation heading -->
+          <!-- =========================
+               Recommendation heading
+               ========================= -->
+
           <div class="ai-recommendation-heading-row">
             <div>
               <p class="section-kicker">
@@ -526,8 +514,9 @@ onMounted(() => {
           </div>
 
           <!-- =================================================
-               No preferences yet
+               No preferences
                ================================================= -->
+
           <div
             v-if="!hasPreferences"
             class="ai-empty-state"
@@ -555,6 +544,7 @@ onMounted(() => {
                 to="/preferences"
               >
                 Set my preferences
+
                 <span aria-hidden="true">
                   →
                 </span>
@@ -563,8 +553,9 @@ onMounted(() => {
           </div>
 
           <!-- =================================================
-               Loading state
+               Loading
                ================================================= -->
+
           <div
             v-else-if="recommendationLoading"
             class="ai-loading-state"
@@ -590,8 +581,9 @@ onMounted(() => {
           </div>
 
           <!-- =================================================
-               Error state
+               Recommendation error
                ================================================= -->
+
           <div
             v-else-if="recommendationError"
             class="ai-error-state"
@@ -617,8 +609,9 @@ onMounted(() => {
           </div>
 
           <!-- =================================================
-               AI recommendation cards
+               Top 3 AI recommendation cards
                ================================================= -->
+
           <div
             v-else-if="recommendedActivities.length"
             class="ai-recommendation-grid"
@@ -628,7 +621,10 @@ onMounted(() => {
               :key="activity.id"
               class="ai-recommendation-card"
             >
-              <!-- Activity image -->
+              <!-- =========================
+                   Activity image
+                   ========================= -->
+
               <RouterLink
                 :to="`/activities/${activity.id}`"
                 class="ai-card-image-link"
@@ -636,27 +632,15 @@ onMounted(() => {
               >
                 <img
                   :src="activity.image"
-                  :alt="activity.name"
+                  :alt="`${activity.name} activity`"
                   class="ai-card-image"
                 />
-
-                <span
-                  v-if="
-                    getMatchPercentage(
-                      activity.recommendationScore,
-                    ) !== null
-                  "
-                  class="ai-match-badge"
-                >
-                  {{
-                    getMatchPercentage(
-                      activity.recommendationScore,
-                    )
-                  }}% match
-                </span>
               </RouterLink>
 
-              <!-- Activity content -->
+              <!-- =========================
+                   Activity content
+                   ========================= -->
+
               <div class="ai-card-content">
                 <div>
                   <p class="ai-card-tag">
@@ -684,7 +668,10 @@ onMounted(() => {
                   </p>
                 </div>
 
-                <!-- AI explanation -->
+                <!-- =========================
+                     AI recommendation reasons
+                     ========================= -->
+
                 <div class="ai-reason-box">
                   <strong>
                     Why this may suit you
@@ -715,6 +702,10 @@ onMounted(() => {
                   </p>
                 </div>
 
+                <!-- =========================
+                     Open activity details
+                     ========================= -->
+
                 <RouterLink
                   class="ai-card-action"
                   :to="`/activities/${activity.id}`"
@@ -730,8 +721,9 @@ onMounted(() => {
           </div>
 
           <!-- =================================================
-               AI returned no results
+               No AI result
                ================================================= -->
+
           <div
             v-else
             class="ai-empty-state"
@@ -858,7 +850,7 @@ onMounted(() => {
     </section>
 
     <!-- =====================================================
-         VALUE / BENEFITS
+         BENEFITS
          ===================================================== -->
 
     <section
