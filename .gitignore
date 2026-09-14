@@ -7,17 +7,34 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
+# Dependencies
 node_modules
+
+# Environment files
 .env
+*.local
+
+# Project data / downloaded files
 data/sample/VIC_Service_List_2025.xlsx
 data/sample/gtfs.zip
 data/sample/gtfs_extracted/
 data/sample/gtfs_bus_stops_temp.txt
-.DS_Store
+
+# Environment data pipeline
+__pycache__/
+data/raw/*.json
+
+# Eventfinda activity data
+age-friendly-database/eventfinda_*.json
+age-friendly-database/age-friendly.db.backup
+
+# Build output
 dist
 dist-ssr
 coverage
-*.local
+
+# System files
+.DS_Store
 
 # Editor directories and files
 .vscode/*
@@ -29,8 +46,10 @@ coverage
 *.sln
 *.sw?
 
+# TypeScript
 *.tsbuildinfo
 
+# ESLint
 .eslintcache
 
 # Cypress
@@ -42,9 +61,3 @@ __screenshots__/
 
 # Vite
 *.timestamp-*-*.mjs
-
-.env
-
-# Environment data pipeline
-__pycache__/
-data/raw/*.json
