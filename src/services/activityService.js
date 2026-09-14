@@ -634,41 +634,135 @@ async function fetchActivities() {
   return data
 }
 
+// ======================================================
+// Activities cache
+// ======================================================
+//
+// Keep the normalised activity catalogue in memory after
+// the first successful request.
+//
+// This avoids repeatedly requesting and processing the
+// same activity dataset while navigating the app.
+//
+let cachedActivities = null
+let activitiesLoadingPromise = null
+
 /**
- * Load activities and transit stops from the backend
- * at the same time.
+ * Load activities from the backend.
+ *
+ * IMPORTANT PERFORMANCE CHANGE:
+ *
+ * The Activities listing page no longer downloads all
+ * transit stops or calculates the nearest stop for every
+ * activity.
+ *
+ * Transit information is calculated only when the user
+ * opens an individual activity detail page.
  */
 export async function getActivities() {
-  const [
-    activityRows,
-    transitStops,
-  ] = await Promise.all([
-    fetchActivities(),
-    getTransitStops(),
-  ])
+  if (cachedActivities) {
+    return cachedActivities
+  }
 
-  return activityRows.map(
-    (row, index) =>
-      normaliseActivity(
-        row,
-        index,
-        transitStops,
-      ),
-  )
+  if (activitiesLoadingPromise) {
+    return activitiesLoadingPromise
+  }
+
+  activitiesLoadingPromise =
+    fetchActivities()
+      .then((activityRows) => {
+        cachedActivities =
+          activityRows.map(
+            (row, index) =>
+              normaliseActivity(
+                row,
+                index,
+
+                // Empty list intentionally prevents
+                // nearest-stop calculation on the
+                // activity listing page.
+                [],
+              ),
+          )
+
+        return cachedActivities
+      })
+      .finally(() => {
+        activitiesLoadingPromise = null
+      })
+
+  return activitiesLoadingPromise
 }
 
-// Get a single activity by its ID
+/**
+ * Get one activity by ID.
+ *
+ * Nearby public transport is calculated only here rather
+ * than for every activity in the catalogue.
+ */
 export async function getActivityById(
   id,
 ) {
   const activities =
     await getActivities()
 
-  return (
+  const activity =
     activities.find(
-      (activity) =>
-        activity.id ===
+      (item) =>
+        item.id ===
         String(id),
     ) ?? null
-  )
+
+  if (!activity) {
+    return null
+  }
+
+  if (!activity.coordinates) {
+    return activity
+  }
+
+  try {
+    const transitStops =
+      await getTransitStops()
+
+    const nearestStop =
+      findNearestStop(
+        activity.coordinates,
+        transitStops,
+      )
+
+    if (!nearestStop) {
+      return activity
+    }
+
+    return {
+      ...activity,
+
+      nearestTransportStop: {
+        stopName:
+          nearestStop.stopName,
+
+        distanceLabel:
+          nearestStop.distanceLabel,
+      },
+    }
+  } catch (error) {
+    // Transport information is optional.
+    // Activity details should still be available if
+    // transit-stop loading fails.
+    console.error(
+      'Unable to load nearby transport for activity:',
+      error,
+    )
+
+    return activity
+  }
+}
+
+/**
+ * Clear the in-memory activity cache.
+ */
+export function clearActivitiesCache() {
+  cachedActivities = null
+  activitiesLoadingPromise = null
 }

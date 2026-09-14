@@ -209,40 +209,154 @@ async function fetchServices() {
   return data
 }
 
+// ======================================================
+// Services cache
+// ======================================================
+//
+// The services list does not change while the user is
+// navigating through the current frontend session.
+//
+// Caching prevents repeated requests when the user:
+// Services -> Home -> Services
+//
+let cachedServices = null
+let servicesLoadingPromise = null
+
 /**
- * Load services and transit stops from the backend
- * at the same time.
+ * Load services from the backend.
+ *
+ * IMPORTANT PERFORMANCE CHANGE:
+ *
+ * The services LIST page no longer downloads all transit
+ * stops or calculates the nearest stop for every service.
+ *
+ * Previously:
+ *
+ * services
+ *   +
+ * ~4,994 transit stops
+ *   +
+ * nearest-stop calculation for every service
+ *
+ * Now:
+ *
+ * services only
+ *
+ * Transit information is calculated only when the user
+ * opens one individual service detail page.
  */
 export async function getServices() {
-  const [
-    serviceRows,
-    transitStops,
-  ] = await Promise.all([
-    fetchServices(),
-    getTransitStops(),
-  ])
+  // Return the existing in-memory result immediately.
+  if (cachedServices) {
+    return cachedServices
+  }
 
-  return serviceRows.map(
-    (row, index) =>
-      normaliseService(
-        row,
-        index,
-        transitStops,
-      ),
-  )
+  // If another component has already started loading
+  // services, reuse the same request instead of making
+  // another backend request.
+  if (servicesLoadingPromise) {
+    return servicesLoadingPromise
+  }
+
+  servicesLoadingPromise =
+    fetchServices()
+      .then((serviceRows) => {
+        cachedServices =
+          serviceRows.map(
+            (row, index) =>
+              normaliseService(
+                row,
+                index,
+
+                // Empty list intentionally prevents
+                // nearest-stop calculation on the
+                // services listing page.
+                [],
+              ),
+          )
+
+        return cachedServices
+      })
+      .finally(() => {
+        servicesLoadingPromise = null
+      })
+
+  return servicesLoadingPromise
 }
 
+/**
+ * Load one service by ID.
+ *
+ * Transit-stop information is loaded lazily here because
+ * it is useful on the detail page, but unnecessary when
+ * rendering the complete service catalogue.
+ */
 export async function getServiceById(
   id,
 ) {
   const services =
     await getServices()
 
-  return (
+  const service =
     services.find(
-      (service) =>
-        service.id ===
+      (item) =>
+        item.id ===
         String(id),
     ) ?? null
-  )
+
+  if (!service) {
+    return null
+  }
+
+  // If coordinates are unavailable, we cannot calculate
+  // nearby transport, so return the service immediately.
+  if (!service.coordinates) {
+    return service
+  }
+
+  try {
+    const transitStops =
+      await getTransitStops()
+
+    const nearestStop =
+      findNearestStop(
+        service.coordinates,
+        transitStops,
+      )
+
+    if (!nearestStop) {
+      return service
+    }
+
+    return {
+      ...service,
+
+      nearestTransportStop:
+        nearestStop.stopName,
+
+      transportDistance:
+        nearestStop.distanceLabel,
+    }
+  } catch (error) {
+    // Transit information is supplementary.
+    // A transit failure should never prevent the service
+    // itself from being displayed.
+    console.error(
+      'Unable to load nearby transport for service:',
+      error,
+    )
+
+    return service
+  }
+}
+
+/**
+ * Clear the in-memory service cache.
+ *
+ * This can be used later if live service refreshing is
+ * introduced.
+ */
+export function clearServicesCache() {
+  cachedServices = null
+  servicesLoadingPromise = null
 }
