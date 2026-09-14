@@ -1,123 +1,252 @@
-import csv
 import json
+import sqlite3
+import time
 from datetime import datetime, timezone
 from pathlib import Path
 
 import requests
 
 
-input_file = Path("data/sample/EP1_sample_events_dataset.csv")
+# ======================================================
+# Project paths
+# ======================================================
 
-# Read activity data
-with open(input_file, "r", encoding="utf-8-sig") as file:
-    reader = csv.reader(file)
-    columns = [column.strip() for column in next(reader)]
-    activities = []
+# Project root:
+# age-friendly-australia/
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
 
-    for line_number, row in enumerate(reader, start=2):
-        if len(row) < len(columns):
-            print(f"Skipped incomplete row {line_number}")
-            continue
+# Current Iteration 2 SQLite database
+DATABASE_FILE = (
+    PROJECT_ROOT
+    / "age-friendly-database"
+    / "age-friendly.db"
+)
 
-        # Keep extra commas in source_note
-        if len(row) > len(columns):
-            row = row[:len(columns) - 1] + [
-                ",".join(row[len(columns) - 1:])
-            ]
-            print(f"Fixed extra comma in row {line_number}")
+# Raw pipeline output
+RAW_OUTPUT_FILE = (
+    PROJECT_ROOT
+    / "data"
+    / "raw"
+    / "melbourne_suburb_weather.json"
+)
 
-        row = [value.strip() for value in row]
-        activities.append(dict(zip(columns, row)))
+# File actually used by WeatherCard.vue
+PUBLIC_OUTPUT_FILE = (
+    PROJECT_ROOT
+    / "public"
+    / "data"
+    / "melbourne_suburb_weather.json"
+)
 
-# Find all suburbs
-suburbs = sorted({
-    activity.get("suburb", "").strip()
-    for activity in activities
-    if activity.get("suburb", "").strip()
-})
 
-print("Suburbs found:")
-print(suburbs)
+# ======================================================
+# Check coordinates
+# ======================================================
 
-weather_results = []
+def valid_coordinates(latitude, longitude):
+    try:
+        latitude = float(latitude)
+        longitude = float(longitude)
 
-for suburb in suburbs:
-    # An LGA is not an exact activity location
-    if "LGA" in suburb.upper():
-        weather_results.append({
-            "suburb": suburb,
-            "latitude": None,
-            "longitude": None,
-            "weather_available": False,
-            "reason": "Exact location not provided",
-            "weather": None
-        })
+        return (
+            -90 <= latitude <= 90
+            and -180 <= longitude <= 180
+            and not (
+                latitude == 0
+                and longitude == 0
+            )
+        )
 
-        print(f"Weather not available for {suburb}")
-        continue
+    except (TypeError, ValueError):
+        return False
 
-    # Find the suburb coordinates
-    geocoding_url = "https://geocoding-api.open-meteo.com/v1/search"
+
+# ======================================================
+# Read current activity locations from SQLite
+# ======================================================
+#
+# OLD VERSION:
+#
+# data/sample/EP1_sample_events_dataset.csv
+#
+# NEW VERSION:
+#
+# age-friendly-database/age-friendly.db
+#        ↓
+# activities table
+#
+# This means weather locations now match the current
+# Eventfinda activity data used by Iteration 2.
+# ======================================================
+
+def load_activity_locations():
+    if not DATABASE_FILE.exists():
+        raise FileNotFoundError(
+            f"Database not found: {DATABASE_FILE}"
+        )
+
+    connection = sqlite3.connect(
+        DATABASE_FILE
+    )
+
+    try:
+        cursor = connection.cursor()
+
+        rows = cursor.execute(
+            """
+            SELECT
+                TRIM(suburb) AS suburb,
+
+                AVG(
+                    CASE
+                        WHEN latitude IS NOT NULL
+                             AND TRIM(
+                                 CAST(
+                                     latitude AS TEXT
+                                 )
+                             ) != ''
+                        THEN CAST(
+                            latitude AS REAL
+                        )
+                    END
+                ) AS latitude,
+
+                AVG(
+                    CASE
+                        WHEN longitude IS NOT NULL
+                             AND TRIM(
+                                 CAST(
+                                     longitude AS TEXT
+                                 )
+                             ) != ''
+                        THEN CAST(
+                            longitude AS REAL
+                        )
+                    END
+                ) AS longitude
+
+            FROM activities
+
+            WHERE
+                suburb IS NOT NULL
+                AND TRIM(suburb) != ''
+
+            GROUP BY
+                TRIM(suburb)
+
+            ORDER BY
+                suburb COLLATE NOCASE
+            """
+        ).fetchall()
+
+        locations = []
+
+        for row in rows:
+            locations.append(
+                {
+                    "suburb": row[0],
+                    "latitude": row[1],
+                    "longitude": row[2],
+                }
+            )
+
+        return locations
+
+    finally:
+        connection.close()
+
+
+# ======================================================
+# Find coordinates using Open-Meteo geocoding
+# ======================================================
+#
+# This is used only when the Eventfinda/SQLite record
+# does not already provide usable latitude/longitude.
+# ======================================================
+
+def geocode_suburb(suburb):
+    print(
+        f"Geocoding {suburb}..."
+    )
+
+    geocoding_url = (
+        "https://geocoding-api.open-meteo.com"
+        "/v1/search"
+    )
 
     geocoding_params = {
         "name": suburb,
         "count": 10,
         "language": "en",
         "format": "json",
-        "countryCode": "AU"
+        "countryCode": "AU",
     }
 
-    geocoding_response = requests.get(
-        geocoding_url,
-        params=geocoding_params,
-        timeout=30
+    try:
+        response = requests.get(
+            geocoding_url,
+            params=geocoding_params,
+            timeout=30,
+        )
+
+        response.raise_for_status()
+
+        results = (
+            response
+            .json()
+            .get(
+                "results",
+                [],
+            )
+        )
+
+        # Prefer Victorian locations
+        for item in results:
+            if (
+                item.get("admin1")
+                == "Victoria"
+            ):
+                return (
+                    item.get(
+                        "latitude"
+                    ),
+                    item.get(
+                        "longitude"
+                    ),
+                )
+
+        print(
+            f"No Victorian location found "
+            f"for {suburb}"
+        )
+
+    except requests.RequestException as error:
+        print(
+            f"Geocoding failed for "
+            f"{suburb}: {error}"
+        )
+
+    return None, None
+
+
+# ======================================================
+# Get Open-Meteo weather
+# ======================================================
+
+def fetch_weather(
+    suburb,
+    latitude,
+    longitude,
+):
+    weather_url = (
+        "https://api.open-meteo.com"
+        "/v1/forecast"
     )
-
-    if geocoding_response.status_code != 200:
-        weather_results.append({
-            "suburb": suburb,
-            "latitude": None,
-            "longitude": None,
-            "weather_available": False,
-            "reason": "Geocoding request failed",
-            "weather": None
-        })
-
-        print(f"Failed to find {suburb}")
-        continue
-
-    locations = geocoding_response.json().get("results", [])
-
-    # Select the location in Victoria
-    location = None
-
-    for item in locations:
-        if item.get("admin1") == "Victoria":
-            location = item
-            break
-
-    if location is None:
-        weather_results.append({
-            "suburb": suburb,
-            "latitude": None,
-            "longitude": None,
-            "weather_available": False,
-            "reason": "Location could not be matched",
-            "weather": None
-        })
-
-        print(f"No Victorian location found for {suburb}")
-        continue
-
-    latitude = location["latitude"]
-    longitude = location["longitude"]
-
-    # Get weather and UV data
-    weather_url = "https://api.open-meteo.com/v1/forecast"
 
     weather_params = {
         "latitude": latitude,
         "longitude": longitude,
+
         "hourly": (
             "temperature_2m,"
             "apparent_temperature,"
@@ -126,57 +255,382 @@ for suburb in suburbs:
             "wind_speed_10m,"
             "uv_index"
         ),
-        "timezone": "Australia/Melbourne",
-        "temperature_unit": "celsius",
-        "wind_speed_unit": "kmh",
-        "forecast_days": 7
+
+        "timezone":
+            "Australia/Melbourne",
+
+        "temperature_unit":
+            "celsius",
+
+        "wind_speed_unit":
+            "kmh",
+
+        "forecast_days": 7,
     }
 
-    weather_response = requests.get(
-        weather_url,
-        params=weather_params,
-        timeout=30
-    )
+    try:
+        weather_response = requests.get(
+            weather_url,
+            params=weather_params,
+            timeout=30,
+        )
 
-    if weather_response.status_code == 200:
-        weather_results.append({
+        weather_response.raise_for_status()
+
+        print(
+            f"Weather collected for "
+            f"{suburb}"
+        )
+
+        return {
             "suburb": suburb,
-            "latitude": latitude,
-            "longitude": longitude,
+            "latitude": float(latitude),
+            "longitude": float(longitude),
             "weather_available": True,
             "reason": None,
-            "weather": weather_response.json()
-        })
+            "weather":
+                weather_response.json(),
+        }
 
-        print(f"Weather collected for {suburb}")
+    except requests.RequestException as error:
+        print(
+            f"Weather request failed "
+            f"for {suburb}: {error}"
+        )
 
-    else:
-        weather_results.append({
+        return {
             "suburb": suburb,
             "latitude": latitude,
             "longitude": longitude,
             "weather_available": False,
-            "reason": "Weather request failed",
-            "weather": None
-        })
+            "reason":
+                "Weather request failed",
+            "weather": None,
+        }
 
-        print(f"Failed to get weather for {suburb}")
 
-# Create output folder
-output_folder = Path("data/raw")
-output_folder.mkdir(parents=True, exist_ok=True)
+# ======================================================
+# Main weather pipeline
+# ======================================================
 
-# Save weather data
-output_file = output_folder / "melbourne_suburb_weather.json"
+def main():
+    print(
+        "----------------------------------------"
+    )
 
-output_data = {
-    "source": "Open-Meteo",
-    "coverage": "Suburbs in the activity dataset",
-    "fetched_at": datetime.now(timezone.utc).isoformat(),
-    "locations": weather_results
-}
+    print(
+        "Age-Friendly Australia "
+        "Weather Pipeline"
+    )
 
-with open(output_file, "w", encoding="utf-8") as file:
-    json.dump(output_data, file, indent=2, ensure_ascii=False)
+    print(
+        "----------------------------------------"
+    )
 
-print(f"Weather data saved to: {output_file}")
+    print(
+        f"Database: {DATABASE_FILE}"
+    )
+
+    # --------------------------------------------------
+    # 1. Read all current activity suburbs
+    # --------------------------------------------------
+
+    locations = (
+        load_activity_locations()
+    )
+
+    print(
+        f"Found {len(locations)} "
+        f"unique activity suburbs."
+    )
+
+    print(
+        "----------------------------------------"
+    )
+
+    weather_results = []
+
+    # --------------------------------------------------
+    # 2. Fetch weather for each suburb
+    # --------------------------------------------------
+
+    for index, location in enumerate(
+        locations,
+        start=1,
+    ):
+        suburb = (
+            location[
+                "suburb"
+            ]
+            .strip()
+        )
+
+        latitude = location[
+            "latitude"
+        ]
+
+        longitude = location[
+            "longitude"
+        ]
+
+        print(
+            f"[{index}/{len(locations)}] "
+            f"{suburb}"
+        )
+
+        # ----------------------------------------------
+        # Broad LGA records do not represent an exact
+        # suburb location.
+        # ----------------------------------------------
+
+        if "LGA" in suburb.upper():
+            weather_results.append(
+                {
+                    "suburb": suburb,
+                    "latitude": None,
+                    "longitude": None,
+                    "weather_available":
+                        False,
+                    "reason":
+                        "Exact location not provided",
+                    "weather": None,
+                }
+            )
+
+            print(
+                f"Weather unavailable "
+                f"for broad location: "
+                f"{suburb}"
+            )
+
+            continue
+
+        # ----------------------------------------------
+        # Prefer coordinates already available from
+        # Eventfinda / SQLite.
+        # ----------------------------------------------
+
+        if valid_coordinates(
+            latitude,
+            longitude,
+        ):
+            print(
+                f"Using activity coordinates "
+                f"for {suburb}"
+            )
+
+        else:
+            # ------------------------------------------
+            # If coordinates are missing, try
+            # Open-Meteo geocoding.
+            # ------------------------------------------
+
+            latitude, longitude = (
+                geocode_suburb(
+                    suburb
+                )
+            )
+
+        # ----------------------------------------------
+        # Still no coordinates
+        # ----------------------------------------------
+
+        if not valid_coordinates(
+            latitude,
+            longitude,
+        ):
+            weather_results.append(
+                {
+                    "suburb": suburb,
+                    "latitude": None,
+                    "longitude": None,
+                    "weather_available":
+                        False,
+                    "reason":
+                        "Location could not be matched",
+                    "weather": None,
+                }
+            )
+
+            print(
+                f"No usable coordinates "
+                f"for {suburb}"
+            )
+
+            continue
+
+        # ----------------------------------------------
+        # Get weather
+        # ----------------------------------------------
+
+        weather_results.append(
+            fetch_weather(
+                suburb,
+                latitude,
+                longitude,
+            )
+        )
+
+        # Avoid sending requests too quickly.
+        time.sleep(0.1)
+
+    # ==================================================
+    # 3. Calculate summary
+    # ==================================================
+
+    available_count = sum(
+        1
+        for item in weather_results
+        if item[
+            "weather_available"
+        ]
+    )
+
+    unavailable_count = (
+        len(weather_results)
+        - available_count
+    )
+
+    # ==================================================
+    # 4. Build output JSON
+    # ==================================================
+
+    output_data = {
+        "source":
+            "Open-Meteo",
+
+        "coverage":
+            (
+                "Current suburbs in the "
+                "SQLite activities table"
+            ),
+
+        "fetched_at":
+            datetime.now(
+                timezone.utc
+            ).isoformat(),
+
+        "location_count":
+            len(
+                weather_results
+            ),
+
+        "available_count":
+            available_count,
+
+        "unavailable_count":
+            unavailable_count,
+
+        "locations":
+            weather_results,
+    }
+
+    # ==================================================
+    # 5. Save raw output
+    # ==================================================
+
+    RAW_OUTPUT_FILE.parent.mkdir(
+        parents=True,
+        exist_ok=True,
+    )
+
+    with open(
+        RAW_OUTPUT_FILE,
+        "w",
+        encoding="utf-8",
+    ) as file:
+        json.dump(
+            output_data,
+            file,
+            indent=2,
+            ensure_ascii=False,
+        )
+
+    # ==================================================
+    # 6. Save frontend production copy
+    # ==================================================
+    #
+    # WeatherCard.vue reads:
+    #
+    # /data/melbourne_suburb_weather.json
+    #
+    # Therefore this file must exist inside:
+    #
+    # public/data/
+    # ==================================================
+
+    PUBLIC_OUTPUT_FILE.parent.mkdir(
+        parents=True,
+        exist_ok=True,
+    )
+
+    with open(
+        PUBLIC_OUTPUT_FILE,
+        "w",
+        encoding="utf-8",
+    ) as file:
+        json.dump(
+            output_data,
+            file,
+            indent=2,
+            ensure_ascii=False,
+        )
+
+    # ==================================================
+    # Complete
+    # ==================================================
+
+    print(
+        "----------------------------------------"
+    )
+
+    print(
+        "Weather pipeline completed."
+    )
+
+    print(
+        f"Total locations: "
+        f"{len(weather_results)}"
+    )
+
+    print(
+        f"Weather available: "
+        f"{available_count}"
+    )
+
+    print(
+        f"Weather unavailable: "
+        f"{unavailable_count}"
+    )
+
+    print(
+        "----------------------------------------"
+    )
+
+    print(
+        "Raw weather output:"
+    )
+
+    print(
+        RAW_OUTPUT_FILE
+    )
+
+    print(
+        "Frontend weather output:"
+    )
+
+    print(
+        PUBLIC_OUTPUT_FILE
+    )
+
+    print(
+        "----------------------------------------"
+    )
+
+
+# ======================================================
+# Run
+# ======================================================
+
+if __name__ == "__main__":
+    main()
