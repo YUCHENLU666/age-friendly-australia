@@ -1,10 +1,8 @@
 const crypto =
   require('crypto')
 
-let activityEmbeddingCache = {
-  key: null,
-  promise: null,
-}
+const precomputedData =
+  require('./activityEmbeddings.json')
 
 const {
   buildActivityText,
@@ -14,27 +12,16 @@ const {
 )
 
 const {
+  MODEL_NAME,
   createEmbedding,
-  createEmbeddingsInBatches,
 } = require(
   './embeddingService',
 )
 
-function cosineSimilarity(
-  vectorA,
-  vectorB,
-) {
-  return vectorA.reduce(
-    (
-      total,
-      value,
-      index,
-    ) =>
-      total +
-      value * vectorB[index],
-    0,
-  )
-}
+// ======================================================
+// Day names
+// ======================================================
+
 const DAY_NAMES = [
   'Sunday',
   'Monday',
@@ -45,11 +32,160 @@ const DAY_NAMES = [
   'Saturday',
 ]
 
+// ======================================================
+// Normalise text
+// ======================================================
+
 function normaliseText(value) {
   return String(value ?? '')
     .trim()
     .toLowerCase()
 }
+
+// ======================================================
+// Create activity text hash
+// ======================================================
+//
+// This must use the same SHA-256 logic as
+// generateActivityEmbeddings.js.
+//
+// It allows the live recommendation system to verify
+// that a saved embedding still belongs to the current
+// activity text.
+//
+// If an activity name/category/description changes,
+// the stored embedding will no longer be trusted.
+// ======================================================
+
+function createTextHash(text) {
+  return crypto
+    .createHash('sha256')
+    .update(text)
+    .digest('hex')
+}
+
+// ======================================================
+// Prepare precomputed embeddings
+// ======================================================
+//
+// activityEmbeddings.json is generated locally.
+//
+// Render no longer needs to generate embeddings for all
+// activities during a user's request.
+//
+// Instead:
+//
+// activity ID
+//      ↓
+// precomputed embedding lookup
+//      ↓
+// cosine similarity with user preference embedding
+//
+// ======================================================
+
+const precomputedEmbeddingMap =
+  new Map()
+
+if (
+  precomputedData &&
+  Array.isArray(
+    precomputedData.items,
+  )
+) {
+  for (
+    const item of
+      precomputedData.items
+  ) {
+    if (
+      item?.id &&
+      Array.isArray(
+        item.embedding,
+      )
+    ) {
+      precomputedEmbeddingMap.set(
+        String(item.id),
+        item,
+      )
+    }
+  }
+}
+
+// ======================================================
+// Validate embedding model
+// ======================================================
+//
+// The stored activity embeddings must use the same
+// model as the user preference embedding.
+//
+// Otherwise cosine similarity would not be meaningful.
+// ======================================================
+
+const precomputedModelMatches =
+  precomputedData?.model ===
+  MODEL_NAME
+
+if (
+  !precomputedModelMatches
+) {
+  console.warn(
+    'Precomputed activity embedding model does not match the current model.',
+  )
+
+  console.warn(
+    `Stored model: ${
+      precomputedData?.model ||
+      'unknown'
+    }`,
+  )
+
+  console.warn(
+    `Current model: ${MODEL_NAME}`,
+  )
+} else {
+  console.log(
+    `Loaded ${precomputedEmbeddingMap.size} precomputed activity embeddings.`,
+  )
+}
+
+// ======================================================
+// Cosine similarity
+// ======================================================
+//
+// Both activity and preference embeddings are already
+// normalised by embeddingService.js.
+//
+// Therefore their dot product is cosine similarity.
+// ======================================================
+
+function cosineSimilarity(
+  vectorA,
+  vectorB,
+) {
+  if (
+    !Array.isArray(vectorA) ||
+    !Array.isArray(vectorB) ||
+    vectorA.length !==
+      vectorB.length
+  ) {
+    return 0
+  }
+
+  return vectorA.reduce(
+    (
+      total,
+      value,
+      index,
+    ) =>
+      total +
+      value *
+        vectorB[index],
+    0,
+  )
+}
+
+// ======================================================
+// Determine activity weekday
+// ======================================================
 
 function getActivityDay(
   dateTime,
@@ -60,10 +196,11 @@ function getActivityDay(
 
   const date =
     new Date(
-      String(dateTime).replace(
-        ' ',
-        'T',
-      ),
+      String(dateTime)
+        .replace(
+          ' ',
+          'T',
+        ),
     )
 
   if (
@@ -79,90 +216,103 @@ function getActivityDay(
   ]
 }
 
+// ======================================================
+// Check whether semantic AI ranking is needed
+// ======================================================
+
 function hasSemanticPreferences(
   preferences,
 ) {
   return Boolean(
-    preferences.interests?.length ||
+    preferences.interests
+      ?.length ||
       preferences.activityTypes
         ?.length,
   )
 }
 
-function createActivitiesCacheKey(
-  activities,
-  activityTexts,
-) {
-  const cacheContent =
-    activities.map(
-      (
-        activity,
-        index,
-      ) => ({
-        id: activity.id,
-        text:
-          activityTexts[index],
-      }),
-    )
+// ======================================================
+// Get one precomputed activity embedding
+// ======================================================
+//
+// Activity ID must match.
+//
+// Activity text hash must also match.
+//
+// This prevents stale embeddings from silently being
+// used after activity data has changed.
+// ======================================================
 
-  return crypto
-    .createHash('sha256')
-    .update(
-      JSON.stringify(
-        cacheContent,
+function getPrecomputedEmbedding(
+  activity,
+) {
+  if (
+    !precomputedModelMatches
+  ) {
+    return null
+  }
+
+  const item =
+    precomputedEmbeddingMap.get(
+      String(
+        activity.id,
       ),
     )
-    .digest('hex')
-}
 
-async function getCachedActivityEmbeddings(
-  activities,
-  activityTexts,
-) {
-  const cacheKey =
-    createActivitiesCacheKey(
-      activities,
-      activityTexts,
+  if (!item) {
+    return null
+  }
+
+  const currentText =
+    buildActivityText(
+      activity,
+    )
+
+  const currentHash =
+    createTextHash(
+      currentText,
     )
 
   if (
-    activityEmbeddingCache.key !==
-      cacheKey ||
-    !activityEmbeddingCache.promise
+    item.textHash !==
+    currentHash
   ) {
-    console.log(
-      'Creating activity embedding cache',
+    console.warn(
+      `Ignoring stale embedding for activity ${activity.id}.`,
     )
 
-    activityEmbeddingCache = {
-      key: cacheKey,
-
-      promise:
-        createEmbeddingsInBatches(
-          activityTexts,
-          16,
-        ),
-    }
-  } else {
-    console.log(
-      'Using cached activity embeddings',
-    )
+    return null
   }
 
-  return activityEmbeddingCache.promise
+  return item.embedding
 }
+
+// ======================================================
+// Recommend activities
+// ======================================================
 
 async function recommendActivities(
   preferences = {},
   activities = [],
   limit = 3,
 ) {
+  // ------------------------------------
+  // Validate activity input
+  // ------------------------------------
+
   if (
-    !Array.isArray(activities) ||
+    !Array.isArray(
+      activities,
+    ) ||
     activities.length === 0
   ) {
     return []
   }
+
+  // ------------------------------------
+  // Determine which scoring dimensions
+  // are currently available
+  // ------------------------------------
 
   const useSemanticScore =
     hasSemanticPreferences(
@@ -183,7 +333,10 @@ async function recommendActivities(
     preferences.preferredDays
       .length > 0
 
-  // No recommendation preferences
+  // ------------------------------------
+  // No usable recommendation preferences
+  // ------------------------------------
+
   if (
     !useSemanticScore &&
     !useAreaScore &&
@@ -191,6 +344,10 @@ async function recommendActivities(
   ) {
     return []
   }
+
+  // ------------------------------------
+  // Recommendation weights
+  // ------------------------------------
 
   const semanticWeight =
     useSemanticScore
@@ -207,17 +364,32 @@ async function recommendActivities(
       ? 0.15
       : 0
 
-  // Normalise weights when the user
-  // selects only some preference types.
   const totalWeight =
     semanticWeight +
     areaWeight +
     dayWeight
 
-  let preferenceEmbedding =
-    null
+  // ====================================================
+  // Generate ONLY the user's preference embedding
+  // ====================================================
+  //
+  // OLD behaviour:
+  //
+  // preference embedding
+  // +
+  // 141 activity embeddings generated on Render
+  //
+  // NEW behaviour:
+  //
+  // preference embedding only
+  // +
+  // activity embeddings loaded from JSON
+  //
+  // This removes the expensive batch embedding process
+  // from the Render request path.
+  // ====================================================
 
-  let activityEmbeddings =
+  let preferenceEmbedding =
     null
 
   if (useSemanticScore) {
@@ -226,38 +398,62 @@ async function recommendActivities(
         preferences,
       )
 
-    const activityTexts =
-      activities.map(
-        buildActivityText,
-      )
+    console.log(
+      'Generating preference embedding only.',
+    )
 
     preferenceEmbedding =
       await createEmbedding(
         preferenceText,
       )
-
-    activityEmbeddings =
-      await getCachedActivityEmbeddings(
-        activities,
-        activityTexts,
-      )
   }
 
-  return activities
-    .map(
-      (
-        activity,
-        index,
-      ) => {
-        const semanticScore =
+  // ------------------------------------
+  // Track missing/stale embeddings
+  // ------------------------------------
+
+  let missingEmbeddingCount =
+    0
+
+  // ------------------------------------
+  // Score every candidate activity
+  // ------------------------------------
+
+  const results =
+    activities.map(
+      (activity) => {
+        // ================================
+        // Semantic AI score
+        // ================================
+
+        let semanticScore =
+          0
+
+        if (
           useSemanticScore
-            ? cosineSimilarity(
+        ) {
+          const activityEmbedding =
+            getPrecomputedEmbedding(
+              activity,
+            )
+
+          if (
+            activityEmbedding
+          ) {
+            semanticScore =
+              cosineSimilarity(
                 preferenceEmbedding,
-                activityEmbeddings[
-                  index
-                ],
+                activityEmbedding,
               )
-            : 0
+          } else {
+            missingEmbeddingCount +=
+              1
+          }
+        }
+
+        // ================================
+        // Area match
+        // ================================
 
         const areaMatch =
           useAreaScore &&
@@ -268,6 +464,10 @@ async function recommendActivities(
               preferences.generalArea,
             )
 
+        // ================================
+        // Day match
+        // ================================
+
         const activityDay =
           getActivityDay(
             activity.day_time,
@@ -275,29 +475,47 @@ async function recommendActivities(
 
         const dayMatch =
           useDayScore &&
-          preferences.preferredDays.some(
-            (preferredDay) =>
-              normaliseText(
+          preferences
+            .preferredDays
+            .some(
+              (
                 preferredDay,
-              ) ===
-              normaliseText(
-                activityDay,
-              ),
-          )
+              ) =>
+                normaliseText(
+                  preferredDay,
+                ) ===
+                normaliseText(
+                  activityDay,
+                ),
+            )
+
+        // ================================
+        // Weighted recommendation score
+        // ================================
 
         const weightedScore =
           semanticScore *
             semanticWeight +
-          (areaMatch
-            ? areaWeight
-            : 0) +
-          (dayMatch
-            ? dayWeight
-            : 0)
+          (
+            areaMatch
+              ? areaWeight
+              : 0
+          ) +
+          (
+            dayMatch
+              ? dayWeight
+              : 0
+          )
 
         const score =
-          weightedScore /
-          totalWeight
+          totalWeight > 0
+            ? weightedScore /
+              totalWeight
+            : 0
+
+        // ================================
+        // Human-readable reasons
+        // ================================
 
         const reasons = []
 
@@ -342,12 +560,53 @@ async function recommendActivities(
         }
       },
     )
-    .sort(
-      (a, b) =>
-        b.score - a.score,
+
+  // ------------------------------------
+  // Diagnostic logging
+  // ------------------------------------
+
+  if (
+    useSemanticScore
+  ) {
+    console.log(
+      `Used precomputed embeddings for ${
+        activities.length -
+        missingEmbeddingCount
+      }/${activities.length} candidate activities.`,
     )
-    .slice(0, limit)
+
+    if (
+      missingEmbeddingCount >
+      0
+    ) {
+      console.warn(
+        `${missingEmbeddingCount} activities did not have a matching precomputed embedding.`,
+      )
+    }
+  }
+
+  // ------------------------------------
+  // Rank and return Top N
+  // ------------------------------------
+
+  return results
+    .sort(
+      (
+        activityA,
+        activityB,
+      ) =>
+        activityB.score -
+        activityA.score,
+    )
+    .slice(
+      0,
+      limit,
+    )
 }
+
+// ======================================================
+// Exports
+// ======================================================
 
 module.exports = {
   cosineSimilarity,
