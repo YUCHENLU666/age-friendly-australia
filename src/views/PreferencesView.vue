@@ -110,7 +110,7 @@ const days = [
   'Flexible',
 ]
 
-//Generate activity type options
+//Generate interests type options
 const activityTypes =
   computed(() => {
     return [
