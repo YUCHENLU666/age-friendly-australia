@@ -23,15 +23,19 @@
 //
 // ======================================================
 
+//Write to activityEmbeddings.json
 const fs =
   require('fs')
 
+//Safely concatenate database and output file paths
 const path =
   require('path')
 
+//Generate SHA-256 text hash
 const crypto =
   require('crypto')
 
+//Read active database
 const sqlite3 =
   require('sqlite3')
     .verbose()
@@ -51,6 +55,7 @@ const {
 // File paths
 // ======================================================
 
+//input path
 const DATABASE_PATH =
   path.join(
     __dirname,
@@ -58,6 +63,7 @@ const DATABASE_PATH =
     'age-friendly.db',
   )
 
+//output path
 const OUTPUT_PATH =
   path.join(
     __dirname,
@@ -76,6 +82,7 @@ const OUTPUT_PATH =
 // the hash changes as well.
 // ======================================================
 
+//Convert the event text into a fixed-length hash to verify that the event content has not been altered
 function createTextHash(
   text,
 ) {
@@ -136,7 +143,7 @@ function loadActivities(
 // ======================================================
 // Close SQLite safely
 // ======================================================
-
+//The database connection will be closed after the script finishes, preventing the database file from remaining locked
 function closeDatabase(
   database,
 ) {
@@ -184,6 +191,7 @@ async function main() {
     '----------------------------------------',
   )
 
+  //open database
   const database =
     new sqlite3.Database(
       DATABASE_PATH,

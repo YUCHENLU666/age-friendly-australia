@@ -231,13 +231,21 @@ app.get(
 // =========================
 
 // POST /api/recommendations
+//The frontend sends user preferences to the backend as the request content
 app.post(
   '/api/recommendations',
   async (req, res) => {
     try {
+      //{
+//   generalArea: 'Melbourne CBD',
+//   interests: ['Jazz'],
+//   preferredDays: ['Wednesday'],
+//   activityTypes: ['Social'],
+// }
       const requestBody =
         req.body ?? {}
 
+      //Organize user preferences
       const preferences = {
         generalArea:
           String(
@@ -267,6 +275,8 @@ app.post(
             : [],
       }
 
+      //Query the database for upcoming events
+      //Exclude past events
       const activities =
         await queryAll(`
           SELECT
@@ -290,6 +300,7 @@ app.post(
           ORDER BY day_time
         `)
 
+      //Call the AI ​​recommendation function
       const recommendations =
         await recommendActivities(
           preferences,
@@ -297,6 +308,7 @@ app.post(
           3,
         )
 
+      //Format the data to be returned to the frontend
       res.json({
         recommendations:
           recommendations.map(

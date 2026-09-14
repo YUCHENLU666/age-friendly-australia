@@ -21,7 +21,7 @@ const {
 // ======================================================
 // Day names
 // ======================================================
-
+//used to convert the getDay() to text, 0->Sunday, 1->Monday
 const DAY_NAMES = [
   'Sunday',
   'Monday',
@@ -56,7 +56,7 @@ function normaliseText(value) {
 // If an activity name/category/description changes,
 // the stored embedding will no longer be trusted.
 // ======================================================
-
+//Check if the active vector has expired
 function createTextHash(text) {
   return crypto
     .createHash('sha256')
@@ -82,7 +82,7 @@ function createTextHash(text) {
 // cosine similarity with user preference embedding
 //
 // ======================================================
-
+//Locate vectors directly using the event ID
 const precomputedEmbeddingMap =
   new Map()
 
@@ -119,7 +119,8 @@ if (
 //
 // Otherwise cosine similarity would not be meaningful.
 // ======================================================
-
+//check the activity model and perference model is same,
+//different model will give different vector, the number space is also different,Therefore, cosine similarity is meaningless
 const precomputedModelMatches =
   precomputedData?.model ===
   MODEL_NAME
@@ -156,7 +157,9 @@ if (
 //
 // Therefore their dot product is cosine similarity.
 // ======================================================
-
+// calculate the similarity
+//vector A is user perference, vector B is activity
+//Closer to 1 → more semantically similar
 function cosineSimilarity(
   vectorA,
   vectorB,
@@ -219,7 +222,7 @@ function getActivityDay(
 // ======================================================
 // Check whether semantic AI ranking is needed
 // ======================================================
-
+//The AI ​​model is used only if the user has configured any of the following settings
 function hasSemanticPreferences(
   preferences,
 ) {
@@ -242,7 +245,7 @@ function hasSemanticPreferences(
 // This prevents stale embeddings from silently being
 // used after activity data has changed.
 // ======================================================
-
+//check the model, activity id, Hash text, then return a vector of a activity
 function getPrecomputedEmbedding(
   activity,
 ) {
@@ -294,6 +297,7 @@ function getPrecomputedEmbedding(
 async function recommendActivities(
   preferences = {},
   activities = [],
+  //return number
   limit = 3,
 ) {
   // ------------------------------------

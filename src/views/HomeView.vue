@@ -104,13 +104,32 @@ const trustItems = [
 //
 // We combine both datasets later using activity IDs.
 // ======================================================
-
+//Save the raw AI rankings returned by the backend.
+// [
+//   {
+//     activityId: '550',
+//     score: 0.86,
+//     reasons: [...],
+//     breakdown: {...},
+//   }
+// ]
 const recommendations =
   ref([])
-
+//Save the complete event returned by the standard event API.
+// [
+//   {
+//     id: '550',
+//     name: 'Jazz Night',
+//     image: '...',
+//     suburb: 'Melbourne CBD',
+//     schedule: 'Wednesday...',
+//     primaryTag: 'Jazz',
+//   }
+// ]
 const activities =
   ref([])
 
+//Used to control whether "Finding activities for you..." is displayed
 const recommendationLoading =
   ref(false)
 
@@ -131,7 +150,7 @@ const preferences =
 // controls the interface and should not affect activity
 // recommendation ranking.
 // ======================================================
-
+//Determine whether the user has preferences
 const hasPreferences =
   computed(() => {
     return Boolean(
@@ -159,7 +178,7 @@ const hasPreferences =
 // This helper also protects the frontend if a plain
 // string is returned instead.
 // ======================================================
-
+//Reasons for the proposed handling
 function normaliseReasons(
   reasons,
 ) {
@@ -204,7 +223,8 @@ function normaliseReasons(
 //
 // The UI needs both, so they are joined by activity ID.
 // ======================================================
-
+//Iterate through each recommendation result, 
+// then locate the full event using the ID
 const recommendedActivities =
   computed(() => {
     return recommendations.value

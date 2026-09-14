@@ -1,13 +1,18 @@
+// choose model
 const MODEL_NAME =
   'onnx-community/all-MiniLM-L6-v2-ONNX'
 
+// Save model loading results
 let extractorPromise = null
 
+// if extractorPromise is null, load the model
+// load @huggingface/transformers, creat feature-extraction Pipeline, load MiniLM model, save the results in extractorPromise
 async function getExtractor() {
   if (!extractorPromise) {
     extractorPromise = import(
       '@huggingface/transformers'
     ).then(({ pipeline }) =>
+      // Extract semantic features from the text and convert them into numerical vectors
       pipeline(
         'feature-extraction',
         MODEL_NAME,
@@ -19,18 +24,22 @@ async function getExtractor() {
 }
 
 async function createEmbeddings(texts) {
+  //Convert a batch of text at a time
   const inputTexts =
     Array.isArray(texts)
       ? texts
       : [texts]
 
+  // check the input is empty or not
   if (inputTexts.length === 0) {
     return []
   }
 
+  // get model
   const extractor =
     await getExtractor()
 
+  //Run the model, covert the word to a 384-vector
   const output =
     await extractor(
       inputTexts,
@@ -40,9 +49,12 @@ async function createEmbeddings(texts) {
       },
     )
 
+  //Convert to a standard JavaScript array.
   return output.tolist()
 }
 
+// Convert a text to 384-vector
+//Generate a user preference vector.
 async function createEmbedding(text) {
   const embeddings =
     await createEmbeddings([text])
@@ -50,6 +62,7 @@ async function createEmbedding(text) {
   return embeddings[0]
 }
 
+//Generate activity vectors in batches
 async function createEmbeddingsInBatches(
   texts,
   batchSize = 16,
@@ -85,6 +98,7 @@ async function createEmbeddingsInBatches(
   return embeddings
 }
 
+//Other backend files can then use the model name and the three conversion functions
 module.exports = {
   MODEL_NAME,
   createEmbedding,
