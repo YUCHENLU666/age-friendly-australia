@@ -1,3 +1,4 @@
+// clean the null and undefined, then delete HTML tags, covert HTML characters, Remove extra spaces
 function cleanText(value) {
   return String(value ?? '')
     .replace(/<[^>]*>/g, ' ')
@@ -12,6 +13,7 @@ function cleanText(value) {
     .trim()
 }
 
+// Constructing Activity Texts
 function buildActivityText(
   activity,
 ) {
@@ -49,6 +51,7 @@ function buildActivityText(
     .join(' ')
 }
 
+// Constructing Preference Texts
 function buildPreferenceText(
   preferences,
 ) {
@@ -79,6 +82,7 @@ function buildPreferenceText(
     .join(' ')
 }
 
+//Indicates that the three functions are being made available for use by other backend files
 module.exports = {
   cleanText,
   buildActivityText,

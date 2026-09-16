@@ -19,21 +19,29 @@ import {
   savePreferences,
 } from '@/services/preferencesService'
 
+//Activity and loading states
 const activities = ref([])
 const loading = ref(true)
 
+//Load saved preferences
 const preferences = ref(
   getPreferences(),
 )
 
+//Preserve the original state
+//Convert the preferences present when the page first opens into a string and save them
 const savedSnapshot = ref(
   JSON.stringify(preferences.value),
 )
 
+//Status Notification
+//After saving or clearing preferences, the page will display a notification
 const statusMessage = ref('')
 
 let statusTimer = null
 
+//Call `getActivities()`, and upon success, 
+// save the complete list of activities to `activities.value`
 onMounted(async () => {
   try {
     activities.value =
@@ -45,6 +53,8 @@ onMounted(async () => {
   }
 })
 
+//Generate region options
+//Set used to remove same suburb
 const areas = computed(() => {
   return [
     ...new Set(
@@ -58,6 +68,10 @@ const areas = computed(() => {
   ].sort()
 })
 
+// ======================================================
+// Generate interest options
+// ======================================================
+//Exclude unsuitable tags
 const excludedInterestTags =
   new Set([
     'PALS',
@@ -67,6 +81,7 @@ const excludedInterestTags =
     'Storytime',
   ])
 
+//Collect tags from all activities
 const interests = computed(() => {
   return [
     ...new Set(
@@ -83,6 +98,7 @@ const interests = computed(() => {
   ].sort()
 })
 
+//Day of the week options
 const days = [
   'Monday',
   'Tuesday',
@@ -94,6 +110,7 @@ const days = [
   'Flexible',
 ]
 
+//Generate interests type options
 const activityTypes =
   computed(() => {
     return [
@@ -108,6 +125,9 @@ const activityTypes =
     ].sort()
   })
 
+//Add the following to the activity type buttons:
+// - Short letter/abbreviation
+// - Descriptive text
 const activityTypeMeta = {
   'Arts & crafts': {
     short: 'AC',
@@ -152,6 +172,7 @@ const activityTypeMeta = {
   },
 }
 
+//If a new activity type appears without configuration instructions, use the default content
 const getActivityTypeMeta = (
   type,
 ) => {
@@ -164,6 +185,7 @@ const getActivityTypeMeta = (
   )
 }
 
+//User selection and deselection
 const toggleArrayValue = (
   field,
   value,
@@ -171,6 +193,8 @@ const toggleArrayValue = (
   const current =
     preferences.value[field]
 
+  //if the current value not in the field, add it in the field
+  //if in the field, remove it
   if (current.includes(value)) {
     preferences.value[field] =
       current.filter(
@@ -187,6 +211,9 @@ const toggleArrayValue = (
   ]
 }
 
+//This state is used to control on-page prompts or the state of the save button
+//same, dont have not saved changes
+//not same, have not saved changes
 const hasUnsavedChanges =
   computed(() => {
     return (
@@ -197,6 +224,7 @@ const hasUnsavedChanges =
     )
   })
 
+  //Font size
 const textSizeLabel =
   computed(() => {
     if (
@@ -216,6 +244,8 @@ const textSizeLabel =
     return 'Standard'
   })
 
+//Save tips
+//Display a status message and automatically clear it after 3 seconds
 const showStatus = (
   message,
 ) => {
@@ -234,6 +264,7 @@ const showStatus = (
     }, 3000)
 }
 
+//Save preferences
 const save = () => {
   preferences.value =
     savePreferences(
@@ -250,6 +281,7 @@ const save = () => {
   )
 }
 
+//Clear preferences
 const reset = () => {
   preferences.value =
     clearPreferences()
@@ -263,6 +295,8 @@ const reset = () => {
     'Your saved preferences have been cleared.',
   )
 }
+
+//Preference Summary is in line 818
 </script>
 
 <template>
@@ -781,7 +815,6 @@ const reset = () => {
                     type="radio"
                     value="extra-large"
                   />
-
                   <div class="text-card-top">
                     <span>
                       Extra large

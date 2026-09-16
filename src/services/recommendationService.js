@@ -96,7 +96,7 @@ export async function getRecommendations(
         preferences?.activityTypes,
       ),
   }
-
+  //Send a POST request
   const response =
     await fetch(
       `${API_BASE_URL}/recommendations`,

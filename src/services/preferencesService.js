@@ -1,12 +1,20 @@
+//localStorage key name
 const PREFERENCES_KEY =
   'ageFriendlyAustralia.preferences'
 
+//Valid font size
 const TEXT_SIZE_OPTIONS = [
   'standard',
   'large',
   'extra-large',
 ]
 
+//Return to default preferences
+//when use it
+//user first visit the web
+//not save the preferences
+//saved data broken
+//user click Clear preferences
 function createDefaultPreferences() {
   return {
     generalArea: '',
@@ -17,6 +25,7 @@ function createDefaultPreferences() {
   }
 }
 
+//Clean the array
 function cleanStringArray(value) {
   if (!Array.isArray(value)) {
     return []
@@ -33,6 +42,7 @@ function cleanStringArray(value) {
   ]
 }
 
+//Cleanse complete preference objects
 function normalisePreferences(value) {
   const data =
     value &&
@@ -68,6 +78,12 @@ function normalisePreferences(value) {
   }
 }
 
+// ======================================================
+// Notify other components
+// ======================================================
+//After saving or clearing preferences,
+//it dispatches a custom event within the browser window
+//Carrying the latest preferences in the event
 function notifyPreferencesUpdated(
   preferences,
 ) {
@@ -87,8 +103,10 @@ function notifyPreferencesUpdated(
   )
 }
 
+//Reading preferences
 export function getPreferences() {
   try {
+    //form the localStorage
     const stored =
       localStorage.getItem(
         PREFERENCES_KEY,
@@ -106,6 +124,7 @@ export function getPreferences() {
   }
 }
 
+//save Preferences
 export function savePreferences(
   preferences,
 ) {
@@ -121,10 +140,12 @@ export function savePreferences(
     ),
   )
 
+  //Apply font immediately
   applyTextSizePreference(
     cleanedPreferences.textSize,
   )
 
+  //Send preference update event
   notifyPreferencesUpdated(
     cleanedPreferences,
   )
@@ -132,7 +153,9 @@ export function savePreferences(
   return cleanedPreferences
 }
 
+//Clear preferences
 export function clearPreferences() {
+  //remove localStorage
   localStorage.removeItem(
     PREFERENCES_KEY,
   )
@@ -144,6 +167,7 @@ export function clearPreferences() {
     defaults.textSize,
   )
 
+  //Notify other components
   notifyPreferencesUpdated(
     defaults,
   )
@@ -151,6 +175,7 @@ export function clearPreferences() {
   return defaults
 }
 
+//Apply font size
 export function applyTextSizePreference(
   value,
 ) {
@@ -169,6 +194,7 @@ export function applyTextSizePreference(
     textSize
 }
 
+//Restore fonts when the website launches
 export function applySavedTextSizePreference() {
   const preferences =
     getPreferences()
