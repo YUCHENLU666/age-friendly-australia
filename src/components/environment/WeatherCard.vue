@@ -25,6 +25,10 @@ const props = defineProps({
     type: String,
     required: true,
   },
+  activityTime: {
+    type: String,
+    required: true,
+  },
 })
 
 // Store the matching suburb weather.
@@ -91,82 +95,63 @@ onMounted(async () => {
 })
 
 // =========================
-// Find current weather hour
+// Find activity weather hour
 // =========================
-//
-// Open-Meteo stores weather as hourly arrays.
-//
-// Example:
-//
-// time:
-// [
-//   "2026-09-08T13:00",
-//   "2026-09-08T14:00",
-//   "2026-09-08T15:00"
-// ]
-//
-// temperature_2m:
-// [
-//   16,
-//   17,
-//   18
-// ]
-//
-// We need the same index from these arrays.
-const currentHourIndex = computed(() => {
+
+const activityHour = computed(() => {
+  if (!props.activityTime) {
+    return null
+  }
+
+  const match = props.activityTime.match(
+    /(\d{4}-\d{2}-\d{2})[ T](\d{2})/,
+  )
+
+  if (!match) {
+    return null
+  }
+
+  return `${match[1]}T${match[2]}:00`
+})
+
+const activityHourIndex = computed(() => {
   const hourly =
     locationWeather.value?.weather
       ?.hourly
 
-  if (!hourly) {
+  if (!hourly || !activityHour.value) {
     return -1
   }
 
-  // Get current Melbourne time.
-  const melbourneTime =
-    new Date().toLocaleString(
-      'sv-SE',
-      {
-        timeZone:
-          'Australia/Melbourne',
-        hour12: false,
-      },
-    )
+  return hourly.time.indexOf(
+    activityHour.value,
+  )
+})
 
-  // Example:
-  //
-  // 2026-09-08 15:42:00
-  //
-  // becomes:
-  //
-  // 2026-09-08T15:00
-  const currentHour =
-    `${melbourneTime.slice(
-      0,
-      13,
-    ).replace(' ', 'T')}:00`
+const airQualityHourIndex = computed(() => {
+  const hourly =
+    locationWeather.value?.air_quality?.hourly
+
+  if (!hourly || !activityHour.value) {
+    return -1
+  }
 
   return hourly.time.indexOf(
-    currentHour,
+    activityHour.value,
   )
 })
 
 // =========================
 // Get one weather value
 // =========================
-//
-// Example:
-//
-// getWeatherValue('temperature_2m')
-//
-// returns the current temperature.
+
 const getWeatherValue = (field) => {
   const hourly =
     locationWeather.value?.weather
       ?.hourly
 
   const index =
-    currentHourIndex.value
+    activityHourIndex.value
 
   if (
     !hourly ||
@@ -177,6 +162,20 @@ const getWeatherValue = (field) => {
 
   return hourly[field]?.[index] ??
     null
+}
+
+const getAirQualityValue = (field) => {
+  const hourly =
+    locationWeather.value?.air_quality?.hourly
+
+  const index =
+    airQualityHourIndex.value
+
+  if (!hourly || index === -1) {
+    return null
+  }
+
+  return hourly[field]?.[index] ?? null
 }
 </script>
 
@@ -211,6 +210,16 @@ const getWeatherValue = (field) => {
       class="weather-message"
     >
       Local weather unavailable
+    </p
+
+    <p
+      v-else-if="
+        activityHourIndex === -1 &&
+        airQualityHourIndex === -1
+      "
+      class="weather-message"
+    >
+      Forecast not available for this activity date
     </p>
 
     <!-- Weather available -->
@@ -270,6 +279,21 @@ const getWeatherValue = (field) => {
             }}
           </strong>
         </div>
+
+        <!-- Air quality -->
+        <div>
+          <span class="weather-label">
+            AQI (US)
+          </span>
+
+          <strong>
+            {{
+              getAirQualityValue(
+                'us_aqi',
+              ) ?? 'N/A'
+            }}
+          </strong>
+        </div>
       </div>
 
       <small class="weather-source">
@@ -303,7 +327,7 @@ const getWeatherValue = (field) => {
 .weather-values {
   display: grid;
   grid-template-columns:
-    repeat(3, 1fr);
+    repeat(4, 1fr);
   gap: 12px;
 }
 
@@ -314,7 +338,7 @@ const getWeatherValue = (field) => {
 }
 
 .weather-label {
-  font-size: 14px;
+  font-size: 14px; 
   color: #5f6b65;
 }
 
