@@ -52,6 +52,22 @@ async function fetchAllEvents() {
   return allEvents;
 }
 
+function extractImageUrl(event) {
+  const images = event.images?.images || [];
+  if (images.length === 0) return null;
+
+  // Prefer the primary image; fall back to the first available image
+  const primaryImage = images.find((img) => img.is_primary) || images[0];
+
+  // Prefer the 190x127 thumbnail (transformation_id 8) for card display;
+  // fall back to the 350x350 crop, then the original full-size image
+  const transforms = primaryImage.transforms?.transforms || [];
+  const thumbnail = transforms.find((t) => t.transformation_id === 8);
+  const squareCrop = transforms.find((t) => t.transformation_id === 27);
+
+  return thumbnail?.url || squareCrop?.url || primaryImage.original_url || null;
+}
+
 function extractKeyFields(event) {
   return {
     id: event.id,
@@ -67,6 +83,7 @@ function extractKeyFields(event) {
     lng: event.point?.lng || null,
     restrictions: event.restrictions || null,
     url: event.url,
+    image_url: extractImageUrl(event),
   };
 }
 
