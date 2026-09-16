@@ -272,7 +272,7 @@ def fetch_weather(
         weather_response = requests.get(
             weather_url,
             params=weather_params,
-            timeout=30,
+            timeout=60,
         )
 
         weather_response.raise_for_status()
@@ -306,6 +306,71 @@ def fetch_weather(
             "reason":
                 "Weather request failed",
             "weather": None,
+        }
+
+
+# ======================================================
+# Get Open-Meteo air quality
+# ======================================================
+
+def fetch_air_quality(
+    suburb,
+    latitude,
+    longitude,
+):
+    air_quality_url = (
+        "https://air-quality-api.open-meteo.com"
+        "/v1/air-quality"
+    )
+
+    air_quality_params = {
+        "latitude": latitude,
+        "longitude": longitude,
+
+        "hourly": (
+            "pm2_5,"
+            "pm10,"
+            "us_aqi"
+        ),
+
+        "timezone":
+            "Australia/Melbourne",
+
+        "forecast_days": 7,
+    }
+
+    try:
+        air_quality_response = requests.get(
+            air_quality_url,
+            params=air_quality_params,
+            timeout=30,
+        )
+
+        air_quality_response.raise_for_status()
+
+        print(
+            f"Air quality collected for "
+            f"{suburb}"
+        )
+
+        return {
+            "air_quality_available": True,
+            "air_quality_reason": None,
+            "air_quality":
+                air_quality_response.json(),
+        }
+
+    except requests.RequestException as error:
+        print(
+            f"Air quality request failed "
+            f"for {suburb}: {error}"
+        )
+
+        return {
+            "air_quality_available": False,
+            "air_quality_reason":
+                "Air quality request failed",
+            "air_quality": None,
         }
 
 
@@ -394,6 +459,11 @@ def main():
                     "reason":
                         "Exact location not provided",
                     "weather": None,
+                    "air_quality_available":
+                        False,
+                    "air_quality_reason":
+                        "Exact location not provided",
+                    "air_quality": None,
                 }
             )
 
@@ -449,6 +519,11 @@ def main():
                     "reason":
                         "Location could not be matched",
                     "weather": None,
+                    "air_quality_available":
+                        False,
+                    "air_quality_reason":
+                        "Location could not be matched",
+                    "air_quality": None,
                 }
             )
 
@@ -463,12 +538,29 @@ def main():
         # Get weather
         # ----------------------------------------------
 
+        weather_result = fetch_weather(
+            suburb,
+            latitude,
+            longitude,
+        )
+
+        # ----------------------------------------------
+        # Get air quality
+        # ----------------------------------------------
+
+        air_quality_result = fetch_air_quality(
+            suburb,
+            latitude,
+            longitude,
+        )
+
+        # Add air quality to the weather result.
+        weather_result.update(
+            air_quality_result
+        )
+
         weather_results.append(
-            fetch_weather(
-                suburb,
-                latitude,
-                longitude,
-            )
+            weather_result
         )
 
         # Avoid sending requests too quickly.
@@ -497,7 +589,10 @@ def main():
 
     output_data = {
         "source":
-            "Open-Meteo",
+            (
+                "Open-Meteo Weather "
+                "and Air Quality APIs"
+            ),
 
         "coverage":
             (
