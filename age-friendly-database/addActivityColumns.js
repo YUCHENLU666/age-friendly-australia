@@ -11,6 +11,7 @@ const columnsToAdd = [
   { name: 'longitude', type: 'REAL' },
   { name: 'restrictions', type: 'TEXT' },
   { name: 'url', type: 'TEXT' },
+  { name: 'image_url', type: 'TEXT' },
 ]
 
 async function addColumns() {

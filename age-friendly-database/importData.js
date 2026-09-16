@@ -60,8 +60,8 @@ async function importEventfindaActivities() {
       `INSERT INTO activities (
         event_name, category_tags, venue, suburb, day_time, recurrence,
         senior_relevant, source_note, description, is_free, latitude, longitude,
-        restrictions, url
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+        restrictions, url, image_url
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
     )
 
     events.forEach((event) => {
@@ -80,6 +80,7 @@ async function importEventfindaActivities() {
         event.lng || null,
         event.restrictions || null,
         event.url || null,
+        event.image_url || null,
       ])
     })
 
