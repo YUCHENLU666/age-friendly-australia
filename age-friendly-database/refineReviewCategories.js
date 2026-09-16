@@ -10,6 +10,7 @@ const MIXED_CATEGORIES = [
   'Covers, Tribute Bands',
   'Dance',
   'Festivals',
+  'Fashion',
 ];
 
 // Categories confirmed unsuitable regardless of restrictions field

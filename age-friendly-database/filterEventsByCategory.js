@@ -35,6 +35,7 @@ const INCLUDE_CATEGORIES = [
   'Socials and Balls',
   'Games, Hobbies',
   'Circus',
+  'Ceremonies, Commemorations',
 ];
 
 // Categories excluded — nightlife / high-intensity / not age-friendly
@@ -50,6 +51,7 @@ const EXCLUDE_CATEGORIES = [
   'Equestrian',
   // Newly added after uncategorised review
   'Children, Kids, Holidays',
+  'Cricket',
 ];
 
 // Categories still under review — kept out for now, flagged for manual check
@@ -71,6 +73,7 @@ const REVIEW_CATEGORIES = [
   'Quiz, Karaoke',
   // Newly added — single event, ambiguous category name
   'Contemporary',
+  'Fashion',
 ];
 
 function filterEvents() {

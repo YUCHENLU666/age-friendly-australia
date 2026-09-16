@@ -49,7 +49,21 @@ async function fetchAllEvents() {
     await new Promise((resolve) => setTimeout(resolve, 1100));
   }
 
-  return allEvents;
+  // De-duplicate by id — pagination against a live, popularity-sorted feed
+  // can occasionally return the same event twice if its rank shifts
+  // between requests.
+  const seen = new Set();
+  const deduped = allEvents.filter((event) => {
+    if (seen.has(event.id)) return false;
+    seen.add(event.id);
+    return true;
+  });
+
+  if (deduped.length !== allEvents.length) {
+    console.log(`⚠️ Removed ${allEvents.length - deduped.length} duplicate event(s) introduced by pagination drift.`);
+  }
+
+  return deduped;
 }
 
 function extractImageUrl(event) {
