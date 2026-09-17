@@ -15,16 +15,19 @@ import {
 //
 // <WeatherCard
 //   :suburb="activity.suburb"
+//   :activity-time="activity.schedule"
 // />
 //
 // If activity.suburb is "Oakleigh",
 // this component will display
 // Oakleigh weather information.
+//
 const props = defineProps({
   suburb: {
     type: String,
     required: true,
   },
+
   activityTime: {
     type: String,
     required: true,
@@ -44,7 +47,7 @@ const errorMessage = ref('')
 // Load weather JSON
 // =========================
 //
-// The JSON file is currently stored at:
+// The JSON file is stored at:
 //
 // public/data/melbourne_suburb_weather.json
 //
@@ -68,7 +71,7 @@ onMounted(async () => {
     const data = await response.json()
 
     // Find the weather record whose suburb
-    // matches the suburb received from the parent.
+    // matches the suburb received from parent.
     //
     // Example:
     //
@@ -81,7 +84,7 @@ onMounted(async () => {
       data.locations.find(
         (location) =>
           location.suburb ===
-          props.suburb &&
+            props.suburb &&
           location.weather_available,
       ) || null
   } catch (error) {
@@ -97,15 +100,24 @@ onMounted(async () => {
 // =========================
 // Find activity weather hour
 // =========================
-
+//
+// Example:
+//
+// 2026-09-17 14:30:00
+//
+// becomes:
+//
+// 2026-09-17T14:00
+//
 const activityHour = computed(() => {
   if (!props.activityTime) {
     return null
   }
 
-  const match = props.activityTime.match(
-    /(\d{4}-\d{2}-\d{2})[ T](\d{2})/,
-  )
+  const match =
+    props.activityTime.match(
+      /(\d{4}-\d{2}-\d{2})[ T](\d{2})/,
+    )
 
   if (!match) {
     return null
@@ -114,12 +126,19 @@ const activityHour = computed(() => {
   return `${match[1]}T${match[2]}:00`
 })
 
+// =========================
+// Find matching weather hour
+// =========================
+
 const activityHourIndex = computed(() => {
   const hourly =
     locationWeather.value?.weather
       ?.hourly
 
-  if (!hourly || !activityHour.value) {
+  if (
+    !hourly ||
+    !activityHour.value
+  ) {
     return -1
   }
 
@@ -128,11 +147,20 @@ const activityHourIndex = computed(() => {
   )
 })
 
+// =========================
+// Find matching air quality hour
+// =========================
+
 const airQualityHourIndex = computed(() => {
   const hourly =
-    locationWeather.value?.air_quality?.hourly
+    locationWeather.value
+      ?.air_quality
+      ?.hourly
 
-  if (!hourly || !activityHour.value) {
+  if (
+    !hourly ||
+    !activityHour.value
+  ) {
     return -1
   }
 
@@ -160,28 +188,41 @@ const getWeatherValue = (field) => {
     return null
   }
 
-  return hourly[field]?.[index] ??
+  return (
+    hourly[field]?.[index] ??
     null
+  )
 }
+
+// =========================
+// Get one air quality value
+// =========================
 
 const getAirQualityValue = (field) => {
   const hourly =
-    locationWeather.value?.air_quality?.hourly
+    locationWeather.value
+      ?.air_quality
+      ?.hourly
 
   const index =
     airQualityHourIndex.value
 
-  if (!hourly || index === -1) {
+  if (
+    !hourly ||
+    index === -1
+  ) {
     return null
   }
 
-  return hourly[field]?.[index] ?? null
+  return (
+    hourly[field]?.[index] ??
+    null
+  )
 }
 </script>
 
 <template>
   <div class="weather-card">
-
     <!-- While JSON is loading -->
     <p
       v-if="loading"
@@ -199,19 +240,24 @@ const getAirQualityValue = (field) => {
     </p>
 
     <!--
-      Some activity records use "Monash LGA".
+      Some activity records may use an area
+      rather than an exact suburb.
 
-      That is not an exact suburb,
-      so our Python pipeline does not
-      provide weather for it.
+      If no matching suburb weather exists,
+      show this message.
     -->
     <p
       v-else-if="!locationWeather"
       class="weather-message"
     >
       Local weather unavailable
-    </p
+    </p>
 
+    <!--
+      Weather exists for the suburb,
+      but forecast data does not cover
+      this activity's date/time.
+    -->
     <p
       v-else-if="
         activityHourIndex === -1 &&
@@ -245,8 +291,14 @@ const getAirQualityValue = (field) => {
             {{
               getWeatherValue(
                 'temperature_2m',
-              )
-            }}°C
+              ) ?? 'N/A'
+            }}<template
+              v-if="
+                getWeatherValue(
+                  'temperature_2m',
+                ) !== null
+              "
+            >°C</template>
           </strong>
         </div>
 
@@ -260,8 +312,14 @@ const getAirQualityValue = (field) => {
             {{
               getWeatherValue(
                 'precipitation_probability',
-              )
-            }}%
+              ) ?? 'N/A'
+            }}<template
+              v-if="
+                getWeatherValue(
+                  'precipitation_probability',
+                ) !== null
+              "
+            >%</template>
           </strong>
         </div>
 
@@ -275,7 +333,7 @@ const getAirQualityValue = (field) => {
             {{
               getWeatherValue(
                 'uv_index',
-              )
+              ) ?? 'N/A'
             }}
           </strong>
         </div>
@@ -300,7 +358,6 @@ const getAirQualityValue = (field) => {
         Source: Open-Meteo
       </small>
     </div>
-
   </div>
 </template>
 
@@ -338,7 +395,7 @@ const getAirQualityValue = (field) => {
 }
 
 .weather-label {
-  font-size: 14px; 
+  font-size: 14px;
   color: #5f6b65;
 }
 
@@ -355,5 +412,12 @@ const getAirQualityValue = (field) => {
 .weather-message {
   margin: 0;
   color: #5f6b65;
+}
+
+@media (max-width: 700px) {
+  .weather-values {
+    grid-template-columns:
+      repeat(2, 1fr);
+  }
 }
 </style>
