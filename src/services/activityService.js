@@ -83,6 +83,7 @@ function getDay(schedule) {
   if (value.includes('sun')) {
     return 'Sunday'
   }
+
   // If the schedule does not specify a day, return 'Flexible'
   return 'Flexible'
 }
@@ -554,7 +555,10 @@ function normaliseActivity(
           'Source not provided',
       ),
 
+    // Prefer the real activity image from the database.
+    // If image_url is empty, use the original fallback image.
     image:
+      row.image_url ||
       getActivityImage(
         name,
         tags,

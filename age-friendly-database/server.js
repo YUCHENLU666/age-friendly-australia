@@ -129,7 +129,8 @@ app.get(
             latitude,
             longitude,
             restrictions,
-            url
+            url,
+            image_url
           FROM activities
           ORDER BY id
         `)
@@ -237,11 +238,12 @@ app.post(
   async (req, res) => {
     try {
       //{
-//   generalArea: 'Melbourne CBD',
-//   interests: ['Jazz'],
-//   preferredDays: ['Wednesday'],
-//   activityTypes: ['Social'],
-// }
+      //   generalArea: 'Melbourne CBD',
+      //   interests: ['Jazz'],
+      //   preferredDays: ['Wednesday'],
+      //   activityTypes: ['Social'],
+      // }
+
       const requestBody =
         req.body ?? {}
 
@@ -300,7 +302,7 @@ app.post(
           ORDER BY day_time
         `)
 
-      //Call the AI ​​recommendation function
+      //Call the AI recommendation function
       const recommendations =
         await recommendActivities(
           preferences,
