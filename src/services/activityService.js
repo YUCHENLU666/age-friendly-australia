@@ -51,6 +51,24 @@ function normaliseTags(value) {
     .filter(Boolean)
 }
 
+function isUpcoming(row) {
+  const raw = row.day_time ?? row.dayTime ?? row.schedule ?? ''
+  const trimmed = raw.trim()
+
+  if (!trimmed) {
+    return false
+  }
+
+  const parsed = new Date(trimmed)
+  const looksLikeDate = !Number.isNaN(parsed.getTime())
+
+  if (looksLikeDate) {
+    return parsed >= new Date()
+  }
+
+  return true
+}
+
 // Normalize the date of the activity into a day of the week
 function getDay(schedule) {
   const value =
@@ -671,8 +689,11 @@ export async function getActivities() {
   activitiesLoadingPromise =
     fetchActivities()
       .then((activityRows) => {
+        const upcomingRows =
+          activityRows.filter(isUpcoming)
+
         cachedActivities =
-          activityRows.map(
+          upcomingRows.map(
             (row, index) =>
               normaliseActivity(
                 row,
