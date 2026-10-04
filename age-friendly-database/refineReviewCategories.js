@@ -11,6 +11,7 @@ const MIXED_CATEGORIES = [
   'Dance',
   'Festivals',
   'Fashion',
+  'Rock',
 ];
 
 // Categories confirmed unsuitable regardless of restrictions field
@@ -25,6 +26,7 @@ const CONFIRMED_EXCLUDE = [
   'Funk',
   'R&B, Soul',
   'Business & Professional',
+  'Family & Lifestyle',
 ];
 
 // Categories confirmed suitable regardless of restrictions field
