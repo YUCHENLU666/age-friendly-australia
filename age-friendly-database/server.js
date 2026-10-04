@@ -9,6 +9,9 @@ const {
   recommendActivities,
 } = require('./ai/recommendationService')
 
+const { getCommunityVenues } = require('./vicmapFoiService')
+const { getBusPositions } = require('./ptvRealtimeService')
+
 const app = express()
 
 const PORT = process.env.PORT || 3000
@@ -358,6 +361,99 @@ app.post(
       res.status(500).json({
         error:
           'Unable to generate recommendations.',
+      })
+    }
+  },
+)
+
+// =========================
+// Realtime / external APIs
+// =========================
+
+// GET /api/realtime/community-venues
+app.get(
+  '/api/realtime/community-venues',
+  async (req, res) => {
+    try {
+      const featureType =
+        req.query.type || 'community venue'
+
+      const featureSubtype =
+        req.query.subtype || null
+
+      const limit =
+        Number.parseInt(req.query.limit, 10) || 50
+
+      const venues = await getCommunityVenues(
+        featureType,
+        featureSubtype,
+        limit,
+      )
+
+      res.json(venues)
+    } catch (error) {
+      console.error(
+        'Vicmap API endpoint error:',
+        error.message,
+      )
+
+      res.status(502).json({
+        error: 'Unable to retrieve community venues.',
+      })
+    }
+  },
+)
+
+// =========================
+// PTV realtime cache
+// =========================
+
+const PTV_CACHE_DURATION_MS = 30 * 1000
+
+const ptvCache = new Map()
+
+// GET /api/realtime/bus-positions
+app.get(
+  '/api/realtime/bus-positions',
+  async (req, res) => {
+    try {
+      const routeId = req.query.routeId || null
+
+      const limit =
+        Number.parseInt(req.query.limit, 10) || 50
+
+      const cacheKey = `${routeId || 'all'}:${limit}`
+
+      const cached = ptvCache.get(cacheKey)
+
+      const now = Date.now()
+
+      if (
+        cached &&
+        now - cached.timestamp < PTV_CACHE_DURATION_MS
+      ) {
+        return res.json(cached.data)
+      }
+
+      const buses = await getBusPositions(
+        routeId,
+        limit,
+      )
+
+      ptvCache.set(cacheKey, {
+        timestamp: now,
+        data: buses,
+      })
+
+      res.json(buses)
+    } catch (error) {
+      console.error(
+        'PTV realtime API endpoint error:',
+        error.message,
+      )
+
+      res.status(502).json({
+        error: 'Unable to retrieve live bus positions.',
       })
     }
   },

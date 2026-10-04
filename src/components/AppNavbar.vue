@@ -19,23 +19,11 @@ import {
 
 const route = useRoute()
 
-// =====================================
-// Text size menu state
-// =====================================
-
-// Controls whether the text size menu
-// is currently open or closed.
 const textMenuOpen = ref(false)
 
-// Read the currently saved text size
-// from the full Preferences system.
 const currentTextSize = ref(
   getPreferences().textSize,
 )
-
-// =====================================
-// Text size options
-// =====================================
 
 const textSizeOptions = [
   {
@@ -58,12 +46,6 @@ const textSizeOptions = [
   },
 ]
 
-// =====================================
-// Current text size label
-// =====================================
-
-// Find the user-friendly label that
-// corresponds to the current value.
 const currentTextSizeLabel =
   computed(() => {
     const option =
@@ -79,57 +61,31 @@ const currentTextSizeLabel =
     )
   })
 
-// =====================================
-// Open / close text size menu
-// =====================================
-
 const openTextMenu = () => {
-  // Re-read the latest saved value
-  // before opening the menu.
   currentTextSize.value =
     getPreferences().textSize
 
-  // Toggle the menu.
   textMenuOpen.value =
     !textMenuOpen.value
 }
 
-// =====================================
-// Update text size
-// =====================================
-
 const setTextSize = (value) => {
-  // Read the current complete preference object.
   const preferences =
     getPreferences()
 
-  // Only update text size.
   preferences.textSize =
     value
 
-  // Save the complete preference object.
   savePreferences(
     preferences,
   )
 
-  // Update the Navbar state immediately.
   currentTextSize.value =
     value
 
-  // Close the menu.
   textMenuOpen.value = false
 }
 
-// =====================================
-// Listen for Preferences updates
-// =====================================
-
-// PreferencesView.vue may also change
-// the text size.
-//
-// preferencesService.js dispatches the
-// custom event below whenever preferences
-// are updated.
 const handlePreferencesUpdate = (
   event,
 ) => {
@@ -140,10 +96,6 @@ const handlePreferencesUpdate = (
       event.detail.textSize
   }
 }
-
-// =====================================
-// Close menu when clicking outside
-// =====================================
 
 const handleDocumentClick = (
   event,
@@ -164,10 +116,6 @@ const handleDocumentClick = (
   }
 }
 
-// =====================================
-// Close menu with Escape
-// =====================================
-
 const handleKeydown = (
   event,
 ) => {
@@ -179,10 +127,6 @@ const handleKeydown = (
   }
 }
 
-// =====================================
-// Close menu when changing page
-// =====================================
-
 watch(
   () => route.fullPath,
   () => {
@@ -190,10 +134,6 @@ watch(
       false
   },
 )
-
-// =====================================
-// Register event listeners
-// =====================================
 
 onMounted(() => {
   window.addEventListener(
@@ -211,10 +151,6 @@ onMounted(() => {
     handleKeydown,
   )
 })
-
-// =====================================
-// Remove event listeners
-// =====================================
 
 onBeforeUnmount(() => {
   window.removeEventListener(
@@ -242,9 +178,6 @@ onBeforeUnmount(() => {
     >
       <div class="navbar-inner">
 
-        <!-- =========================
-             Website brand
-        ========================== -->
         <RouterLink
           to="/"
           class="navbar-brand"
@@ -268,14 +201,8 @@ onBeforeUnmount(() => {
           </span>
         </RouterLink>
 
-        <!-- =========================
-             Navigation right section
-        ========================== -->
         <div class="navbar-right">
 
-          <!-- =========================
-               Main navigation links
-          ========================== -->
           <div class="navbar-links">
 
             <RouterLink
@@ -300,16 +227,19 @@ onBeforeUnmount(() => {
             </RouterLink>
 
             <RouterLink
+              to="/live"
+              class="navbar-link"
+            >
+              Live
+            </RouterLink>
+
+            <RouterLink
               to="/saved"
               class="navbar-link"
             >
               Saved
             </RouterLink>
 
-            <!--
-              Preferences restored
-              from the main branch.
-            -->
             <RouterLink
               to="/preferences"
               class="navbar-link"
@@ -319,9 +249,6 @@ onBeforeUnmount(() => {
 
           </div>
 
-          <!-- =========================
-               Text size quick menu
-          ========================== -->
           <div class="navbar-text-size">
 
             <button
@@ -369,9 +296,6 @@ onBeforeUnmount(() => {
               </span>
             </button>
 
-            <!-- =========================
-                 Text size popup
-            ========================== -->
             <div
               v-if="textMenuOpen"
               id="text-size-menu"
@@ -380,7 +304,6 @@ onBeforeUnmount(() => {
               aria-label="Text size"
             >
 
-              <!-- Menu header -->
               <div
                 class="navbar-text-menu-header"
               >
@@ -407,9 +330,6 @@ onBeforeUnmount(() => {
                 </button>
               </div>
 
-              <!-- =========================
-                   Text size choices
-              ========================== -->
               <div
                 class="navbar-text-options"
                 role="radiogroup"
@@ -481,9 +401,6 @@ onBeforeUnmount(() => {
                 </button>
               </div>
 
-              <!-- =========================
-                   Full preferences link
-              ========================== -->
               <RouterLink
                 to="/preferences"
                 class="navbar-text-manage"

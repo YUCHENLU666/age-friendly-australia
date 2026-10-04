@@ -193,6 +193,30 @@ const router = createRouter({
     },
 
     // =========================
+    // Live real-time information page
+    // =========================
+    {
+      // URL:
+      //
+      // /live
+      path: '/live',
+
+      name: 'live-information',
+
+      // Load LiveInformationView.vue.
+      component: () =>
+        import(
+          '@/views/LiveInformationView.vue'
+        ),
+
+      // This page requires login,
+      // consistent with other feature pages.
+      meta: {
+        requiresAuth: true,
+      },
+    },
+
+    // =========================
     // Saved items page
     // =========================
     {
