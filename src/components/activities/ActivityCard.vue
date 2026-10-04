@@ -11,9 +11,8 @@ import { RouterLink } from 'vue-router'
 
 // Import the reusable weather component.
 //
-// WeatherCard receives a suburb,
-// then finds the matching weather data
-// from the public weather JSON file.
+// WeatherCard receives a suburb
+// and the activity schedule.
 import WeatherCard from '@/components/environment/WeatherCard.vue'
 
 // =========================
@@ -31,6 +30,7 @@ import WeatherCard from '@/components/environment/WeatherCard.vue'
 //   :activity="activity"
 //   :saved="true"
 // />
+//
 defineProps({
   // Full activity information.
   //
@@ -65,6 +65,7 @@ defineProps({
 //
 // The parent page then handles
 // the actual save / unsave logic.
+//
 defineEmits([
   'toggle-save',
 ])
@@ -234,28 +235,29 @@ defineEmits([
            Reusable Weather Component
            =========================
 
-           ActivityCard passes the suburb
-           to WeatherCard.
-
-           Example:
+           ActivityCard passes:
 
            activity.suburb
                   ↓
               "Oakleigh"
-                  ↓
-           WeatherCard.vue
-                  ↓
-           Search Oakleigh inside
-           melbourne_suburb_weather.json
-                  ↓
-           Temperature / Rain / UV
 
-           This means WeatherCard can also
-           be reused in other pages later,
-           such as ActivityDetailView.vue.
+           and:
+
+           activity.schedule
+                  ↓
+           "2026-09-20 14:30:00"
+
+           WeatherCard first tries to show
+           weather for the activity time.
+
+           If that time is outside the
+           forecast range, WeatherCard
+           falls back to current local
+           conditions.
       -->
       <WeatherCard
         :suburb="activity.suburb"
+        :activity-time="activity.schedule"
       />
 
       <!-- =========================

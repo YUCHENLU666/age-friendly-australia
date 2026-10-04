@@ -61,3 +61,5 @@ __screenshots__/
 
 # Vite
 *.timestamp-*-*.mjs
+
+age-friendly-database/*.before-images.db
