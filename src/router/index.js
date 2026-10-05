@@ -4,21 +4,24 @@ import {
 } from 'vue-router'
 
 // Import the Home page directly.
-// Because HomeView is used frequently, we import it normally.
+// Because HomeView is used frequently,
+// we import it normally.
 import HomeView from '@/views/HomeView.vue'
 
 // =========================
 // Create Vue Router
 // =========================
 const router = createRouter({
-  // createWebHistory() allows the website to use
-  // normal browser URLs such as:
+  // createWebHistory() allows the website
+  // to use normal browser URLs such as:
   //
   // /
   // /login
   // /activities
   // /services
+  // /live
   // /saved
+  // /calendar
   // /preferences
   //
   // instead of URLs with # symbols.
@@ -61,8 +64,8 @@ const router = createRouter({
       //   requiresAuth: true
       // }
       //
-      // because the login page must be accessible
-      // before the administrator logs in.
+      // because the login page must be
+      // accessible before the user logs in.
     },
 
     // =========================
@@ -107,7 +110,7 @@ const router = createRouter({
           '@/views/ActivitiesView.vue'
         ),
 
-      // Administrator must be logged in.
+      // User must be logged in.
       meta: {
         requiresAuth: true,
       },
@@ -160,7 +163,7 @@ const router = createRouter({
           '@/views/ServicesView.vue'
         ),
 
-      // Administrator must be logged in.
+      // User must be logged in.
       meta: {
         requiresAuth: true,
       },
@@ -240,6 +243,45 @@ const router = createRouter({
     },
 
     // =========================
+    // Personal Calendar page
+    // =========================
+    {
+      // Epic 7 Personal Calendar.
+      //
+      // URL:
+      //
+      // /calendar
+      //
+      // This page allows users to:
+      //
+      // 1. View saved activities
+      //    on their activity dates.
+      //
+      // 2. Choose planned visit dates
+      //    for saved services.
+      //
+      // 3. View activities and planned
+      //    service visits together.
+      path: '/calendar',
+
+      name: 'calendar',
+
+      // Lazy-load CalendarView.vue
+      // only when the user visits
+      // the calendar page.
+      component: () =>
+        import(
+          '@/views/CalendarView.vue'
+        ),
+
+      // Keep the calendar protected
+      // like the other main feature pages.
+      meta: {
+        requiresAuth: true,
+      },
+    },
+
+    // =========================
     // Preferences page
     // =========================
     {
@@ -308,7 +350,7 @@ const router = createRouter({
 //
 // User enters:
 //
-// /activities
+// /calendar
 //
 //        ↓
 //
@@ -316,7 +358,8 @@ const router = createRouter({
 //
 //        ↓
 //
-// Check whether Activities requires login.
+// Check whether Calendar
+// requires login.
 //
 //        ↓
 //
@@ -326,13 +369,13 @@ const router = createRouter({
 //
 // Logged in?
 //
-// YES → continue to /activities
+// YES → continue to /calendar
 //
 // NO → redirect to /login
 //
 router.beforeEach((to) => {
   // =========================
-  // Read administrator login status
+  // Read login status
   // =========================
   //
   // LoginView.vue saves this value
@@ -362,7 +405,7 @@ router.beforeEach((to) => {
   //
   // User wants:
   //
-  // /preferences
+  // /calendar
   //
   // Then:
   //
@@ -383,13 +426,13 @@ router.beforeEach((to) => {
   }
 
   // =========================
-  // Prevent logged-in admin
+  // Prevent logged-in user
   // from returning to login
   // =========================
   //
   // Example:
   //
-  // Admin logs in successfully
+  // User logs in successfully
   //        ↓
   // Goes to homepage
   //        ↓

@@ -17,14 +17,46 @@ import {
   savePreferences,
 } from '@/services/preferencesService'
 
+// =========================
+// Current route
+// =========================
+//
+// useRoute() gives information about
+// the page the user is currently viewing.
+//
+// We use it below so that the text-size
+// menu automatically closes when the
+// user changes to another page.
+//
 const route = useRoute()
 
+// =========================
+// Text-size menu state
+// =========================
+//
+// Controls whether the accessibility
+// text-size popup menu is open or closed.
+//
 const textMenuOpen = ref(false)
 
+// =========================
+// Current text size
+// =========================
+//
+// Read the text size that was previously
+// saved in the user's preferences.
+//
 const currentTextSize = ref(
   getPreferences().textSize,
 )
 
+// =========================
+// Available text size options
+// =========================
+//
+// These options are shown inside
+// the text-size popup menu.
+//
 const textSizeOptions = [
   {
     value: 'standard',
@@ -46,6 +78,22 @@ const textSizeOptions = [
   },
 ]
 
+// =========================
+// Current text-size label
+// =========================
+//
+// Convert the saved value:
+//
+// "standard"
+// "large"
+// "extra-large"
+//
+// into a user-friendly label:
+//
+// "Standard"
+// "Large"
+// "Extra large"
+//
 const currentTextSizeLabel =
   computed(() => {
     const option =
@@ -61,6 +109,16 @@ const currentTextSizeLabel =
     )
   })
 
+// =========================
+// Open / close text-size menu
+// =========================
+//
+// Before opening the menu, read the
+// latest preference value again.
+//
+// This keeps the Navbar in sync if
+// PreferencesView changed the text size.
+//
 const openTextMenu = () => {
   currentTextSize.value =
     getPreferences().textSize
@@ -69,6 +127,14 @@ const openTextMenu = () => {
     !textMenuOpen.value
 }
 
+// =========================
+// Change text size
+// =========================
+//
+// This updates only the textSize field
+// inside the complete preferences object,
+// then saves the updated preferences.
+//
 const setTextSize = (value) => {
   const preferences =
     getPreferences()
@@ -80,12 +146,28 @@ const setTextSize = (value) => {
     preferences,
   )
 
+  // Update Navbar immediately.
   currentTextSize.value =
     value
 
+  // Close the menu after selection.
   textMenuOpen.value = false
 }
 
+// =========================
+// Listen for preference updates
+// =========================
+//
+// PreferencesView can also change
+// accessibility settings.
+//
+// preferencesService dispatches the custom
+// event "age-friendly-preferences-updated"
+// when the preferences are changed.
+//
+// This allows the Navbar to update
+// without refreshing the page.
+//
 const handlePreferencesUpdate = (
   event,
 ) => {
@@ -97,6 +179,13 @@ const handlePreferencesUpdate = (
   }
 }
 
+// =========================
+// Close menu when clicking outside
+// =========================
+//
+// If the user clicks anywhere outside
+// .navbar-text-size, close the popup.
+//
 const handleDocumentClick = (
   event,
 ) => {
@@ -116,6 +205,12 @@ const handleDocumentClick = (
   }
 }
 
+// =========================
+// Close menu with Escape key
+// =========================
+//
+// This improves keyboard accessibility.
+//
 const handleKeydown = (
   event,
 ) => {
@@ -127,6 +222,20 @@ const handleKeydown = (
   }
 }
 
+// =========================
+// Close menu after route change
+// =========================
+//
+// Example:
+//
+// User opens text-size menu
+//        ↓
+// clicks Calendar
+//        ↓
+// route.fullPath changes
+//        ↓
+// menu closes automatically
+//
 watch(
   () => route.fullPath,
   () => {
@@ -135,6 +244,13 @@ watch(
   },
 )
 
+// =========================
+// Register event listeners
+// =========================
+//
+// These listeners are added when
+// the Navbar component is mounted.
+//
 onMounted(() => {
   window.addEventListener(
     'age-friendly-preferences-updated',
@@ -152,6 +268,14 @@ onMounted(() => {
   )
 })
 
+// =========================
+// Remove event listeners
+// =========================
+//
+// Clean up listeners when the component
+// is removed to avoid duplicate listeners
+// or unnecessary memory usage.
+//
 onBeforeUnmount(() => {
   window.removeEventListener(
     'age-friendly-preferences-updated',
@@ -172,12 +296,19 @@ onBeforeUnmount(() => {
 
 <template>
   <header class="app-header">
+
+    <!-- =========================
+         Main navigation bar
+    ========================== -->
     <nav
       class="app-navbar"
       aria-label="Main navigation"
     >
       <div class="navbar-inner">
 
+        <!-- =========================
+             Website brand / Home link
+        ========================== -->
         <RouterLink
           to="/"
           class="navbar-brand"
@@ -201,10 +332,17 @@ onBeforeUnmount(() => {
           </span>
         </RouterLink>
 
+        <!-- =========================
+             Right side of Navbar
+        ========================== -->
         <div class="navbar-right">
 
+          <!-- =========================
+               Main navigation links
+          ========================== -->
           <div class="navbar-links">
 
+            <!-- Home -->
             <RouterLink
               to="/"
               class="navbar-link"
@@ -212,6 +350,7 @@ onBeforeUnmount(() => {
               Home
             </RouterLink>
 
+            <!-- Activities -->
             <RouterLink
               to="/activities"
               class="navbar-link"
@@ -219,6 +358,7 @@ onBeforeUnmount(() => {
               Activities
             </RouterLink>
 
+            <!-- Services -->
             <RouterLink
               to="/services"
               class="navbar-link"
@@ -226,6 +366,7 @@ onBeforeUnmount(() => {
               Services
             </RouterLink>
 
+            <!-- Live information -->
             <RouterLink
               to="/live"
               class="navbar-link"
@@ -233,6 +374,7 @@ onBeforeUnmount(() => {
               Live
             </RouterLink>
 
+            <!-- Saved activities and services -->
             <RouterLink
               to="/saved"
               class="navbar-link"
@@ -240,6 +382,28 @@ onBeforeUnmount(() => {
               Saved
             </RouterLink>
 
+            <!-- =========================
+                 Epic 7 Personal Calendar
+            ========================== -->
+            <!--
+              This new navigation link opens
+              CalendarView.vue through the
+              /calendar route.
+
+              The Calendar page allows users to:
+              1. View saved activities by date.
+              2. Set planned visit dates for
+                 saved services.
+              3. View both together in one place.
+            -->
+            <RouterLink
+              to="/calendar"
+              class="navbar-link"
+            >
+              Calendar
+            </RouterLink>
+
+            <!-- Accessibility preferences -->
             <RouterLink
               to="/preferences"
               class="navbar-link"
@@ -249,8 +413,15 @@ onBeforeUnmount(() => {
 
           </div>
 
+          <!-- =========================
+               Text-size quick menu
+          ========================== -->
           <div class="navbar-text-size">
 
+            <!--
+              Button used to open or close
+              the text-size popup.
+            -->
             <button
               class="navbar-text-trigger"
               type="button"
@@ -263,6 +434,7 @@ onBeforeUnmount(() => {
                 openTextMenu
               "
             >
+              <!-- Text-size icon -->
               <span
                 class="navbar-text-icon"
                 aria-hidden="true"
@@ -270,6 +442,7 @@ onBeforeUnmount(() => {
                 Aa
               </span>
 
+              <!-- Current text-size label -->
               <span
                 class="navbar-text-trigger-copy"
               >
@@ -284,6 +457,7 @@ onBeforeUnmount(() => {
                 </small>
               </span>
 
+              <!-- Dropdown arrow -->
               <span
                 class="navbar-text-chevron"
                 :class="{
@@ -296,6 +470,9 @@ onBeforeUnmount(() => {
               </span>
             </button>
 
+            <!-- =========================
+                 Text-size popup
+            ========================== -->
             <div
               v-if="textMenuOpen"
               id="text-size-menu"
@@ -304,6 +481,7 @@ onBeforeUnmount(() => {
               aria-label="Text size"
             >
 
+              <!-- Popup header -->
               <div
                 class="navbar-text-menu-header"
               >
@@ -318,6 +496,7 @@ onBeforeUnmount(() => {
                   </p>
                 </div>
 
+                <!-- Close popup button -->
                 <button
                   class="navbar-text-close"
                   type="button"
@@ -330,6 +509,9 @@ onBeforeUnmount(() => {
                 </button>
               </div>
 
+              <!-- =========================
+                   Text-size choices
+              ========================== -->
               <div
                 class="navbar-text-options"
                 role="radiogroup"
@@ -361,6 +543,10 @@ onBeforeUnmount(() => {
                     )
                   "
                 >
+                  <!--
+                    Visual preview of
+                    the selected text size.
+                  -->
                   <span
                     class="navbar-text-preview"
                     :class="
@@ -371,6 +557,7 @@ onBeforeUnmount(() => {
                     Aa
                   </span>
 
+                  <!-- Option name and description -->
                   <span
                     class="navbar-text-option-copy"
                   >
@@ -387,6 +574,10 @@ onBeforeUnmount(() => {
                     </small>
                   </span>
 
+                  <!--
+                    Show a tick next to
+                    the currently selected option.
+                  -->
                   <span
                     class="navbar-text-option-state"
                     aria-hidden="true"
@@ -401,6 +592,9 @@ onBeforeUnmount(() => {
                 </button>
               </div>
 
+              <!-- =========================
+                   Link to full Preferences
+              ========================== -->
               <RouterLink
                 to="/preferences"
                 class="navbar-text-manage"
