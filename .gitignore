@@ -26,6 +26,7 @@ data/raw/*.json
 
 # Eventfinda activity data
 age-friendly-database/eventfinda_*.json
+!age-friendly-database/eventfinda_whitelist.json
 age-friendly-database/age-friendly.db.backup*
 
 # Build output
