@@ -11,6 +11,8 @@ import {
 
 import {
   activityTimeToHour,
+  classifyAqi,
+  classifyUv,
   getForecastMessage,
   getForecastState,
   getHourlyValue,
@@ -268,6 +270,32 @@ function getAirQualityValue(
     field,
   )
 }
+
+// =========================
+// UV and AQI categories
+// =========================
+//
+// Keep the original numbers and
+// add a simple text category.
+//
+const uvCategory =
+  computed(() =>
+    classifyUv(
+      getWeatherValue(
+        'uv_index',
+      ),
+    ),
+  )
+
+const aqiCategory =
+  computed(() =>
+    classifyAqi(
+      getAirQualityValue(
+        'us_aqi',
+      ),
+    ),
+  )
+
 </script>
 
 <template>
@@ -414,6 +442,7 @@ function getAirQualityValue(
               UV
             </span>
 
+            <!-- Keep the original value -->
             <strong>
               {{
                 getWeatherValue(
@@ -421,6 +450,22 @@ function getAirQualityValue(
                 ) ?? 'N/A'
               }}
             </strong>
+
+            <!-- Add the UV category -->
+            <span
+              v-if="
+                getWeatherValue(
+                  'uv_index',
+                ) !== null
+              "
+              :class="[
+                'weather-category',
+                'weather-category--' +
+                  uvCategory.tone,
+              ]"
+            >
+              {{ uvCategory.label }}
+            </span>
           </div>
 
           <!-- Air quality -->
@@ -429,6 +474,7 @@ function getAirQualityValue(
               AQI (US)
             </span>
 
+            <!-- Keep the original value -->
             <strong>
               {{
                 getAirQualityValue(
@@ -436,6 +482,22 @@ function getAirQualityValue(
                 ) ?? 'N/A'
               }}
             </strong>
+
+            <!-- Add the AQI category -->
+            <span
+              v-if="
+                getAirQualityValue(
+                  'us_aqi',
+                ) !== null
+              "
+              :class="[
+                'weather-category',
+                'weather-category--' +
+                  aqiCategory.tone,
+              ]"
+            >
+              {{ aqiCategory.label }}
+            </span>
           </div>
         </div>
 
@@ -523,11 +585,15 @@ function getAirQualityValue(
 .weather-values {
   display: grid;
   grid-template-columns:
-    repeat(4, 1fr);
+    repeat(
+      4,
+      minmax(0, 1fr)
+    );
   gap: 12px;
 }
 
 .weather-values > div {
+  min-width: 0;
   display: flex;
   flex-direction: column;
   gap: 4px;
@@ -540,6 +606,61 @@ function getAirQualityValue(
 
 .weather-values strong {
   font-size: 18px;
+}
+
+.weather-category {
+  display: inline-block;
+  width: fit-content;
+  max-width: 100%;
+  padding: 4px 6px;
+  border-radius: 6px;
+  box-sizing: border-box;
+  overflow-wrap: anywhere;
+  font-size: 0.875rem;
+  font-weight: 600;
+  line-height: 1.35;
+}
+
+/* Low UV or Good AQI */
+.weather-category--good {
+  background: #e3f3e9;
+  color: #165837;
+}
+
+/* Moderate */
+.weather-category--moderate {
+  background: #fff4cc;
+  color: #6d5000;
+}
+
+/* High UV or sensitive AQI */
+.weather-category--caution {
+  background: #ffead6;
+  color: #874100;
+}
+
+/* Very High UV or Unhealthy AQI */
+.weather-category--danger {
+  background: #fde8e6;
+  color: #8f1d20;
+}
+
+/* Extreme UV or Very Unhealthy AQI */
+.weather-category--severe {
+  background: #f2e6f8;
+  color: #652680;
+}
+
+/* Hazardous AQI */
+.weather-category--hazardous {
+  background: #f5e2eb;
+  color: #73172e;
+}
+
+/* Invalid or missing value */
+.weather-category--neutral {
+  background: #e9edeb;
+  color: #45544c;
 }
 
 .weather-source {

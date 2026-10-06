@@ -264,3 +264,132 @@ export function getForecastMessage(
     'this activity time.'
   )
 }
+
+// =========================
+// UV category
+// =========================
+//
+// UV values from Open-Meteo
+// can include decimal numbers.
+//
+// Examples:
+//
+// 2.5 -> Low
+// 5.2 -> Moderate
+// 7.1 -> High
+//
+export function classifyUv(
+  value,
+) {
+  if (
+    !isWeatherNumber(value) ||
+    value < 0
+  ) {
+    return {
+      label: 'Unavailable',
+      tone: 'neutral',
+    }
+  }
+
+  if (value < 3) {
+    return {
+      label: 'Low',
+      tone: 'good',
+    }
+  }
+
+  if (value < 6) {
+    return {
+      label: 'Moderate',
+      tone: 'moderate',
+    }
+  }
+
+  if (value < 8) {
+    return {
+      label: 'High',
+      tone: 'caution',
+    }
+  }
+
+  if (value < 11) {
+    return {
+      label: 'Very High',
+      tone: 'danger',
+    }
+  }
+
+  return {
+    label: 'Extreme',
+    tone: 'severe',
+  }
+}
+
+// =========================
+// US AQI category
+// =========================
+//
+// The JSON field is "us_aqi",
+// so these are US AQI categories.
+//
+// Examples:
+//
+// 42  -> Good
+// 75  -> Moderate
+// 120 -> Unhealthy for
+//        Sensitive Groups
+//
+export function classifyAqi(
+  value,
+) {
+  if (
+    !isWeatherNumber(value) ||
+    value < 0
+  ) {
+    return {
+      label: 'Unavailable',
+      tone: 'neutral',
+    }
+  }
+
+  if (value <= 50) {
+    return {
+      label: 'Good',
+      tone: 'good',
+    }
+  }
+
+  if (value <= 100) {
+    return {
+      label: 'Moderate',
+      tone: 'moderate',
+    }
+  }
+
+  if (value <= 150) {
+    return {
+      label:
+        'Unhealthy for Sensitive Groups',
+      tone: 'caution',
+    }
+  }
+
+  if (value <= 200) {
+    return {
+      label: 'Unhealthy',
+      tone: 'danger',
+    }
+  }
+
+  if (value <= 300) {
+    return {
+      label: 'Very Unhealthy',
+      tone: 'severe',
+    }
+  }
+
+  return {
+    label: 'Hazardous',
+    tone: 'hazardous',
+  }
+}
