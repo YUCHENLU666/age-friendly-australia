@@ -1,0 +1,72 @@
+name: Daily weather refresh
+
+on:
+  schedule:
+    # 20:00 UTC = 07:00 Melbourne in summer, 06:00 in winter.
+    - cron: '0 20 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: weather-refresh-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      # Set this variable to the live site's /api/activities URL.
+      # Without it, the pipeline reads the repository's SQLite database.
+      WEATHER_ACTIVITIES_API_URL: ${{ vars.WEATHER_ACTIVITIES_API_URL }}
+      PYTHONUNBUFFERED: '1'
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install Python dependencies
+        run: python -m pip install -r data_pipeline/requirements.txt
+
+      - name: Test failure protection
+        run: python -m unittest discover -s data_pipeline/tests -v
+
+      - name: Refresh weather, UV and air quality
+        id: refresh
+        run: python data_pipeline/fetch_open_meteo.py
+
+      # On failure, publish the status without replacing the forecast.
+      - name: Publish forecast or failure status
+        if: ${{ !cancelled() && (steps.refresh.outcome == 'success' || steps.refresh.outcome == 'failure') }}
+        env:
+          REFRESH_OUTCOME: ${{ steps.refresh.outcome }}
+          TARGET_BRANCH: ${{ github.ref_name }}
+
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          if [ "$REFRESH_OUTCOME" = "success" ]; then
+            git add public/data/melbourne_suburb_weather.json
+          fi
+
+          if [ -f public/data/weather_refresh_status.json ]; then
+            git add public/data/weather_refresh_status.json
+          fi
+
+          if git diff --cached --quiet; then
+            exit 0
+          fi
+
+          git commit -m "chore: refresh weather and air quality data"
+
+          # Include teammates' changes without force-pushing.
+          git pull --rebase origin "$TARGET_BRANCH"
+          git push origin "HEAD:$TARGET_BRANCH"
