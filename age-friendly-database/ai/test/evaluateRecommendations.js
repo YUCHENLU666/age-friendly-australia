@@ -27,6 +27,12 @@ const casesPath =
     'evaluationCases.json',
   )
 
+// Keep evaluation results reproducible. Production uses the
+// current time, but this benchmark evaluates the activity
+// snapshot that was labelled on 6 October 2026.
+const evaluationReferenceTime =
+  '2026-10-06 00:00:00'
+
 function loadFutureActivities() {
   return new Promise(
     (resolve, reject) => {
@@ -51,10 +57,10 @@ function loadFutureActivities() {
           FROM activities
           WHERE
             datetime(day_time) >=
-            datetime('now')
+            datetime(?)
           ORDER BY day_time
         `,
-        [],
+        [evaluationReferenceTime],
         (error, rows) => {
           database.close()
 
@@ -197,6 +203,99 @@ function average(values) {
   )
 }
 
+function validateEvaluationCases(
+  evaluationCases,
+  activities,
+) {
+  const activityIds =
+    new Set(
+      activities.map(
+        (activity) =>
+          String(activity.id),
+      ),
+    )
+
+  const missingIds =
+    new Set()
+
+  const caseIds =
+    new Set()
+
+  for (
+    const evaluationCase
+    of evaluationCases
+  ) {
+    if (
+      caseIds.has(
+        evaluationCase.id,
+      )
+    ) {
+      throw new Error(
+        `Duplicate evaluation case ID: ${evaluationCase.id}`,
+      )
+    }
+
+    caseIds.add(
+      evaluationCase.id,
+    )
+
+    const judgements =
+      Array.isArray(
+        evaluationCase.judgements,
+      )
+        ? evaluationCase.judgements
+        : []
+
+    if (
+      !judgements.some(
+        (judgement) =>
+          judgement.relevance > 0,
+      )
+    ) {
+      throw new Error(
+        `Evaluation case ${evaluationCase.id} has no relevant activity.`,
+      )
+    }
+
+    for (
+      const judgement
+      of judgements
+    ) {
+      if (
+        !activityIds.has(
+          String(
+            judgement.activityId,
+          ),
+        )
+      ) {
+        missingIds.add(
+          String(
+            judgement.activityId,
+          ),
+        )
+      }
+
+      if (
+        ![0, 1, 2, 3].includes(
+          judgement.relevance,
+        )
+      ) {
+        throw new Error(
+          `Invalid relevance score in ${evaluationCase.id}.`,
+        )
+      }
+    }
+  }
+
+  if (missingIds.size > 0) {
+    throw new Error(
+      `Evaluation judgements reference activities outside the labelled snapshot: ${[
+        ...missingIds,
+      ].join(', ')}`,
+    )
+  }
+}
+
 async function runEvaluation() {
   const activities =
     await loadFutureActivities()
@@ -208,6 +307,11 @@ async function runEvaluation() {
         'utf8',
       ),
     )
+
+  validateEvaluationCases(
+    evaluationCases,
+    activities,
+  )
 
   const results = []
 
@@ -251,6 +355,20 @@ async function runEvaluation() {
               .activityId,
           ),
       )
+
+    const unjudgedIds =
+      recommendedIds.filter(
+        (activityId) =>
+          !relevanceMap.has(
+            activityId,
+          ),
+      )
+
+    if (unjudgedIds.length > 0) {
+      console.warn(
+        `[UNJUDGED AI] ${evaluationCase.id}: ${unjudgedIds.join(', ')}`,
+      )
+    }
 
     const precisionAt3 =
       calculatePrecisionAtK(

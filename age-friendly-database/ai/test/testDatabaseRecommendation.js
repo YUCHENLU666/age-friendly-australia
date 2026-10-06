@@ -70,13 +70,18 @@ async function runTest() {
 
   const preferences = {
     generalArea:
-      '',
+      'Melbourne CBD',
 
-    interests: [],
+    interests: [
+      'Jazz',
+      'Live music',
+    ],
 
     preferredDays: ['Saturday',],
 
-    activityTypes: [],
+    activityTypes: [
+      'Live music',
+    ],
   }
 
   console.time(
