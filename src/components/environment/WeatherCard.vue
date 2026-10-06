@@ -16,6 +16,7 @@ import {
   getForecastMessage,
   getForecastState,
   getHourlyValue,
+  getOutdoorConditions,
   getRefreshState,
 } from '@/services/weatherConditions'
 
@@ -296,6 +297,37 @@ const aqiCategory =
     ),
   )
 
+// =========================
+// Outdoor conditions summary
+// =========================
+//
+// Use the same activity-hour
+// values shown in the card.
+//
+const outdoorConditions =
+  computed(() =>
+    getOutdoorConditions({
+      uv:
+        getWeatherValue(
+          'uv_index',
+        ),
+
+      rain:
+        getWeatherValue(
+          'precipitation_probability',
+        ),
+
+      aqi:
+        getAirQualityValue(
+          'us_aqi',
+        ),
+
+      stale:
+        refreshState.value !==
+        'current',
+    }),
+  )
+
 </script>
 
 <template>
@@ -532,10 +564,47 @@ const aqiCategory =
           Weather forecast unavailable
           for this activity time.
         </p>
+        <!-- Outdoor conditions summary -->
+        <div
+          v-if="hasConditions"
+          class="weather-outdoor"
+        >
+          <div class="weather-outdoor-heading">
+            <strong>
+              Outdoor conditions
+            </strong>
+
+            <span
+              :class="[
+                'weather-category',
+                'weather-category--' +
+                  outdoorConditions.tone,
+              ]"
+            >
+              {{ outdoorConditions.label }}
+            </span>
+          </div>
+
+          <p>
+            {{
+              outdoorConditions
+                .reasons
+                .join(' · ')
+            }}
+          </p>
+
+          <small>
+            Based on UV, rain probability
+            and US AQI only.
+          </small>
+        </div>
       </template>
 
       <small
-        v-if="lastUpdated"
+        v-if="
+          lastUpdated &&
+          refreshState !== 'current'
+        "
         class="weather-source"
       >
         Last successful update:
@@ -543,7 +612,25 @@ const aqiCategory =
       </small>
 
       <small class="weather-source">
-        Source: Open-Meteo
+        Data:
+
+        <a
+          href="https://open-meteo.com/"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          Open-Meteo
+        </a>
+
+        · Air quality:
+
+        <a
+          href="https://atmosphere.copernicus.eu/"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          CAMS
+        </a>
       </small>
     </div>
   </div>
@@ -686,6 +773,29 @@ const aqiCategory =
 .weather-coverage-note {
   margin: 12px 0 0;
   color: #5f6b65;
+}
+
+.weather-outdoor {
+  margin-top: 16px;
+  padding-top: 12px;
+  border-top:
+    1px solid #d8dedb;
+}
+
+.weather-outdoor-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+
+.weather-outdoor p {
+  margin: 8px 0;
+  color: #34443c;
+}
+
+.weather-outdoor small {
+  color: #68736e;
 }
 
 @media (max-width: 700px) {

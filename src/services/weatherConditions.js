@@ -268,16 +268,6 @@ export function getForecastMessage(
 // =========================
 // UV category
 // =========================
-//
-// UV values from Open-Meteo
-// can include decimal numbers.
-//
-// Examples:
-//
-// 2.5 -> Low
-// 5.2 -> Moderate
-// 7.1 -> High
-//
 export function classifyUv(
   value,
 ) {
@@ -326,19 +316,8 @@ export function classifyUv(
 }
 
 // =========================
-// US AQI category
+// AQI category
 // =========================
-//
-// The JSON field is "us_aqi",
-// so these are US AQI categories.
-//
-// Examples:
-//
-// 42  -> Good
-// 75  -> Moderate
-// 120 -> Unhealthy for
-//        Sensitive Groups
-//
 export function classifyAqi(
   value,
 ) {
@@ -391,5 +370,129 @@ export function classifyAqi(
   return {
     label: 'Hazardous',
     tone: 'hazardous',
+  }
+}
+
+// =========================
+// Outdoor conditions
+// =========================
+//
+// Create a simple summary using
+// UV, rain probability and US AQI.
+//
+export function getOutdoorConditions({
+  uv,
+  rain,
+  aqi,
+  stale = false,
+}) {
+  const validUv =
+    isWeatherNumber(uv) &&
+    uv >= 0
+
+  const validRain =
+    isWeatherNumber(rain) &&
+    rain >= 0 &&
+    rain <= 100
+
+  const validAqi =
+    isWeatherNumber(aqi) &&
+    aqi >= 0
+
+  const reasons = []
+
+  if (
+    validUv &&
+    uv >= 6
+  ) {
+    reasons.push('High UV')
+  } else if (
+    validUv &&
+    uv >= 3
+  ) {
+    reasons.push(
+      'Sun protection recommended',
+    )
+  }
+
+  if (
+    validRain &&
+    rain >= 60
+  ) {
+    reasons.push('Rain likely')
+  }
+
+  if (
+    validAqi &&
+    aqi > 100
+  ) {
+    reasons.push(
+      'Poor air quality',
+    )
+  } else if (
+    validAqi &&
+    aqi > 50
+  ) {
+    reasons.push(
+      'Moderate air quality',
+    )
+  }
+
+  if (stale) {
+    reasons.push(
+      'Data may be out of date',
+    )
+
+    return {
+      label:
+        'Check latest forecast',
+      tone: 'neutral',
+      reasons,
+    }
+  }
+
+  if (
+    !validUv ||
+    !validRain ||
+    !validAqi
+  ) {
+    reasons.push(
+      'Some forecast values are unavailable',
+    )
+
+    return {
+      label:
+        'Forecast incomplete',
+      tone: 'neutral',
+      reasons,
+    }
+  }
+
+  if (
+    uv >= 11 ||
+    aqi > 150
+  ) {
+    return {
+      label: 'Not ideal',
+      tone: 'danger',
+      reasons,
+    }
+  }
+
+  if (reasons.length) {
+    return {
+      label: 'Take care',
+      tone: 'caution',
+      reasons,
+    }
+  }
+
+  return {
+    label:
+      'No flagged conditions',
+    tone: 'good',
+    reasons: [
+      'No concerns flagged by the UV, rain or US AQI checks',
+    ],
   }
 }
