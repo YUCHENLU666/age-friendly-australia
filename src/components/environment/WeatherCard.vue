@@ -13,11 +13,9 @@ import {
   activityTimeToHour,
   classifyAqi,
   classifyUv,
-  getForecastMessage,
   getForecastState,
   getHourlyValue,
   getOutdoorConditions,
-  getRefreshState,
 } from '@/services/weatherConditions'
 
 // =========================
@@ -41,7 +39,6 @@ const props = defineProps({
 // Component state
 // =========================
 const weatherData = ref(null)
-const refreshStatus = ref(null)
 const loading = ref(true)
 const errorMessage = ref('')
 
@@ -78,12 +75,10 @@ onMounted(async () => {
   try {
     const {
       data,
-      status,
     } =
       await loadWeatherData()
 
     weatherData.value = data
-    refreshStatus.value = status
   } catch (error) {
     console.error(
       'Weather loading error:',
@@ -162,101 +157,23 @@ const hasConditions =
   )
 
 // =========================
-// Refresh status
+// Forecast unavailable message
 // =========================
-const refreshState =
-  computed(() => {
-    const location = locationWeather.value
-    const fetchedAt = location && Object.hasOwn(location, 'fetched_at')
-      ? location.fetched_at
-      : weatherData.value?.fetched_at
-
-    // A full failure applies to every location.
-    // A partial failure applies only to the affected suburb.
-    const status = refreshStatus.value?.status === 'failed'
-      ? refreshStatus.value
-      : location?.refresh_status === 'failed'
-        ? {
-            status: 'failed',
-            last_attempt_at: location.last_attempt_at,
-          }
-        : null
-
-    return getRefreshState(fetchedAt, status)
-  })
-
-const refreshNote =
+const unavailableNote =
   computed(() => {
     if (
-      refreshState.value ===
-      'failed'
-    ) {
-      const hasPreviousForecast = Boolean(
-        locationWeather.value?.weather ||
-        locationWeather.value?.air_quality,
-      )
-
-      return hasConditions.value
-        ? 'Data refresh failed. Temporarily using the previous forecast.'
-        : hasPreviousForecast
-          ? 'Data refresh failed. The previous forecast has been retained.'
-          : 'Data refresh failed. No previous forecast is available for this suburb.'
-    }
-
-    if (
-      refreshState.value ===
-      'stale'
+      weatherState.value === 'future' ||
+      airQualityState.value === 'future'
     ) {
       return (
-        'Forecast data may be ' +
-        'out of date. Waiting ' +
-        'for the next update.'
+        'Forecast available closer ' +
+        'to the activity date'
       )
     }
 
-    return ''
-  })
-
-const unavailableNote =
-  computed(() =>
-    getForecastMessage(
-      weatherState.value,
-      airQualityState.value,
-      refreshState.value,
-    ),
-  )
-
-const lastUpdated =
-  computed(() => {
-    const location = locationWeather.value
-    const fetchedAt = location && Object.hasOwn(location, 'fetched_at')
-      ? location.fetched_at
-      : weatherData.value?.fetched_at
-
-    const date = new Date(
-      fetchedAt ?? '',
-    )
-
-    if (
-      Number.isNaN(
-        date.getTime(),
-      )
-    ) {
-      return ''
-    }
-
-    return date.toLocaleString(
-      'en-AU',
-      {
-        timeZone:
-          'Australia/Melbourne',
-        day: 'numeric',
-        month: 'short',
-        year: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit',
-        timeZoneName: 'short',
-      },
+    return (
+      'Forecast unavailable for ' +
+      'this activity time.'
     )
   })
 
@@ -344,9 +261,6 @@ const outdoorConditions =
           'us_aqi',
         ),
 
-      stale:
-        refreshState.value !==
-        'current',
     }),
   )
 
@@ -395,15 +309,6 @@ const outdoorConditions =
           {{ suburb }}
         </span>
       </div>
-
-      <!-- Latest API refresh failed -->
-      <p
-        v-if="refreshNote"
-        class="weather-update-note"
-        role="status"
-      >
-        {{ refreshNote }}
-      </p>
 
       <!-- Suburb not found -->
       <p
@@ -566,11 +471,9 @@ const outdoorConditions =
         >
           {{
             airQualityState ===
-              'future' &&
-            refreshState ===
-              'current'
+              'future'
               ? 'Air quality forecast available closer to the activity date'
-              : 'AQI unavailable in the saved forecast for this activity time.'
+              : 'Air quality forecast unavailable for this activity time.'
           }}
         </p>
 
@@ -614,24 +517,8 @@ const outdoorConditions =
                 .join(' · ')
             }}
           </p>
-
-          <small>
-            Based on UV, rain probability
-            and US AQI only.
-          </small>
         </div>
       </template>
-
-      <small
-        v-if="
-          lastUpdated &&
-          refreshState !== 'current'
-        "
-        class="weather-source"
-      >
-        Last successful update:
-        {{ lastUpdated }}
-      </small>
 
       <small class="weather-source">
         Data:
