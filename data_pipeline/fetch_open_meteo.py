@@ -486,342 +486,200 @@ def fetch_air_quality(
 # Main weather pipeline
 # ======================================================
 
+def keep_previous_location(suburb, previous, error):
+    old_locations = previous.get("locations", [])
+    if not isinstance(old_locations, list):
+        old_locations = []
+
+    old = next((
+        item for item in old_locations
+        if isinstance(item, dict)
+        and str(item.get("suburb", "")).strip().casefold() == suburb.casefold()
+    ), None)
+
+    if old and (old.get("weather") or old.get("air_quality")):
+        result = dict(old)
+        result["fetched_at"] = old.get("fetched_at", previous.get("fetched_at"))
+        print(f"Keeping previous data for {suburb}")
+    else:
+        result = {
+            "latitude": None,
+            "longitude": None,
+            "weather_available": False,
+            "reason": "Refresh failed; no previous weather data",
+            "weather": None,
+            "air_quality_available": False,
+            "air_quality_reason": "Refresh failed; no previous air quality data",
+            "air_quality": None,
+            "fetched_at": None,
+        }
+        print(f"No previous data for {suburb}; marked unavailable")
+
+    result.update({
+        "suburb": suburb,
+        "refresh_status": "failed",
+        "last_attempt_at": datetime.now(timezone.utc).isoformat(),
+        "refresh_error": str(error),
+    })
+    return result
+
+
 def refresh_data():
-    print(
-        "----------------------------------------"
-    )
+    # Leave time to publish before the workflow's 25-minute limit.
+    deadline = time.monotonic() + 15 * 60
 
-    print(
-        "Age-Friendly Australia "
-        "Weather Pipeline"
-    )
-
-    print(
-        "----------------------------------------"
-    )
-
-    print(
-        f"Database: {DATABASE_FILE}"
-    )
-
-    # --------------------------------------------------
-    # 1. Read all current activity suburbs
-    # --------------------------------------------------
-
-    locations = (
-        load_activity_locations()
-    )
+    locations = load_activity_locations()
     if not locations:
         raise ValueError("No activity locations found; keeping the previous JSON")
 
-    print(
-        f"Found {len(locations)} "
-        f"unique activity suburbs."
-    )
-
-    print(
-        "----------------------------------------"
-    )
-
+    previous = read_previous_snapshot()
     weather_results = []
+    failed_suburbs = []
+    refreshed_count = 0
 
-    # --------------------------------------------------
-    # 2. Fetch weather for each suburb
-    # --------------------------------------------------
+    print("----------------------------------------")
+    print("Age-Friendly Australia Weather Pipeline")
+    print(f"Found {len(locations)} unique activity suburbs.")
+    print("----------------------------------------")
 
-    for index, location in enumerate(
-        locations,
-        start=1,
-    ):
-        suburb = (
-            location[
-                "suburb"
-            ]
-            .strip()
-        )
+    for index, location in enumerate(locations, start=1):
+        suburb = location["suburb"].strip()
+        latitude = location["latitude"]
+        longitude = location["longitude"]
 
-        latitude = location[
-            "latitude"
-        ]
+        print(f"[{index}/{len(locations)}] {suburb}")
 
-        longitude = location[
-            "longitude"
-        ]
-
-        print(
-            f"[{index}/{len(locations)}] "
-            f"{suburb}"
-        )
-
-        # ----------------------------------------------
-        # Broad LGA records do not represent an exact
-        # suburb location.
-        # ----------------------------------------------
+        if time.monotonic() >= deadline:
+            failed_suburbs.append(suburb)
+            weather_results.append(keep_previous_location(
+                suburb, previous, "Refresh time limit reached",
+            ))
+            continue
 
         if "LGA" in suburb.upper():
-            weather_results.append(
-                {
-                    "suburb": suburb,
-                    "latitude": None,
-                    "longitude": None,
-                    "weather_available":
-                        False,
-                    "reason":
-                        "Exact location not provided",
-                    "weather": None,
-                    "air_quality_available":
-                        False,
-                    "air_quality_reason":
-                        "Exact location not provided",
-                    "air_quality": None,
-                }
-            )
-
-            print(
-                f"Weather unavailable "
-                f"for broad location: "
-                f"{suburb}"
-            )
-
-            continue
-
-        # ----------------------------------------------
-        # Prefer coordinates already available from
-        # Eventfinda / SQLite.
-        # ----------------------------------------------
-
-        if valid_coordinates(
-            latitude,
-            longitude,
-        ):
-            print(
-                f"Using activity coordinates "
-                f"for {suburb}"
-            )
-
+            reason = "Exact location not provided"
         else:
-            # ------------------------------------------
-            # If coordinates are missing, try
-            # Open-Meteo geocoding.
-            # ------------------------------------------
+            reason = None
 
-            latitude, longitude = (
-                geocode_suburb(
-                    suburb
-                )
-            )
+            if valid_coordinates(latitude, longitude):
+                print(f"Using activity coordinates for {suburb}")
+            else:
+                try:
+                    latitude, longitude = geocode_suburb(suburb)
+                except RuntimeError as error:
+                    failed_suburbs.append(suburb)
+                    weather_results.append(keep_previous_location(
+                        suburb, previous, error,
+                    ))
+                    continue
 
-        # ----------------------------------------------
-        # Still no coordinates
-        # ----------------------------------------------
+            if not valid_coordinates(latitude, longitude):
+                reason = "Location could not be matched"
 
-        if not valid_coordinates(
-            latitude,
-            longitude,
-        ):
-            weather_results.append(
-                {
-                    "suburb": suburb,
-                    "latitude": None,
-                    "longitude": None,
-                    "weather_available":
-                        False,
-                    "reason":
-                        "Location could not be matched",
-                    "weather": None,
-                    "air_quality_available":
-                        False,
-                    "air_quality_reason":
-                        "Location could not be matched",
-                    "air_quality": None,
-                }
-            )
-
-            print(
-                f"No usable coordinates "
-                f"for {suburb}"
-            )
-
+        if reason:
+            weather_results.append({
+                "suburb": suburb,
+                "latitude": None,
+                "longitude": None,
+                "weather_available": False,
+                "reason": reason,
+                "weather": None,
+                "air_quality_available": False,
+                "air_quality_reason": reason,
+                "air_quality": None,
+            })
+            print(f"Weather unavailable for {suburb}: {reason}")
             continue
 
-        # ----------------------------------------------
-        # Get weather
-        # ----------------------------------------------
+        weather_result = fetch_weather(suburb, latitude, longitude)
 
-        weather_result = fetch_weather(
-            suburb,
-            latitude,
-            longitude,
-        )
         if not weather_result["weather_available"]:
-            raise RuntimeError(f"Weather request failed for {suburb}; keeping the previous JSON")
+            failed_suburbs.append(suburb)
+            weather_results.append(keep_previous_location(
+                suburb, previous, weather_result["reason"],
+            ))
+            continue
 
-        # ----------------------------------------------
-        # Get air quality
-        # ----------------------------------------------
+        air_quality_result = fetch_air_quality(suburb, latitude, longitude)
 
-        air_quality_result = fetch_air_quality(
-            suburb,
-            latitude,
-            longitude,
-        )
         if not air_quality_result["air_quality_available"]:
-            raise RuntimeError(f"Air quality request failed for {suburb}; keeping the previous JSON")
+            failed_suburbs.append(suburb)
+            weather_results.append(keep_previous_location(
+                suburb, previous, air_quality_result["air_quality_reason"],
+            ))
+            continue
 
-        # Add air quality to the weather result.
-        weather_result.update(
-            air_quality_result
-        )
+        weather_result.update(air_quality_result)
+        weather_result.update({
+            "fetched_at": datetime.now(timezone.utc).isoformat(),
+            "refresh_status": "ok",
+            "refresh_error": None,
+        })
 
-        weather_results.append(
-            weather_result
-        )
-
-        # Avoid sending requests too quickly.
+        weather_results.append(weather_result)
+        refreshed_count += 1
         time.sleep(0.1)
 
-    # ==================================================
-    # 3. Calculate summary
-    # ==================================================
+    # No successful refresh: do not replace either forecast file.
+    if refreshed_count == 0:
+        raise ValueError("No locations refreshed; keeping the previous JSON")
 
     available_count = sum(
-        1
-        for item in weather_results
-        if item[
-            "weather_available"
-        ]
+        1 for item in weather_results if item["weather_available"]
     )
-
-    unavailable_count = (
-        len(weather_results)
-        - available_count
+    air_quality_available_count = sum(
+        1 for item in weather_results if item["air_quality_available"]
     )
-    if available_count == 0:
-        raise ValueError("No valid forecasts collected; keeping the previous JSON")
-
-    # ==================================================
-    # 4. Build output JSON
-    # ==================================================
 
     output_data = {
-        "source":
-            (
-                "Open-Meteo Weather "
-                "and Air Quality APIs"
-            ),
-
-        "coverage":
-            (
-                "Current suburbs in the "
-                "SQLite activities table"
-            ),
-
-        "fetched_at":
-            datetime.now(
-                timezone.utc
-            ).isoformat(),
-
-        "location_count":
-            len(
-                weather_results
-            ),
-
-        "available_count":
-            available_count,
-
-        "unavailable_count":
-            unavailable_count,
-
-        "air_quality_available_count": sum(
-            1 for item in weather_results if item["air_quality_available"]
-        ),
-
-        "locations":
-            weather_results,
+        "source": "Open-Meteo Weather and Air Quality APIs",
+        "coverage": "Current suburbs in the SQLite activities table",
+        "fetched_at": datetime.now(timezone.utc).isoformat(),
+        "refresh_status": "partial" if failed_suburbs else "ok",
+        "refreshed_count": refreshed_count,
+        "failed_suburbs": failed_suburbs,
+        "location_count": len(weather_results),
+        "available_count": available_count,
+        "unavailable_count": len(weather_results) - available_count,
+        "air_quality_available_count": air_quality_available_count,
+        "locations": weather_results,
     }
 
-    # ==================================================
-    # 5. Save raw output
-    # ==================================================
-
     write_json_atomic(RAW_OUTPUT_FILE, output_data)
-
-    # ==================================================
-    # 6. Save frontend production copy
-    # ==================================================
-    #
-    # WeatherCard.vue reads:
-    #
-    # /data/melbourne_suburb_weather.json
-    #
-    # Therefore this file must exist inside:
-    #
-    # public/data/
-    # ==================================================
-
     write_json_atomic(PUBLIC_OUTPUT_FILE, output_data)
 
-    # ==================================================
-    # Complete
-    # ==================================================
+    print("----------------------------------------")
+    print("Weather pipeline completed.")
+    print(f"Total locations: {len(weather_results)}")
+    print(f"Locations refreshed: {refreshed_count}")
+    print(f"Locations with refresh failures: {len(failed_suburbs)}")
 
-    print(
-        "----------------------------------------"
-    )
+    if failed_suburbs:
+        print("Failed suburbs: " + ", ".join(failed_suburbs))
 
-    print(
-        "Weather pipeline completed."
-    )
+    print(f"Raw weather output: {RAW_OUTPUT_FILE}")
+    print(f"Frontend weather output: {PUBLIC_OUTPUT_FILE}")
+    print("----------------------------------------")
 
-    print(
-        f"Total locations: "
-        f"{len(weather_results)}"
-    )
-
-    print(
-        f"Weather available: "
-        f"{available_count}"
-    )
-
-    print(
-        f"Weather unavailable: "
-        f"{unavailable_count}"
-    )
-
-    print(
-        "----------------------------------------"
-    )
-
-    print(
-        "Raw weather output:"
-    )
-
-    print(
-        RAW_OUTPUT_FILE
-    )
-
-    print(
-        "Frontend weather output:"
-    )
-
-    print(
-        PUBLIC_OUTPUT_FILE
-    )
-
-    print(
-        "----------------------------------------"
-    )
     return output_data
 
 
 def main():
     previous = read_previous_snapshot()
     attempted_at = datetime.now(timezone.utc).isoformat()
+
     try:
         output_data = refresh_data()
-    except (requests.RequestException, ValueError, RuntimeError, OSError, sqlite3.Error) as error:
+    except (
+        requests.RequestException,
+        ValueError,
+        RuntimeError,
+        OSError,
+        sqlite3.Error,
+    ) as error:
         print(f"Refresh failed: {error}")
         print("Previous weather JSON has been kept.")
+
         write_json_atomic(STATUS_OUTPUT_FILE, {
             "status": "failed",
             "last_attempt_at": attempted_at,
@@ -831,11 +689,18 @@ def main():
         return False
 
     write_json_atomic(STATUS_OUTPUT_FILE, {
-        "status": "ok",
+        "status": output_data["refresh_status"],
         "last_attempt_at": datetime.now(timezone.utc).isoformat(),
         "last_success_at": output_data["fetched_at"],
-        "message": "Weather and air quality updated successfully.",
+        "refreshed_count": output_data["refreshed_count"],
+        "failed_suburbs": output_data["failed_suburbs"],
+        "message": (
+            "Weather and air quality updated successfully."
+            if not output_data["failed_suburbs"]
+            else "Some locations could not refresh. Previous data was retained where available."
+        ),
     })
+
     return True
 
 

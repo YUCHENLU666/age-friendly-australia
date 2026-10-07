@@ -165,14 +165,25 @@ const hasConditions =
 // Refresh status
 // =========================
 const refreshState =
-  computed(() =>
-    getRefreshState(
-      weatherData.value
-        ?.fetched_at,
+  computed(() => {
+    const location = locationWeather.value
+    const fetchedAt = location && Object.hasOwn(location, 'fetched_at')
+      ? location.fetched_at
+      : weatherData.value?.fetched_at
 
-      refreshStatus.value,
-    ),
-  )
+    // A full failure applies to every location.
+    // A partial failure applies only to the affected suburb.
+    const status = refreshStatus.value?.status === 'failed'
+      ? refreshStatus.value
+      : location?.refresh_status === 'failed'
+        ? {
+            status: 'failed',
+            last_attempt_at: location.last_attempt_at,
+          }
+        : null
+
+    return getRefreshState(fetchedAt, status)
+  })
 
 const refreshNote =
   computed(() => {
@@ -180,9 +191,16 @@ const refreshNote =
       refreshState.value ===
       'failed'
     ) {
+      const hasPreviousForecast = Boolean(
+        locationWeather.value?.weather ||
+        locationWeather.value?.air_quality,
+      )
+
       return hasConditions.value
         ? 'Data refresh failed. Temporarily using the previous forecast.'
-        : 'Data refresh failed. The previous forecast has been retained.'
+        : hasPreviousForecast
+          ? 'Data refresh failed. The previous forecast has been retained.'
+          : 'Data refresh failed. No previous forecast is available for this suburb.'
     }
 
     if (
@@ -210,9 +228,13 @@ const unavailableNote =
 
 const lastUpdated =
   computed(() => {
+    const location = locationWeather.value
+    const fetchedAt = location && Object.hasOwn(location, 'fetched_at')
+      ? location.fetched_at
+      : weatherData.value?.fetched_at
+
     const date = new Date(
-      weatherData.value
-        ?.fetched_at ?? '',
+      fetchedAt ?? '',
     )
 
     if (
