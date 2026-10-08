@@ -1,20 +1,20 @@
 {
   "status": "partial",
-  "last_attempt_at": "2026-10-07T13:22:37.053298+00:00",
-  "last_success_at": "2026-10-07T13:22:36.895614+00:00",
+  "last_attempt_at": "2026-10-08T00:13:31.642447+00:00",
+  "last_success_at": "2026-10-08T00:13:31.493055+00:00",
   "refreshed_count": 37,
   "failed_suburbs": [
     "Brunswick East",
     "Carlton",
-    "Dandenong North",
     "Docklands",
     "Elsternwick",
-    "Hawthorn",
-    "Mooroolbark",
-    "Mornington",
-    "Ringwood East",
-    "Southbank",
-    "St Kilda"
+    "Eltham",
+    "Laverton",
+    "Melbourne CBD",
+    "Moonee Ponds",
+    "Narre Warren",
+    "South Melbourne",
+    "Southbank"
   ],
   "message": "Some locations could not refresh. Previous data was retained where available."
 }
