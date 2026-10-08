@@ -1,38 +1,30 @@
-# Age-Friendly Australia - Iteration 2
+# Age-Friendly Australia
 
-**An accessible activity and aged-care service discovery platform for older adults in Greater Melbourne, enhanced with personalisation, AI-assisted recommendations, local environmental context and performance-aware deployment.**
+**Age-Friendly Australia** is an age-friendly web platform designed to help older adults in Greater Melbourne discover local activities, explore useful services, plan future visits, view environmental conditions, and receive personalised activity recommendations.
 
-Iteration 2 extends the core discovery experience delivered in Iteration 1.
-
-The current release allows users to:
-
-- Browse local activities
-- Browse aged-care services
-- Save useful activities and services
-- Configure optional preferences
-- View local weather and UV information
-- Receive AI-assisted personalised activity recommendations
-- Access nearby public transport information from detail pages
-- Adjust global text size
-- Use the platform through an age-friendly and responsive interface
-
-The Iteration 2 preview also includes an administrator login gate so the development release is not exposed directly to unrelated users.
+The platform combines an accessible Vue interface with an Express and SQLite backend, AI-assisted recommendations, weather and air-quality information, public transport data, and local browser-based personalisation.
 
 ---
 
-# Iteration 2 Goal
+## Project Overview
 
-> Help older adults discover suitable local activities and essential services more confidently by combining accessible information, optional personalisation, environmental context and AI-assisted recommendations.
+Age-Friendly Australia aims to reduce the effort required for older adults to find relevant local information.
 
-Iteration 2 focuses on five major improvements:
+The current application supports:
 
-1. Broader and more realistic activity data
-2. Optional user preferences
-3. AI-assisted personalised activity recommendations
-4. Weather and UV context for activities
-5. Performance improvements for production deployment
+- Activity discovery and filtering
+- Aged-care and support service discovery
+- Saved activities and services
+- Personal planning through a calendar
+- Activity-time weather and air-quality information
+- AI-assisted activity recommendations
+- Nearby public transport information
+- Live Victorian community venue information
+- Live PTV bus positions
+- Local user preferences
+- Adjustable text size and responsive age-friendly design
 
-The existing Iteration 1 activity discovery, service discovery, saved-item and accessibility functionality remains available.
+The project is primarily focused on **Greater Melbourne, Victoria, Australia**.
 
 ---
 
@@ -40,83 +32,114 @@ The existing Iteration 1 activity discovery, service discovery, saved-item and a
 
 ## 1. Activity Discovery
 
-Users can browse activities across Greater Melbourne and inspect information including:
+Users can browse local activities and inspect information such as:
 
 - Activity name
-- Category
+- Category and interests
 - Venue
 - Suburb
 - Date and time
 - Recurrence
-- Description
-- Older-adult relevance
-- Free / paid information where available
-- Latitude and longitude
-- Restrictions
-- Original event URL
+- Older-adult suitability
+- Activity image
 - Source information
 
-Activities can be searched and filtered through the Activities interface.
+The Activities page supports:
+
+- Free-text search
+- Area filtering
+- Interest filtering
+- Preferred-day filtering
+- Schedule-type filtering
+- Older-adult relevance filtering
+
+Activity information is loaded through:
+
+```text
+ActivitiesView
+      ↓
+activityService
+      ↓
+GET /api/activities
+      ↓
+SQLite activities
+```
+
+Backend activity data is normalised before being used by Vue components so that the frontend receives a consistent activity structure.
 
 ---
 
-## 2. Eventfinda Activity Data Integration
+## 2. Activity Weather and Air Quality
 
-Iteration 1 used a small manually prepared activity dataset.
+Each activity card can display environmental conditions for the **scheduled activity time**.
 
-Iteration 2 replaces that pilot dataset with a larger activity dataset collected from Eventfinda and processed before being imported into SQLite.
+The weather card currently supports:
 
-The current imported snapshot contains approximately:
+- Temperature
+- Rain probability
+- UV index
+- UV category
+- US Air Quality Index
+- AQI category
+- Overall outdoor-condition summary
 
-```text
-176 filtered Greater Melbourne activities
-```
+The application intentionally matches environmental data to the activity hour rather than displaying unrelated current weather.
 
-The Eventfinda processing pipeline includes:
-
-```text
-Eventfinda API
-    |
-    v
-fetchAllEventfindaEvents.js
-    |
-    v
-filterEventsByCategory.js
-    |
-    v
-flagSuspiciousContent.js
-    |
-    v
-refineReviewCategories.js
-    |
-    v
-mergeFinalActivities.js
-    |
-    v
-importData.js
-    |
-    v
-SQLite activities table
-```
-
-Additional Iteration 2 activity fields include:
+If the activity is outside the available forecast range, the interface explains that the forecast will become available closer to the activity date.
 
 ```text
-description
-is_free
-latitude
-longitude
-restrictions
-url
+ActivityCard
+      ↓
+suburb + activity time
+      ↓
+WeatherCard
+      ↓
+weatherService
+      ↓
+weatherConditions
+      ↓
+Temperature / Rain / UV / AQI
+      ↓
+Outdoor conditions summary
 ```
 
-The previous manually prepared EP1 activity CSV is no longer used as the main activity source.
+The weather service also uses a short in-memory cache so multiple activity cards can reuse the same downloaded weather dataset.
 
 ---
 
-## 3. Aged-Care Service Discovery
+## 3. Automated Weather Refresh
 
-Users can browse aged-care service information including:
+Environmental data is refreshed automatically through GitHub Actions.
+
+The workflow:
+
+```text
+.github/workflows/weather-refresh.yml
+```
+
+runs daily and:
+
+1. Installs the Python pipeline dependencies
+2. Runs weather pipeline tests
+3. Fetches updated weather, UV and air-quality data
+4. Updates the generated weather JSON
+5. Records refresh status
+6. Commits successful updates back to the repository
+
+Generated files include:
+
+```text
+public/data/melbourne_suburb_weather.json
+public/data/weather_refresh_status.json
+```
+
+The refresh process includes failure protection so an unsuccessful refresh does not automatically replace the last usable forecast.
+
+---
+
+## 4. Service Discovery
+
+Users can browse service information including:
 
 - Service name
 - Provider
@@ -125,167 +148,136 @@ Users can browse aged-care service information including:
 - Address
 - Suburb
 - Postcode
-- Location coordinates
+- Geographic coordinates
 - Source information
 
-The service catalogue remains primarily focused on verified Australian aged-care information.
+Service data is retrieved through:
 
-The interface only displays source-provided information and does not fabricate missing provider details.
+```text
+ServicesView
+      ↓
+serviceService
+      ↓
+GET /api/services
+      ↓
+SQLite services
+```
+
+Individual service pages provide additional context without requiring the listing page to perform unnecessary transport calculations.
 
 ---
 
-## 4. Saved Items
+## 5. Saved Activities and Services
 
-Users can save useful activities and services and return to them later through the Saved page.
+Activities and services can be saved for later use.
 
-Saved identifiers are stored locally in the browser.
+The application stores only item IDs in browser `localStorage`.
 
-No account database is required for saved-item functionality.
+```text
+Activity / Service
+      ↓
+Save
+      ↓
+savedItemsService
+      ↓
+localStorage
+      ↓
+SavedView / CalendarView
+```
+
+The current saved-item structure supports both:
+
+```text
+activityIds
+serviceIds
+```
+
+The service also migrates activity saves created by an earlier version of the application.
+
+No user account database is required for saved-item storage.
 
 ---
 
-# Personalisation
+## 6. Personal Calendar
 
-## 5. Preferences
+The Personal Calendar combines saved activities and planned service visits into one chronological planning view.
 
-Iteration 2 introduces an optional Preferences page.
+### Saved activities
 
-Users can configure:
+Activities use their real scheduled activity date.
 
-- Preferred general area
+### Saved services
+
+Services do not automatically have a personal visit date.
+
+Users can choose their own:
+
+```text
+Day
+Month
+Year
+```
+
+and save the planned visit locally.
+
+```text
+Saved service
+      ↓
+Choose planned date
+      ↓
+calendarService
+      ↓
+localStorage
+      ↓
+CalendarView
+```
+
+Activities and planned service visits are then combined and sorted by date.
+
+> The calendar is a personal planning feature only. Selecting a service date does **not** create or confirm a booking with the service provider.
+
+---
+
+## 7. AI-Assisted Activity Recommendations
+
+The platform provides personalised activity recommendations based on optional user preferences.
+
+Users can configure preferences such as:
+
+- General area
 - Interests
 - Preferred days
-- Preferred activity types
-- Preferred text size
+- Activity types
 
-Preferences are stored locally using:
-
-```text
-localStorage
-```
-
-The platform does not require:
-
-- Exact home address
-- Medical records
-- Diagnosis information
-- Detailed location history
-
-The relevant frontend service is:
+The recommendation flow is:
 
 ```text
-src/services/preferencesService.js
-```
-
-Saved preferences can then be used by the AI recommendation system.
-
----
-
-# AI Activity Recommendations
-
-## 6. Personalised Recommendations
-
-Iteration 2 introduces an AI-assisted activity recommendation system.
-
-The recommendation workflow is:
-
-```text
-PreferencesView.vue
-        |
-        | save preferences
-        v
-Browser localStorage
-        |
-        v
-HomeView.vue
-        |
-        v
-src/services/recommendationService.js
-        |
-        | POST /api/recommendations
-        v
+User preferences
+      ↓
+recommendationService
+      ↓
+POST /api/recommendations
+      ↓
 Express backend
-        |
-        v
-ai/recommendationService.js
-        |
-        +-----------------------------+
-        |                             |
-        v                             v
-Preference embedding          Precomputed activity
-generated at runtime          embeddings
-        |                             |
-        |                             |
-        +--------------+--------------+
-                       |
-                       v
-               Cosine similarity
-                       |
-                       +
-                area/day scoring
-                       |
-                       v
-              Rank future activities
-                       |
-                       v
-             Top 3 recommendations
-                       |
-                       v
-          Homepage recommendation cards
+      ↓
+Preference embedding
+      +
+Precomputed activity embeddings
+      ↓
+Cosine similarity
+      +
+Area match
+      +
+Day match
+      ↓
+Rank upcoming activities
+      ↓
+Top recommendations
 ```
 
-If no meaningful preferences have been saved, the homepage instead encourages the user to configure their preferences.
+### Recommendation model
 
----
-
-# Recommendation Inputs
-
-The backend currently accepts:
-
-```json
-{
-  "generalArea": "Clayton",
-  "interests": [
-    "Arts",
-    "Walking"
-  ],
-  "preferredDays": [
-    "Saturday"
-  ],
-  "activityTypes": [
-    "Social & cultural"
-  ]
-}
-```
-
-The recommendation system considers:
-
-- Semantic relevance to selected interests
-- Semantic relevance to selected activity types
-- Exact preferred-area match
-- Preferred-day match
-
-Only upcoming activities are considered by the recommendation endpoint.
-
-This means the number of activities used during recommendation may be lower than the total number stored in the database.
-
-For example:
-
-```text
-176 total stored activities
-        ↓
-filter upcoming activities
-        ↓
-approximately 141 recommendation candidates
-```
-
-The exact number depends on the current date and activity schedule.
-
----
-
-# Recommendation Model
-
-Semantic similarity is generated using:
+The project uses:
 
 ```text
 onnx-community/all-MiniLM-L6-v2-ONNX
@@ -297,831 +289,228 @@ through:
 @huggingface/transformers
 ```
 
-The current scoring model uses:
-
-```text
-Semantic relevance     70%
-Preferred area match   15%
-Preferred day match    15%
-```
-
-Weights are automatically normalised when only some preference types are provided.
-
-The system uses cosine similarity between:
-
-```text
-User preference embedding
-        and
-Precomputed activity embedding
-```
-
-The current homepage displays the:
-
-```text
-Top 3
-```
-
-highest ranked activities.
-
----
-
-# Precomputed Activity Embeddings
-
-## Why Precomputation Is Used
-
-The original Iteration 2 AI implementation generated embeddings for all candidate activities during the first recommendation request.
-
-This worked well locally but was too resource-intensive for the production Render environment.
-
-The previous runtime flow was:
-
-```text
-User opens homepage
-        |
-        v
-POST /api/recommendations
-        |
-        v
-Load MiniLM model
-        |
-        v
-Generate embeddings for ~141 activities
-        |
-        v
-Generate user preference embedding
-        |
-        v
-Rank activities
-```
-
-On a low-resource production instance, this caused very slow recommendations and could cause the request to fail.
-
-The optimised architecture generates activity embeddings locally before deployment.
-
----
-
-## Current AI Performance Architecture
-
-Activity embeddings are now generated using:
-
-```text
-age-friendly-database/ai/generateActivityEmbeddings.js
-```
-
-and saved into:
+Activity embeddings are precomputed and stored in:
 
 ```text
 age-friendly-database/ai/activityEmbeddings.json
 ```
 
-The workflow is:
+This reduces production workload because the server does not need to regenerate embeddings for the complete activity catalogue during each recommendation request.
+
+Each saved embedding is also associated with a SHA-256 text hash so stale embeddings can be rejected when semantic activity content changes.
+
+### Current ranking dimensions
+
+The recommendation system considers:
 
 ```text
-Local development machine
-        |
-        v
-SQLite activities
-        |
-        v
-buildActivityText()
-        |
-        v
-MiniLM embedding model
-        |
-        v
-Generate activity embeddings
-        |
-        v
-activityEmbeddings.json
-        |
-        v
-Git repository
-        |
-        v
-Render deployment
+Semantic relevance
+Preferred area
+Preferred day
 ```
 
-During a live recommendation request:
+Semantic relevance receives the largest weighting when semantic preferences are available.
 
-```text
-User preferences
-        |
-        v
-Generate ONE preference embedding
-        |
-        v
-Load precomputed activity embeddings
-        |
-        v
-Cosine similarity
-        |
-        +
-Area match
-        |
-        +
-Preferred day match
-        |
-        v
-Top 3 recommendations
-```
-
-The production server therefore no longer needs to generate embeddings for the complete activity catalogue during each deployment session.
+Only upcoming activities are considered by the recommendation endpoint.
 
 ---
 
-## Embedding Integrity Checking
+## 8. Nearby Public Transport
 
-Each precomputed activity embedding stores:
+The project includes GTFS transit-stop reference data.
 
-```text
-activity ID
-text hash
-embedding vector
-```
+Transit information is loaded lazily.
 
-The text hash is generated using:
+Listing pages do **not** calculate the nearest transport stop for every activity or service.
 
-```text
-SHA-256
-```
-
-The hash represents the semantic activity text used to generate the embedding.
-
-This text currently includes:
-
-```text
-event_name
-category_tags
-description
-```
-
-Before using a stored embedding, the backend regenerates the activity text hash and compares it with the saved hash.
-
-If the activity content has changed, the embedding is treated as stale and is not silently reused.
-
----
-
-# Regenerating Activity Embeddings
-
-Activity embeddings do **not** need to be regenerated every time the application starts.
-
-They should be regenerated when the semantic activity content changes.
-
-Examples include:
-
-- Activity name changes
-- Category tags change
-- Activity description changes
-- New activities are added
-- Activities are removed
-- A new Eventfinda dataset is imported
-
-From the backend directory:
-
-```bash
-cd age-friendly-database
-node ai/generateActivityEmbeddings.js
-```
-
-On Windows PowerShell:
-
-```powershell
-cd D:\research\FIT5120\age-friendly-australia\age-friendly-database
-node ai/generateActivityEmbeddings.js
-```
-
-A successful run produces output similar to:
-
-```text
-Generating activity embeddings
-Model: onnx-community/all-MiniLM-L6-v2-ONNX
-
-Loaded 176 activities.
-Activity text prepared.
-Generating embeddings...
-
-Embedded 16/176
-Embedded 32/176
-Embedded 48/176
-Embedded 64/176
-Embedded 80/176
-Embedded 96/176
-Embedded 112/176
-Embedded 128/176
-Embedded 144/176
-Embedded 160/176
-Embedded 176/176
-
-Activity embeddings generated successfully.
-Saved 176 embeddings.
-```
-
-The generated file is:
-
-```text
-age-friendly-database/ai/activityEmbeddings.json
-```
-
-After regeneration:
-
-```bash
-git add age-friendly-database/ai/activityEmbeddings.json
-git commit -m "Refresh precomputed activity embeddings"
-git push origin iteration-2
-```
-
-Changes only to fields such as:
-
-```text
-venue
-suburb
-day_time
-latitude
-longitude
-url
-```
-
-do not normally require a new semantic embedding unless the semantic text also changes.
-
-After a complete Eventfinda re-import, regenerating embeddings is recommended.
-
----
-
-# Recommendation Result
-
-The backend returns recommendation information similar to:
-
-```json
-{
-  "recommendations": [
-    {
-      "activityId": "123",
-      "score": 0.87,
-      "reasons": [
-        "Relevant to your selected interests",
-        "Located in Clayton",
-        "Available on Saturday"
-      ],
-      "breakdown": {
-        "semanticScore": 0.82,
-        "areaMatch": true,
-        "dayMatch": true
-      }
-    }
-  ]
-}
-```
-
-The frontend combines the returned activity IDs with the normalised activity data and displays the Top 3 results as homepage recommendation cards.
-
-The numerical recommendation score is used internally for ranking.
-
-The current user interface focuses on:
-
-- Recommended activity
-- Activity information
-- Human-readable recommendation reasons
-
-rather than exposing the raw internal score as a percentage.
-
----
-
-# Environmental Context
-
-## 7. Weather and UV Information
-
-Iteration 2 introduces local environmental context for supported activity locations.
-
-The activity interface can display:
-
-- Temperature
-- Precipitation probability
-- UV index
-
-Weather data is currently read from:
-
-```text
-public/data/melbourne_suburb_weather.json
-```
-
-and rendered by:
-
-```text
-src/components/environment/WeatherCard.vue
-```
-
-The visible weather component uses Open-Meteo data for supported Melbourne suburbs.
-
----
-
-# Environmental Data Pipeline
-
-The repository contains the Iteration 2 environmental data pipeline:
-
-```text
-data_pipeline/
-|- fetch_open_meteo.py
-|- fetch_epa_air_quality.py
-`- merge_environment_data.py
-```
-
-This supports collection and preparation of:
-
-- Weather data
-- UV information
-- Environmental / air-quality data
-
-At the current frontend stage, the Activity weather component primarily presents:
-
-```text
-Temperature
-Precipitation probability
-UV index
-```
-
-The environmental pipeline can be extended in later iterations to expose additional air-quality information.
-
----
-
-# Transit Stop Integration
-
-The project stores GTFS transit-stop reference data in SQLite.
-
-The original frontend implementation downloaded approximately:
-
-```text
-4,994 transit stops
-```
-
-when opening the Activities or Services listing page.
-
-It then calculated the nearest stop for every activity or service.
-
-This resulted in a large amount of unnecessary browser-side computation.
-
----
-
-## Optimised Transit Loading
-
-Iteration 2 now uses lazy transit loading.
-
-The current listing workflow is:
-
-```text
-Activities page
-        |
-        v
-GET /api/activities
-        |
-        v
-Display activities immediately
-```
-
-and:
-
-```text
-Services page
-        |
-        v
-GET /api/services
-        |
-        v
-Display services immediately
-```
-
-The complete transit-stop dataset is **not** required before rendering these listing pages.
-
-Transit information is loaded only when an individual detail page requires it.
+Instead:
 
 ```text
 Activity / Service detail page
-        |
-        | on demand
-        v
-transitStopsService.js
-        |
-        | GET /api/transit-stops
-        v
+      ↓
+transitStopsService
+      ↓
+GET /api/transit-stops
+      ↓
 SQLite transit_stops
-        |
-        v
-Find nearest stop for selected item
+      ↓
+Nearest-stop calculation
 ```
 
-This substantially reduces the initial workload of the Activities and Services pages.
+This reduces unnecessary work on the main listing pages.
 
 ---
 
-# Frontend Data Caching
+## 9. Live Local Information
 
-Activity and service catalogue results are cached in frontend memory during the current browser session.
-
-This means navigation such as:
+The application includes a dedicated:
 
 ```text
-Services
-    ↓
-Home
-    ↓
-Services
+/live
 ```
 
-does not need to repeatedly request and normalise the same service catalogue.
+page for current local information.
 
-The same optimisation applies to Activities.
+### Vicmap community venues
 
-Transit-stop data also has an in-memory cache after its first on-demand request.
+The backend queries the Victorian **Vicmap Features of Interest** service for community venues.
 
-These caches are browser-session runtime caches and are cleared when the application is reloaded.
+Users can view:
+
+- Venue name
+- Venue type
+- Venue subtype
+- Latitude
+- Longitude
+- Map location
+
+### PTV live bus positions
+
+The backend also retrieves live bus vehicle positions through the PTV GTFS-Realtime service.
+
+The interface supports:
+
+- Current bus positions
+- Optional route filtering
+- Vehicle coordinates
+- Update timestamps
+
+The backend uses a short cache for PTV responses to avoid unnecessary repeated external requests.
+
+---
+
+# Preferences and Local Personalisation
+
+User preferences are stored in browser `localStorage`.
+
+This keeps personalisation lightweight and avoids requiring unnecessary personal information.
+
+The platform does not require users to provide:
+
+- Exact home address
+- Medical records
+- Diagnosis information
+- Detailed location history
+
+Local preferences are used to improve activity recommendations and the overall user experience.
 
 ---
 
 # Accessibility and Age-Friendly Design
 
-The application is designed around the needs of older adults.
+The interface is designed with older users in mind.
 
-Current interface considerations include:
+Current design considerations include:
 
-- Large labelled controls
-- Clear page hierarchy
-- Strong visual separation
-- Readable typography
+- Large readable controls
+- Clear labels
+- Strong information hierarchy
 - Adjustable global text size
-- Simple navigation
-- Clear loading states
-- Clear empty states
-- Clear error states
-- Minimal personal-data requirements
+- Clear navigation
 - Responsive layouts
-- Clear recommendation explanations
-- Reduced unnecessary waiting on catalogue pages
+- Visible loading states
+- Clear error states
+- Clear empty states
+- Simple save interactions
+- Reduced unnecessary data entry
+- Human-readable recommendation explanations
+- Environmental context for activity planning
+- Minimal personal-data requirements
 
-The goal is not simply to display information, but to reduce unnecessary complexity during activity and service discovery.
-
----
-
-# Administrator Access
-
-Iteration 2 includes an administrator login gate for the development preview.
-
-The login page is available at:
-
-```text
-/login
-```
-
-The current preview login state is stored in browser:
-
-```text
-localStorage
-```
-
-Protected application routes require the administrator login before they can be accessed.
-
-This mechanism is intended as:
-
-```text
-development / demonstration access control
-```
-
-and should **not** be treated as production-grade authentication.
+The goal is to make activity and service discovery understandable without requiring technical knowledge from the user.
 
 ---
 
-# Architecture
+# Application Routes
 
-```text
-                        +----------------------+
-                        |      Vue 3 UI        |
-                        |       Vite           |
-                        +----------+-----------+
-                                   |
-                                   |
-                    Frontend service modules
-                                   |
-            +----------------------+----------------------+
-            |                      |                      |
-            v                      v                      v
-   activityService        serviceService       recommendationService
-            |                      |                      |
-            | GET                  | GET                  | POST
-            |                      |                      |
-            v                      v                      v
-                   +---------------------------+
-                   |      Express Backend      |
-                   +-------------+-------------+
-                                 |
-                +----------------+----------------+
-                |                                 |
-                v                                 v
-         SQLite Database                  AI Recommendation
-                |                              Service
-      +---------+---------+                       |
-      |         |         |                       |
- activities  services  transit_stops              |
-                                                  |
-                        +-------------------------+------------------+
-                        |                                            |
-                        v                                            v
-             Preference embedding                        Precomputed activity
-             generated at runtime                        embeddings JSON
-                        |                                            |
-                        +----------------------+---------------------+
-                                               |
-                                               v
-                                     Cosine similarity
-                                               |
-                                               v
-                                      Top 3 recommendations
-```
-
-The frontend does not access SQLite directly.
-
-Vue components communicate with frontend service modules, which communicate with the Express API.
-
-The backend performs:
-
-- SQLite queries
-- Recommendation processing
-- Preference embedding generation
-- Production frontend hosting
-
----
-
-# Runtime Data Flows
-
-## Activity Data
-
-```text
-ActivitiesView.vue
-    |
-    v
-activityService.js
-    |
-    | GET /api/activities
-    v
-server.js
-    |
-    v
-SQLite activities
-    |
-    v
-Frontend memory cache
-```
-
-Transit stops are not required before rendering the activity catalogue.
-
----
-
-## Service Data
-
-```text
-ServicesView.vue
-    |
-    v
-serviceService.js
-    |
-    | GET /api/services
-    v
-server.js
-    |
-    v
-SQLite services
-    |
-    v
-Frontend memory cache
-```
-
-Transit stops are not required before rendering the service catalogue.
-
----
-
-## Transit Stop Data
-
-```text
-Activity / Service detail
-        |
-        v
-transitStopsService.js
-        |
-        | GET /api/transit-stops
-        v
-SQLite transit_stops
-        |
-        v
-Browser memory cache
-        |
-        v
-Nearest-stop calculation
-```
-
-Transit-stop data is loaded lazily.
-
----
-
-## Recommendation Data
-
-```text
-PreferencesView.vue
-    |
-    v
-preferencesService.js
-    |
-    v
-localStorage
-    |
-    v
-HomeView.vue
-    |
-    v
-frontend recommendationService.js
-    |
-    | POST /api/recommendations
-    v
-server.js
-    |
-    v
-ai/recommendationService.js
-    |
-    +---- activityText.js
-    |
-    +---- embeddingService.js
-    |         |
-    |         `---- generates preference embedding
-    |
-    +---- activityEmbeddings.json
-    |         |
-    |         `---- precomputed activity embeddings
-    |
-    v
-Cosine similarity
-    |
-    +
-Area match
-    |
-    +
-Preferred day match
-    |
-    v
-Top 3 activity recommendations
-```
-
-Activity embeddings are generated offline using:
-
-```text
-generateActivityEmbeddings.js
-```
-
-and are reused by the deployed recommendation service.
-
----
-
-## Weather Data
-
-```text
-Open-Meteo
-    |
-    v
-data_pipeline/fetch_open_meteo.py
-    |
-    v
-melbourne_suburb_weather.json
-    |
-    v
-WeatherCard.vue
-    |
-    v
-Activity UI
-```
-
----
-
-# Frontend Routes
+The current Vue application provides the following primary routes:
 
 | Route | Purpose |
-| --- | --- |
-| `/login` | Administrator login |
-| `/` | Homepage and personalised recommendations |
-| `/activities` | Browse and filter activities |
+|---|---|
+| `/login` | Development preview login |
+| `/` | Homepage |
+| `/activities` | Activity discovery |
 | `/activities/:id` | Activity details |
-| `/services` | Browse aged-care services |
+| `/services` | Service discovery |
 | `/services/:id` | Service details |
+| `/live` | Live venues and PTV information |
 | `/saved` | Saved activities and services |
+| `/calendar` | Personal calendar |
 | `/preferences` | User preferences |
 
-Unknown routes redirect to the homepage.
+The development preview currently protects feature routes using a browser-based login state.
 
-Except for `/login`, the current Iteration 2 preview routes are protected by the administrator login guard.
+This mechanism is intended for development and demonstration purposes and should not be treated as production-grade authentication.
+
+---
+
+# System Architecture
+
+```text
+                           User
+                            │
+                            ▼
+                    ┌───────────────┐
+                    │   Vue 3 UI    │
+                    │     Vite      │
+                    └───────┬───────┘
+                            │
+                  Frontend service layer
+                            │
+          ┌─────────────────┼─────────────────┐
+          │                 │                 │
+          ▼                 ▼                 ▼
+  activityService    serviceService   recommendationService
+          │                 │                 │
+          └─────────────────┼─────────────────┘
+                            │
+                            ▼
+                    ┌───────────────┐
+                    │ Express API   │
+                    └───────┬───────┘
+                            │
+          ┌─────────────────┼──────────────────┐
+          │                 │                  │
+          ▼                 ▼                  ▼
+       SQLite         AI Recommendation    External APIs
+          │                 │                  │
+   ┌──────┼──────┐          │          ┌───────┴────────┐
+   │      │      │          │          │                │
+Activities Services Transit │        Vicmap            PTV
+                             │
+                       MiniLM embeddings
+
+
+Separate environmental pipeline:
+
+Activity locations
+      ↓
+Python weather pipeline
+      ↓
+Open environmental data
+      ↓
+Generated weather JSON
+      ↓
+WeatherCard
+```
 
 ---
 
 # Backend API
 
-| Method | Endpoint | Purpose |
-| --- | --- | --- |
-| `GET` | `/api/health` | Backend health check |
-| `GET` | `/api/activities` | Return activity records |
-| `GET` | `/api/services` | Return aged-care service records |
-| `GET` | `/api/transit-stops` | Return stored GTFS stop records |
-| `POST` | `/api/recommendations` | Generate Top 3 personalised activity recommendations |
+The Express backend currently provides:
 
-The backend also serves the compiled Vue frontend in production.
+| Method | Endpoint | Purpose |
+|---|---|---|
+| `GET` | `/api/health` | Backend health check |
+| `GET` | `/api/activities` | Activity catalogue |
+| `GET` | `/api/services` | Service catalogue |
+| `GET` | `/api/transit-stops` | Transit-stop reference data |
+| `POST` | `/api/recommendations` | AI-assisted activity recommendations |
+| `GET` | `/api/realtime/community-venues` | Vicmap community venues |
+| `GET` | `/api/realtime/bus-positions` | PTV live bus positions |
 
 Unknown `/api/*` routes return a JSON `404` response.
-
----
-
-# Key Source Files
-
-```text
-src/
-|
-|- components/
-|  |
-|  |- AppNavbar.vue
-|  |
-|  |- activities/
-|  |  |- ActivityCard.vue
-|  |  `- ActivityFilters.vue
-|  |
-|  |- environment/
-|  |  `- WeatherCard.vue
-|  |
-|  `- services/
-|     |- ServiceCard.vue
-|     `- ServiceFilters.vue
-|
-|- router/
-|  `- index.js
-|
-|- services/
-|  |- activityService.js
-|  |- distanceService.js
-|  |- preferencesService.js
-|  |- recommendationService.js
-|  |- savedItemsService.js
-|  |- serviceService.js
-|  |- suburbCoordinates.js
-|  |- textSizeService.js
-|  |- transitStopsService.js
-|  `- venueCoordinates.js
-|
-`- views/
-   |- HomeView.vue
-   |- LoginView.vue
-   |- ActivitiesView.vue
-   |- ActivityDetailView.vue
-   |- ServicesView.vue
-   |- ServiceDetailView.vue
-   |- SavedView.vue
-   `- PreferencesView.vue
-```
-
-Backend:
-
-```text
-age-friendly-database/
-|
-|- age-friendly.db
-|- server.js
-|- initDb.js
-|- importData.js
-|- addActivityColumns.js
-|
-|- fetchAllEventfindaEvents.js
-|- filterEventsByCategory.js
-|- flagSuspiciousContent.js
-|- refineReviewCategories.js
-|- mergeFinalActivities.js
-|
-|- syncAgedCareData.js
-|- syncGtfsStops.js
-|
-`- ai/
-   |- activityText.js
-   |- embeddingService.js
-   |- recommendationService.js
-   |- generateActivityEmbeddings.js
-   |- activityEmbeddings.json
-   |
-   `- test/
-      |- baselineRecommendationService.js
-      |- compareRecommendations.js
-      |- evaluateRecommendations.js
-      |- evaluationCases.json
-      |- testDatabaseRecommendation.js
-      |- testEmbedding.js
-      `- testRecommendation.js
-```
-
-Environmental pipeline:
-
-```text
-data_pipeline/
-|- fetch_open_meteo.py
-|- fetch_epa_air_quality.py
-`- merge_environment_data.py
-```
 
 ---
 
@@ -1133,16 +522,8 @@ data_pipeline/
 - Vue Router
 - Vite
 - JavaScript
+- HTML
 - CSS
-- Browser Local Storage
-
-The current frontend package requires:
-
-```text
-Node.js ^22.18.0 or >=24.12.0
-```
-
----
 
 ## Backend
 
@@ -1151,108 +532,180 @@ Node.js ^22.18.0 or >=24.12.0
 - SQLite
 - CORS
 - dotenv
-- csv-parser
-- node-cron
-- xlsx
-- unzipper
 
-AI dependencies include:
+## AI
 
-```text
-@huggingface/transformers
-onnxruntime-node
-```
+- `@huggingface/transformers`
+- MiniLM sentence embeddings
+- Cosine similarity
+- Precomputed activity embeddings
+- SHA-256 embedding integrity checks
 
-The backend package also uses native dependencies required by SQLite and the AI runtime.
+## Environmental Data
+
+- Python
+- Open-Meteo based weather data
+- UV information
+- Air-quality information
+- GitHub Actions automated refresh
+
+## Transport and Live Data
+
+- GTFS transit-stop data
+- PTV GTFS-Realtime
+- Vicmap Features of Interest
+- `gtfs-realtime-bindings`
 
 ---
 
-# Run Locally
-
-## Requirements
-
-Install:
+# Repository Structure
 
 ```text
-Node.js ^22.18.0 or >=24.12.0
+age-friendly-australia/
+│
+├── .github/
+│   └── workflows/
+│       └── weather-refresh.yml
+│
+├── age-friendly-database/
+│   ├── ai/
+│   │   ├── activityEmbeddings.json
+│   │   ├── embeddingService.js
+│   │   ├── recommendationService.js
+│   │   └── ...
+│   │
+│   ├── age-friendly.db
+│   ├── server.js
+│   ├── ptvRealtimeService.js
+│   ├── vicmapFoiService.js
+│   └── package.json
+│
+├── data/
+│
+├── data_pipeline/
+│   ├── fetch_open_meteo.py
+│   ├── requirements.txt
+│   └── tests/
+│
+├── public/
+│   ├── data/
+│   │   ├── melbourne_suburb_weather.json
+│   │   └── weather_refresh_status.json
+│   └── images/
+│
+├── src/
+│   ├── components/
+│   │   ├── activities/
+│   │   └── environment/
+│   │
+│   ├── router/
+│   ├── services/
+│   ├── views/
+│   └── ...
+│
+├── .env.example
+├── package.json
+├── vite.config.js
+└── README.md
+```
+
+---
+
+# Local Development
+
+## Prerequisites
+
+Recommended:
+
+```text
+Node.js 22.18+ or a compatible newer version
 npm
-```
-
-Clone the repository and switch to:
-
-```bash
-git checkout iteration-2
+Python 3.12 for the environmental data pipeline
 ```
 
 ---
 
-## 1. Install Frontend Dependencies
+## 1. Clone the repository
 
-From the project root:
+```bash
+git clone https://github.com/YUCHENLU666/age-friendly-australia.git
+cd age-friendly-australia
+```
+
+---
+
+## 2. Install frontend dependencies
 
 ```bash
 npm install
 ```
 
-On Windows PowerShell:
-
-```powershell
-npm.cmd install
-```
-
 ---
 
-## 2. Install Backend Dependencies
+## 3. Configure the frontend API URL
 
-Open the backend directory:
-
-```bash
-cd age-friendly-database
-npm install
-```
-
-If npm reports that installation scripts require approval for packages such as:
+Create:
 
 ```text
-sqlite3
-onnxruntime-node
-sharp
-protobufjs
+.env
 ```
 
-approve them with:
+based on:
 
-```bash
-npm approve-scripts sqlite3 onnxruntime-node sharp protobufjs
-npm install
+```text
+.env.example
 ```
 
-On Windows PowerShell:
+For local development:
 
-```powershell
-npm.cmd approve-scripts sqlite3 onnxruntime-node sharp protobufjs
-npm.cmd install
+```env
+VITE_API_BASE_URL=http://localhost:3000/api
 ```
 
 ---
 
-# Start the Application
-
-## Terminal 1 - Backend
+## 4. Install backend dependencies
 
 ```bash
 cd age-friendly-database
+npm install
+```
+
+For live PTV bus information, configure the required PTV API key in the backend environment:
+
+```env
+PTV_API_KEY=your_ptv_api_key
+```
+
+The backend default port is:
+
+```text
+3000
+```
+
+---
+
+## 5. Start the backend
+
+From:
+
+```text
+age-friendly-database/
+```
+
+run:
+
+```bash
+npm run dev
+```
+
+or:
+
+```bash
 npm start
 ```
 
-PowerShell:
-
-```powershell
-cd age-friendly-database
-npm.cmd start
-```
-
-The backend starts at:
+The backend will be available at:
 
 ```text
 http://localhost:3000
@@ -1264,80 +717,26 @@ Health check:
 http://localhost:3000/api/health
 ```
 
-A successful startup with precomputed embeddings should include:
-
-```text
-Loaded 176 precomputed activity embeddings.
-Age-Friendly Australia started
-Connected to SQLite database.
-```
-
 ---
 
-## Terminal 2 - Frontend
+## 6. Start the frontend
 
-From the project root:
+Open another terminal in the repository root:
 
 ```bash
 npm run dev
 ```
 
-PowerShell:
-
-```powershell
-npm.cmd run dev
-```
-
-Vite normally starts at:
-
-```text
-http://localhost:5173
-```
-
-The default local frontend API URL is:
-
-```text
-http://localhost:3000/api
-```
-
----
-
-# Environment Configuration
-
-The frontend uses:
-
-```text
-VITE_API_BASE_URL
-```
-
-For local development, the default is:
-
-```text
-http://localhost:3000/api
-```
-
-For the current Render production deployment:
-
-```text
-VITE_API_BASE_URL=/api
-```
-
-This allows the frontend and Express backend to use the same Render origin.
+Vite will provide the local frontend URL.
 
 ---
 
 # Production Build
 
-Build the Vue frontend from the project root:
+Build the frontend from the repository root:
 
 ```bash
 npm run build
-```
-
-PowerShell:
-
-```powershell
-npm.cmd run build
 ```
 
 This generates:
@@ -1346,520 +745,220 @@ This generates:
 dist/
 ```
 
-The Express backend is configured to serve the compiled `dist` directory and supports Vue Router history fallback.
+The Express backend is configured to serve the built Vue application from this directory.
 
-Therefore the same Render Web Service can provide:
+Then run:
+
+```bash
+cd age-friendly-database
+npm start
+```
+
+In production, Vue Router routes are handled through the backend's history fallback so URLs such as:
 
 ```text
-Vue frontend
-+
+/activities
+/services
+/calendar
+/live
+```
+
+can be opened directly.
+
+---
+
+# Weather Data Pipeline
+
+The weather pipeline is located in:
+
+```text
+data_pipeline/
+```
+
+Install Python dependencies:
+
+```bash
+python -m pip install -r data_pipeline/requirements.txt
+```
+
+Run the tests:
+
+```bash
+python -m unittest discover -s data_pipeline/tests -v
+```
+
+Run a manual weather refresh:
+
+```bash
+python data_pipeline/fetch_open_meteo.py
+```
+
+The daily GitHub Actions workflow performs the same core process automatically.
+
+---
+
+# Regenerating Activity Embeddings
+
+Activity embeddings should be regenerated when semantic activity content changes, for example when:
+
+- New activities are imported
+- Activities are removed
+- Activity names change
+- Activity descriptions change
+- Activity category tags change
+
+From the backend directory:
+
+```bash
+cd age-friendly-database
+node ai/generateActivityEmbeddings.js
+```
+
+The generated file is:
+
+```text
+age-friendly-database/ai/activityEmbeddings.json
+```
+
+Precomputed embeddings allow production recommendation requests to generate only the user's preference embedding rather than recalculating every activity embedding.
+
+---
+
+# Local Storage
+
+The application currently uses browser `localStorage` for lightweight client-side state.
+
+Examples include:
+
+```text
+Saved activity IDs
+Saved service IDs
+Planned service visit dates
+User preferences
+Development preview login state
+```
+
+Saved item data and planned calendar dates are intentionally separated:
+
+```text
+savedItemsService
+    → which items the user saved
+
+calendarService
+    → when the user plans to visit a saved service
+```
+
+---
+
+# Performance Design
+
+Several optimisations are used to reduce unnecessary work.
+
+## Activity and service caching
+
+Normalised activity and service catalogues are cached in frontend memory during the browser session.
+
+## Weather request sharing
+
+Multiple `WeatherCard` components reuse a shared weather-data request rather than downloading the same JSON independently.
+
+## Lazy transit loading
+
+The full transit-stop dataset is loaded only when a detail page requires nearby transport information.
+
+## Precomputed AI embeddings
+
+Activity embeddings are generated before deployment instead of being recomputed during every recommendation request.
+
+## PTV response caching
+
+Live bus responses are temporarily cached by the backend to reduce repeated calls to the external realtime service.
+
+---
+
+# Data Sources
+
+The project combines several sources and data-processing pipelines, including:
+
+- Event-based activity data processed for the activity catalogue
+- Local service data stored in SQLite
+- GTFS transit-stop information
+- Open-Meteo environmental data
+- CAMS-related air-quality information
+- Vicmap Features of Interest
+- PTV GTFS-Realtime
+
+External information may change when upstream providers update their records.
+
+---
+
+# Important Limitations
+
+This project is an academic prototype and should not be treated as a production health, booking, transport or emergency-information system.
+
+In particular:
+
+- Personal calendar dates do not create real provider bookings.
+- The current login mechanism is intended for development/demo access.
+- Environmental forecasts are limited by provider forecast horizons.
+- External realtime services may become temporarily unavailable.
+- Recommendations assist discovery but do not replace user judgement.
+- Browser-local data may be lost if local storage is cleared.
+
+---
+
+# Development Principles
+
+The project follows several design principles:
+
+```text
+Age-friendly
+Accessible
+Explainable
+Privacy-conscious
+Performance-aware
+Modular
+Data-driven
+```
+
+The application separates:
+
+```text
+Vue presentation components
+        ↓
+Frontend service modules
+        ↓
 Express API
-+
-SQLite
-+
-AI recommendation service
-```
-
----
-
-# Render Deployment
-
-The current Iteration 2 production service is deployed from:
-
-```text
-Branch:
-iteration-2
-```
-
-The current Render service name is:
-
-```text
-age-friendly-australia-i2-api
-```
-
-Primary deployment URL:
-
-```text
-https://age-friendly-australia-i2-api.onrender.com
-```
-
----
-
-## Render Build Command
-
-The production build currently uses:
-
-```bash
-npm ci && npm run build && cd age-friendly-database && npm ci && npm rebuild sqlite3 --build-from-source
-```
-
-The SQLite rebuild is required because the prebuilt `sqlite3` native binary can be incompatible with the Render Linux GLIBC environment.
-
-Rebuilding SQLite inside Render ensures the native module is compiled against the deployment environment.
-
----
-
-## Render Start Command
-
-```bash
-cd age-friendly-database && npm start
-```
-
----
-
-## Render Environment Variables
-
-```text
-VITE_API_BASE_URL=/api
-NODE_VERSION=24.18.0
-```
-
-Render provides the runtime `PORT` automatically.
-
-The backend uses:
-
-```text
-process.env.PORT
-```
-
-and therefore does not require a manually configured production port.
-
----
-
-## Render Health Check
-
-Health Check Path:
-
-```text
-/api/health
-```
-
----
-
-# Testing the Recommendation API
-
-Example request:
-
-```json
-{
-  "generalArea": "Clayton",
-  "interests": [
-    "Arts",
-    "Walking"
-  ],
-  "preferredDays": [
-    "Saturday"
-  ],
-  "activityTypes": [
-    "Social & cultural"
-  ]
-}
-```
-
-PowerShell example:
-
-```powershell
-$body = @{
-    generalArea = "Clayton"
-
-    interests = @(
-        "Arts",
-        "Walking"
-    )
-
-    preferredDays = @(
-        "Saturday"
-    )
-
-    activityTypes = @(
-        "Social & cultural"
-    )
-} | ConvertTo-Json
-
-Invoke-RestMethod `
-    -Uri "http://localhost:3000/api/recommendations" `
-    -Method POST `
-    -ContentType "application/json" `
-    -Body $body
-```
-
-The deployed recommendation endpoint uses precomputed activity embeddings.
-
-When semantic preferences are supplied, the backend only needs to:
-
-```text
-Initialise MiniLM if necessary
         ↓
-Generate ONE user preference embedding
-        ↓
-Read precomputed activity embeddings
-        ↓
-Calculate cosine similarity
-        ↓
-Apply area/day scores
-        ↓
-Return Top 3
+SQLite / AI / external data providers
 ```
 
-A successful backend log should include:
-
-```text
-Loaded 176 precomputed activity embeddings.
-Generating preference embedding only.
-Used precomputed embeddings for 141/141 candidate activities.
-```
-
-The number of candidate activities may be lower than the total database count because only upcoming activities are considered.
-
-The backend should no longer display runtime activity batch-generation logs such as:
-
-```text
-Embedded 16/141
-Embedded 32/141
-...
-```
-
-during normal recommendation requests.
+This keeps UI components focused on presentation while data retrieval and processing remain reusable across the application.
 
 ---
 
-# Iteration 2 Acceptance Summary
+# Project Status
 
-The current Iteration 2 branch supports:
+The current `main` branch includes the integrated application with:
 
-- Eventfinda-based Greater Melbourne activity data
-- Approximately 176 imported activities
-- Searchable and filterable activity discovery
-- Activity detail pages
-- Aged-care service discovery
-- Service detail pages
-- Saved activities and services
-- Global text-size preference
-- Optional user preference settings
-- Preferred general area
-- Preferred interests
-- Preferred days
-- Preferred activity types
-- AI-assisted activity recommendation
-- Top 3 homepage recommendations
-- Human-readable recommendation explanations
-- Precomputed activity embeddings
-- Semantic recommendation using MiniLM
-- Local weather information
-- Precipitation probability
-- UV information
-- Stored GTFS transit-stop support
-- Lazy transit-stop loading
-- Frontend activity caching
-- Frontend service caching
-- Administrator preview login
-- Loading states
-- Empty states
-- Error states
-- Responsive age-friendly layouts
-- Vue production build served by Express
-- Render deployment support
+- Activity discovery
+- Service discovery
+- Saved items
+- Personal calendar
+- Preferences
+- AI recommendations
+- Activity weather and air quality
+- Nearby transit information
+- Live Vicmap community venues
+- Live PTV bus positions
+- Automated environmental-data refresh
+
+Further development can continue to improve data coverage, accessibility, recommendation evaluation, realtime integrations and production authentication.
 
 ---
 
-# Privacy Approach
+## Repository
 
-The current personalisation system intentionally avoids collecting highly sensitive user information.
+`YUCHENLU666/age-friendly-australia`
 
-The application does not require:
-
-- Exact home address
-- Medical records
-- Diagnosis information
-- Detailed location history
-
-Preference information is stored locally in the browser.
-
-The recommendation API receives only the preference information required to rank activities.
-
----
-
-# Performance Optimisations
-
-Iteration 2 includes several performance changes introduced after deployment testing.
-
-## Activity and Service Catalogue Optimisation
-
-Previously:
-
-```text
-Open Activities / Services
-        |
-        v
-Load catalogue
-        +
-Load ~4,994 transit stops
-        |
-        v
-Calculate nearest stop for every record
-        |
-        v
-Render page
-```
-
-Current implementation:
-
-```text
-Open Activities / Services
-        |
-        v
-Load catalogue only
-        |
-        v
-Render immediately
-```
-
-Transit stops are only loaded when needed by a detail page.
-
----
-
-## Frontend Runtime Caching
-
-The following datasets use frontend in-memory caching:
-
-```text
-activities
-services
-transit stops
-```
-
-This reduces repeated API calls during navigation in the same application session.
-
----
-
-## AI Recommendation Optimisation
-
-Previously:
-
-```text
-Render request
-        |
-        v
-Generate embeddings for every candidate activity
-        |
-        v
-Generate preference embedding
-        |
-        v
-Rank
-```
-
-Current implementation:
-
-```text
-Local preprocessing
-        |
-        v
-Generate activity embeddings once
-        |
-        v
-activityEmbeddings.json
-        |
-        v
-Render request
-        |
-        v
-Generate only user preference embedding
-        |
-        v
-Compare against precomputed embeddings
-        |
-        v
-Top 3
-```
-
-This substantially reduces CPU and memory demand during deployed recommendation requests.
-
----
-
-# Known Limitations
-
-1. The Eventfinda activity dataset is a processed imported snapshot rather than a continuously live event feed.
-
-2. Event information depends on the completeness and accuracy of the source data.
-
-3. The aged-care catalogue remains focused on aged-care services rather than broad GP and healthcare coverage.
-
-4. GTFS stop data is stored reference data rather than live public-transport vehicle information or a complete journey planner.
-
-5. The current AI recommendation interface returns only the Top 3 activities.
-
-6. The first semantic recommendation request after a server cold start may still take longer because the MiniLM model must be initialised before generating the user's preference embedding.
-
-7. Activity embeddings are precomputed and stored in `activityEmbeddings.json`. They must be regenerated after relevant activity semantic content changes or after a new activity dataset is imported.
-
-8. If an activity embedding hash no longer matches the current semantic activity text, that embedding is ignored until embeddings are regenerated.
-
-9. Weather and UV information currently relies on a generated Melbourne suburb environmental dataset rather than a live browser-side API request.
-
-10. The environmental data pipeline contains EPA air-quality processing, but the current visible activity weather card primarily exposes temperature, precipitation probability and UV.
-
-11. The administrator login is a development / demonstration access-control mechanism and is not production-grade authentication.
-
-12. Preferences and saved items are device-local and are not synchronised between browsers or devices.
-
-13. Frontend in-memory caches are reset when the browser application is reloaded.
-
-14. The Render free service may experience cold-start delays after inactivity.
-
-15. Scheduled source refreshes should not be assumed to run automatically in every deployment environment.
-
----
-
-# Iteration Progress
-
-## Iteration 1
-
-Iteration 1 established the core platform:
-
-```text
-Activity discovery
-Service discovery
-Filtering
-Detail pages
-Saved items
-Text-size accessibility
-Transit-stop context
-```
-
----
-
-## Iteration 2
-
-Iteration 2 extends the platform with:
-
-```text
-Eventfinda activity data
-        +
-Optional preferences
-        +
-AI personalised recommendations
-        +
-Precomputed AI embeddings
-        +
-Weather and UV context
-        +
-Performance optimisation
-        +
-Administrator preview access
-```
-
----
-
-# Future Work
-
-Possible later-iteration improvements include:
-
-- Recently viewed items
-- More environmental and air-quality presentation
-- Broader GP and healthcare datasets
-- Additional council activity sources
-- More advanced accessibility information
-- Production-grade authentication
-- Server-side user preference accounts
-- More recommendation controls
-- Additional recommendation evaluation
-- Automated Eventfinda refresh
-- Automated embedding regeneration
-- Automated production data refresh
-- Crowd-level or off-peak suggestions
-- Server-side nearest-transit-stop indexing
-- Persistent recommendation caches
-- Separate frontend and backend deployment if required at larger scale
-
----
-
-# Design Prototype
-
-The broader high-fidelity prototype is available at:
-
-```text
-https://kiwi-navy-66840758.figma.site
-```
-
-The prototype includes concepts across multiple iterations, so not every prototype concept is necessarily implemented in the current branch.
-
----
-
-# Repository
-
-Repository:
-
-```text
-https://github.com/YUCHENLU666/age-friendly-australia
-```
-
-Current development release:
-
-```text
-iteration-2
-```
-
-Current Iteration 2 Render deployment:
-
-```text
-https://age-friendly-australia-i2-api.onrender.com
-```
-
----
-
-# Current Iteration 2 Deployment Architecture
-
-```text
-GitHub
-iteration-2 branch
-        |
-        v
-Render Build
-        |
-        +---- npm ci
-        |
-        +---- npm run build
-        |
-        +---- backend npm ci
-        |
-        +---- rebuild sqlite3
-        |
-        v
-Render Web Service
-        |
-        +---- Vue dist frontend
-        |
-        +---- Express API
-        |
-        +---- SQLite database
-        |
-        +---- Precomputed activity embeddings
-        |
-        +---- MiniLM preference embedding
-        |
-        v
-Age-Friendly Australia Iteration 2
-```
-
----
-
-# Current Status
-
-Iteration 2 currently provides a complete end-to-end prototype combining:
-
-```text
-Accessible activity discovery
-+
-Aged-care service discovery
-+
-Local environmental context
-+
-Optional personalisation
-+
-AI-assisted activity recommendations
-+
-Performance-aware deployment
-```
-
-The current implementation is intended as an academic project release and a foundation for further iteration rather than a production healthcare or transport system.
+Age-Friendly Australia — helping older adults discover, plan and engage with their local community more confidently.
