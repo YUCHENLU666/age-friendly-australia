@@ -1,17 +1,73 @@
-//get the Coordinates by activity venue name
-import { getVenueCoordinates } from './venueCoordinates'
+// ======================================================
+// Activity service
+// ======================================================
+//
+// This service is responsible for loading and preparing
+// activity data for the frontend.
+//
+// Main responsibilities:
+//
+// 1. Request activities from the backend API.
+// 2. Normalise different backend field names into one
+//    consistent frontend activity structure.
+// 3. Derive additional UI fields such as:
+//    - day
+//    - suitability
+//    - primary tag
+//    - activity type
+//    - fallback image
+// 4. Cache the activity catalogue in memory.
+// 5. Load nearby public transport only when an
+//    individual activity detail page is opened.
+//
+// Main data flow:
+//
+// SQLite
+//   ↓
+// Express GET /api/activities
+//   ↓
+// activityService
+//   ↓
+// normaliseActivity()
+//   ↓
+// Vue components
+//
 
 import {
-  findNearestStop, //find the nearest transit stop to the activity venue (by activity coordinates + all transit stops)
-  getTransitStops, //get the data of all transit stops
+  getVenueCoordinates,
+} from './venueCoordinates'
+
+import {
+  findNearestStop,
+  getTransitStops,
 } from '@/services/transitStopsService'
 
-// decide where the frontend should visit the backend
+
+// ======================================================
+// API configuration
+// ======================================================
+
+// Use the deployed backend URL when provided through
+// environment variables.
+//
+// Fall back to the local backend during development.
 const API_BASE_URL = (
   import.meta.env.VITE_API_BASE_URL ||
   'http://localhost:3000/api'
 ).replace(/\/$/, '')
 
+
+// ======================================================
+// UI text sanitisation
+// ======================================================
+//
+// Some source data may contain terminology that should
+// not appear in the user-facing interface.
+//
+// safeUiText() converts incoming values to strings,
+// replaces the blocked term and removes surrounding
+// whitespace.
+//
 const blockedUiTerm = [
   'com',
   'munity',
@@ -32,15 +88,28 @@ function safeUiText(value) {
     .trim()
 }
 
-// Normalize the backend tags into Array
-//Data normalization
+
+// ======================================================
+// Tag normalisation
+// ======================================================
+
+/**
+ * Convert backend tag data into a clean array.
+ *
+ * Backend records may provide tags either as:
+ *
+ * - an existing array
+ * - a semicolon-separated string
+ *
+ * Empty values are removed before returning the result.
+ */
 function normaliseTags(value) {
   if (Array.isArray(value)) {
     return value
       .map((tag) =>
         safeUiText(tag),
       )
-      .filter(Boolean)//remove empty strings
+      .filter(Boolean)
   }
 
   return safeUiText(value)
@@ -51,16 +120,42 @@ function normaliseTags(value) {
     .filter(Boolean)
 }
 
+
+// ======================================================
+// Upcoming activity check
+// ======================================================
+
+/**
+ * Determine whether an activity should remain visible.
+ *
+ * If the schedule can be parsed as a real date,
+ * past activities are excluded.
+ *
+ * If the schedule is descriptive text rather than a
+ * parseable date, the activity is kept because it may
+ * represent a recurring or flexible schedule.
+ */
 function isUpcoming(row) {
-  const raw = row.day_time ?? row.dayTime ?? row.schedule ?? ''
-  const trimmed = raw.trim()
+  const raw =
+    row.day_time ??
+    row.dayTime ??
+    row.schedule ??
+    ''
+
+  const trimmed =
+    raw.trim()
 
   if (!trimmed) {
     return false
   }
 
-  const parsed = new Date(trimmed)
-  const looksLikeDate = !Number.isNaN(parsed.getTime())
+  const parsed =
+    new Date(trimmed)
+
+  const looksLikeDate =
+    !Number.isNaN(
+      parsed.getTime(),
+    )
 
   if (looksLikeDate) {
     return parsed >= new Date()
@@ -69,7 +164,17 @@ function isUpcoming(row) {
   return true
 }
 
-// Normalize the date of the activity into a day of the week
+
+// ======================================================
+// Day normalisation
+// ======================================================
+
+/**
+ * Derive a weekday from the activity schedule.
+ *
+ * If no weekday can be identified, the activity is
+ * treated as having a flexible schedule.
+ */
 function getDay(schedule) {
   const value =
     schedule.toLowerCase()
@@ -102,17 +207,29 @@ function getDay(schedule) {
     return 'Sunday'
   }
 
-  // If the schedule does not specify a day, return 'Flexible'
   return 'Flexible'
 }
 
-//Convert the older-adult suitability of the backend into standard value + UI label
+
+// ======================================================
+// Suitability normalisation
+// ======================================================
+
+/**
+ * Convert backend older-adult suitability values into
+ * the standard value + label structure used by the UI.
+ *
+ * value:
+ *   Used internally for filtering and styling.
+ *
+ * label:
+ *   Displayed directly to users.
+ */
 function getSuitability(value) {
   const normalised =
     safeUiText(value)
       .toLowerCase()
 
-  // value for Internal use, label for user
   if (normalised === 'yes') {
     return {
       value: 'yes',
@@ -146,7 +263,22 @@ function getSuitability(value) {
   }
 }
 
-// Get the primary tag for an activity, ignoring less useful tags
+
+// ======================================================
+// Primary activity tag
+// ======================================================
+
+/**
+ * Select the most useful activity tag for display.
+ *
+ * Generic source tags such as "Adult" or
+ * "Event Series" are ignored where possible.
+ *
+ * If no useful tag exists, fall back to:
+ *
+ * 1. the first available tag
+ * 2. "Activity"
+ */
 function getPrimaryTag(tags) {
   const lessUsefulPrimaryTags =
     new Set([
@@ -163,13 +295,22 @@ function getPrimaryTag(tags) {
         ),
     ) ||
     tags[0] ||
-    // if cant find any info return Activity as default
     'Activity'
   )
 }
 
-// use the keywords in the acitivity name and tags to determine the activity type for filtering and display
-// we can update NLP classifier in iteration 2
+
+// ======================================================
+// Activity type classification
+// ======================================================
+
+/**
+ * Derive a broad activity type from keywords in the
+ * activity name and tags.
+ *
+ * This lightweight rule-based classification supports
+ * filtering and consistent frontend presentation.
+ */
 function getActivityType(
   name,
   tags,
@@ -285,7 +426,18 @@ function getActivityType(
   return 'General activity'
 }
 
-//get a image for the activity by the length of the activity name
+
+// ======================================================
+// Fallback activity images
+// ======================================================
+
+/**
+ * Generate a stable numeric value from an activity name.
+ *
+ * This is used when two possible fallback images exist,
+ * so the same activity consistently receives the same
+ * image across renders.
+ */
 function getStableImageIndex(name) {
   return name
     .split('')
@@ -300,8 +452,14 @@ function getStableImageIndex(name) {
     )
 }
 
-// use the keywords in the acitivity name and tags to determine the activity image for display
-// we can update NLP classifier in iteration 2
+
+/**
+ * Select a fallback image when the database does not
+ * provide a real image URL.
+ *
+ * The fallback image is selected using keywords from
+ * the activity name and tags.
+ */
 function getActivityImage(
   name,
   tags,
@@ -466,7 +624,24 @@ function getActivityImage(
   return '/images/activities.jpg'
 }
 
-//normalise the activity data from the backend into a standard format for the frontend
+
+// ======================================================
+// Activity normalisation
+// ======================================================
+
+/**
+ * Convert one backend activity record into the standard
+ * activity object used throughout the frontend.
+ *
+ * Backend datasets may use different field names, such as:
+ *
+ * event_name / name / title
+ * day_time / dayTime / schedule
+ * senior_relevant / seniorRelevant / suitability
+ *
+ * This function hides those differences from the Vue
+ * components by returning one consistent data structure.
+ */
 function normaliseActivity(
   row,
   index,
@@ -508,6 +683,9 @@ function normaliseActivity(
         'Venue not provided',
     )
 
+  // Convert a known venue into coordinates so that
+  // nearby public transport can be calculated when
+  // transit stop data is available.
   const coordinates =
     getVenueCoordinates(venue)
 
@@ -573,8 +751,9 @@ function normaliseActivity(
           'Source not provided',
       ),
 
-    // Prefer the real activity image from the database.
-    // If image_url is empty, use the original fallback image.
+    // Prefer the real activity image stored in the
+    // database. Use a keyword-based fallback only when
+    // image_url is unavailable.
     image:
       row.image_url ||
       getActivityImage(
@@ -627,10 +806,17 @@ function normaliseActivity(
   }
 }
 
+
+// ======================================================
+// Backend request
+// ======================================================
+
 /**
- * Load activities from the backend.
+ * Request the raw activity catalogue from:
  *
  * GET /api/activities
+ *
+ * The backend response must be an array.
  */
 async function fetchActivities() {
   const response =
@@ -656,6 +842,7 @@ async function fetchActivities() {
   return data
 }
 
+
 // ======================================================
 // Activities cache
 // ======================================================
@@ -664,28 +851,45 @@ async function fetchActivities() {
 // the first successful request.
 //
 // This avoids repeatedly requesting and processing the
-// same activity dataset while navigating the app.
+// same activity dataset while the user navigates between
+// different pages.
 //
+
 let cachedActivities = null
-let activitiesLoadingPromise = null
+
+let activitiesLoadingPromise =
+  null
+
+
+// ======================================================
+// Activity catalogue
+// ======================================================
 
 /**
- * Load activities from the backend.
+ * Load and normalise the activity catalogue.
  *
- * IMPORTANT PERFORMANCE CHANGE:
+ * Performance design:
  *
- * The Activities listing page no longer downloads all
- * transit stops or calculates the nearest stop for every
- * activity.
+ * The activity listing page does NOT load the complete
+ * transit-stop dataset.
  *
- * Transit information is calculated only when the user
- * opens an individual activity detail page.
+ * Calculating the nearest stop for every activity would
+ * add unnecessary work when most users only open a small
+ * number of activity detail pages.
+ *
+ * Nearby transport is therefore loaded later by
+ * getActivityById().
  */
 export async function getActivities() {
+  // Return the existing catalogue immediately if it has
+  // already been loaded during this app session.
   if (cachedActivities) {
     return cachedActivities
   }
 
+  // If another component has already started loading the
+  // catalogue, reuse the same Promise rather than sending
+  // a duplicate API request.
   if (activitiesLoadingPromise) {
     return activitiesLoadingPromise
   }
@@ -693,8 +897,11 @@ export async function getActivities() {
   activitiesLoadingPromise =
     fetchActivities()
       .then((activityRows) => {
+        // Remove activities with confirmed past dates.
         const upcomingRows =
-          activityRows.filter(isUpcoming)
+          activityRows.filter(
+            isUpcoming,
+          )
 
         cachedActivities =
           upcomingRows.map(
@@ -703,8 +910,8 @@ export async function getActivities() {
                 row,
                 index,
 
-                // Empty list intentionally prevents
-                // nearest-stop calculation on the
+                // An empty transit-stop list intentionally
+                // skips nearest-stop calculations on the
                 // activity listing page.
                 [],
               ),
@@ -713,17 +920,28 @@ export async function getActivities() {
         return cachedActivities
       })
       .finally(() => {
-        activitiesLoadingPromise = null
+        // Clear the in-progress Promise after the request
+        // finishes so future reloads remain possible.
+        activitiesLoadingPromise =
+          null
       })
 
   return activitiesLoadingPromise
 }
 
+
+// ======================================================
+// Individual activity details
+// ======================================================
+
 /**
- * Get one activity by ID.
+ * Return one activity by ID.
  *
- * Nearby public transport is calculated only here rather
- * than for every activity in the catalogue.
+ * Unlike the activity listing page, the detail page also
+ * attempts to calculate the nearest public transport stop.
+ *
+ * Transport information is optional. Failure to load it
+ * must not prevent the activity itself from being shown.
  */
 export async function getActivityById(
   id,
@@ -742,6 +960,8 @@ export async function getActivityById(
     return null
   }
 
+  // Nearby transport cannot be calculated when venue
+  // coordinates are unavailable.
   if (!activity.coordinates) {
     return activity
   }
@@ -760,6 +980,8 @@ export async function getActivityById(
       return activity
     }
 
+    // Return a new activity object containing the
+    // additional nearest transport information.
     return {
       ...activity,
 
@@ -773,8 +995,8 @@ export async function getActivityById(
     }
   } catch (error) {
     // Transport information is optional.
-    // Activity details should still be available if
-    // transit-stop loading fails.
+    // Activity details should still remain available
+    // even when transit-stop loading fails.
     console.error(
       'Unable to load nearby transport for activity:',
       error,
@@ -784,10 +1006,20 @@ export async function getActivityById(
   }
 }
 
+
+// ======================================================
+// Cache reset
+// ======================================================
+
 /**
- * Clear the in-memory activity cache.
+ * Clear the in-memory activity catalogue.
+ *
+ * The next call to getActivities() will request and
+ * normalise fresh data from the backend.
  */
 export function clearActivitiesCache() {
   cachedActivities = null
-  activitiesLoadingPromise = null
+
+  activitiesLoadingPromise =
+    null
 }

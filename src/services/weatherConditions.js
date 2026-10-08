@@ -1,3 +1,36 @@
+// ======================================================
+// Weather conditions utilities
+// ======================================================
+//
+// This module contains the reusable logic used by
+// WeatherCard to interpret activity weather data.
+//
+// Main responsibilities:
+//
+// 1. Validate numeric weather values.
+// 2. Convert activity date/time into a Melbourne
+//    hourly forecast key.
+// 3. Read hourly weather and air-quality values.
+// 4. Determine forecast coverage / availability.
+// 5. Evaluate refresh freshness.
+// 6. Classify UV and AQI values.
+// 7. Produce a simplified outdoor-condition summary.
+//
+// This module does not fetch data itself.
+// Data loading is handled by weatherService.
+//
+
+
+// ======================================================
+// Weather number validation
+// ======================================================
+
+/**
+ * Check whether a weather value is a valid finite number.
+ *
+ * This prevents null, undefined, NaN and Infinity from
+ * being treated as usable forecast values.
+ */
 export function isWeatherNumber(
   value,
 ) {
@@ -7,12 +40,45 @@ export function isWeatherNumber(
   )
 }
 
+
+// ======================================================
+// Activity time normalisation
+// ======================================================
+
+/**
+ * Convert an activity date/time into the hourly timestamp
+ * format used by the weather dataset.
+ *
+ * Example:
+ *
+ * 2026-10-06 14:30:00
+ *
+ * becomes:
+ *
+ * 2026-10-06T14:00
+ *
+ * Two input types are supported:
+ *
+ * 1. Date/time without an explicit timezone offset
+ *    → treated as Melbourne local time.
+ *
+ * 2. Date/time with UTC / timezone offset
+ *    → converted into Melbourne local time.
+ *
+ * Invalid dates return null.
+ */
 export function activityTimeToHour(
   value,
 ) {
   const text =
     String(value ?? '').trim()
 
+  // Accept:
+  //
+  // YYYY-MM-DD HH:mm:ss
+  // YYYY-MM-DDTHH:mm:ss
+  // optional milliseconds
+  // optional UTC / timezone offset
   const match = text.match(
     /^(\d{4})-(\d{2})-(\d{2})[ T](\d{2}):(\d{2})(?::(\d{2})(?:\.\d+)?)?(Z|[+-]\d{2}:?\d{2})?$/,
   )
@@ -32,6 +98,8 @@ export function activityTimeToHour(
     offset,
   ] = match
 
+  // Build a UTC date only for validation of calendar
+  // values such as invalid days or impossible times.
   const check = new Date(
     Date.UTC(
       +year,
@@ -57,8 +125,8 @@ export function activityTimeToHour(
     return null
   }
 
-  // Eventfinda dates without an offset
-  // already use Melbourne local time.
+  // Eventfinda dates without an explicit offset are
+  // already expressed in Melbourne local time.
   if (!offset) {
     return (
       `${year}-${month}-${day}` +
@@ -66,8 +134,9 @@ export function activityTimeToHour(
     )
   }
 
-  // Convert explicit UTC or offset dates
-  // into Melbourne local time.
+  // Dates with an explicit UTC / timezone offset must
+  // be converted into Melbourne local time before they
+  // can be matched against the weather dataset.
   const date = new Date(
     text.replace(' ', 'T'),
   )
@@ -97,6 +166,22 @@ export function activityTimeToHour(
   )
 }
 
+
+// ======================================================
+// Hourly value lookup
+// ======================================================
+
+/**
+ * Read one field from an hourly forecast at a specific
+ * activity hour.
+ *
+ * Returns null when:
+ *
+ * - the activity hour is unavailable
+ * - hourly timestamps are unavailable
+ * - the requested hour is outside the dataset
+ * - the value is not a valid weather number
+ */
 export function getHourlyValue(
   hourly,
   hour,
@@ -124,6 +209,31 @@ export function getHourlyValue(
     : null
 }
 
+
+// ======================================================
+// Forecast coverage state
+// ======================================================
+
+/**
+ * Determine whether usable forecast data exists for the
+ * requested activity hour.
+ *
+ * Possible states:
+ *
+ * available
+ *   At least one requested field has a usable value.
+ *
+ * future
+ *   The requested activity hour is later than the
+ *   available forecast range.
+ *
+ * past
+ *   The requested activity hour is earlier than the
+ *   available forecast range.
+ *
+ * missing
+ *   Forecast structure or usable values are unavailable.
+ */
 export function getForecastState(
   hourly,
   hour,
@@ -136,8 +246,8 @@ export function getForecastState(
     return 'missing'
   }
 
-  // Ignore hours where every requested
-  // value is null.
+  // Ignore timestamps where every requested weather
+  // field is unavailable.
   const validTimes =
     hourly.time.filter(
       (time, index) =>
@@ -169,6 +279,9 @@ export function getForecastState(
     return 'past'
   }
 
+  // The hour may fall inside the general forecast range
+  // while still having no usable value for the requested
+  // fields.
   const valueAvailable =
     fields.some(
       (field) =>
@@ -184,6 +297,26 @@ export function getForecastState(
     : 'missing'
 }
 
+
+// ======================================================
+// Weather refresh state
+// ======================================================
+
+/**
+ * Determine whether the stored weather dataset should be
+ * treated as current, stale or failed.
+ *
+ * failed:
+ *   The latest refresh attempt failed after the saved
+ *   forecast was generated.
+ *
+ * stale:
+ *   The saved forecast is missing a valid timestamp or
+ *   is older than 36 hours.
+ *
+ * current:
+ *   The saved forecast is sufficiently recent.
+ */
 export function getRefreshState(
   fetchedAt,
   status,
@@ -197,9 +330,9 @@ export function getRefreshState(
       status?.last_attempt_at,
     )
 
-  // Only use a failed status if the
-  // failed attempt happened after the
-  // saved forecast was generated.
+  // A failed refresh is relevant only when the failed
+  // attempt happened after the currently saved forecast
+  // was generated.
   if (
     status?.status === 'failed' &&
     Number.isFinite(attempted) &&
@@ -211,8 +344,7 @@ export function getRefreshState(
     return 'failed'
   }
 
-  // Daily data older than 36 hours
-  // is treated as stale.
+  // Weather data older than 36 hours is considered stale.
   const maximumAge =
     36 * 60 * 60 * 1000
 
@@ -226,11 +358,22 @@ export function getRefreshState(
   return 'current'
 }
 
+
+// ======================================================
+// Forecast message
+// ======================================================
+
+/**
+ * Build the user-facing message shown when forecast data
+ * is unavailable for the requested activity time.
+ */
 export function getForecastMessage(
   weatherState,
   airQualityState,
   refreshState,
 ) {
+  // No warning is needed when either weather or AQI data
+  // is available for the activity hour.
   if (
     weatherState === 'available' ||
     airQualityState === 'available'
@@ -238,6 +381,8 @@ export function getForecastMessage(
     return ''
   }
 
+  // If the stored dataset is stale or the latest refresh
+  // failed, advise the user to check again after an update.
   if (
     refreshState !== 'current'
   ) {
@@ -249,6 +394,8 @@ export function getForecastMessage(
     )
   }
 
+  // A future state means the activity is outside the
+  // current forecast horizon.
   if (
     weatherState === 'future' ||
     airQualityState === 'future'
@@ -265,9 +412,18 @@ export function getForecastMessage(
   )
 }
 
-// =========================
-// UV category
-// =========================
+
+// ======================================================
+// UV classification
+// ======================================================
+
+/**
+ * Convert a numeric UV index into a user-facing category
+ * and visual tone.
+ *
+ * The numeric UV value is still displayed separately by
+ * WeatherCard.
+ */
 export function classifyUv(
   value,
 ) {
@@ -315,9 +471,17 @@ export function classifyUv(
   }
 }
 
-// =========================
-// AQI category
-// =========================
+
+// ======================================================
+// AQI classification
+// ======================================================
+
+/**
+ * Convert a US AQI value into a user-facing category
+ * and visual tone.
+ *
+ * The original numeric AQI value is retained for display.
+ */
 export function classifyAqi(
   value,
 ) {
@@ -373,19 +537,36 @@ export function classifyAqi(
   }
 }
 
-// =========================
-// Outdoor conditions
-// =========================
-//
-// Create a simple summary using
-// UV, rain probability and US AQI.
-//
+
+// ======================================================
+// Outdoor conditions summary
+// ======================================================
+
+/**
+ * Create a simple outdoor-condition summary using:
+ *
+ * - UV index
+ * - rain probability
+ * - US AQI
+ *
+ * The result contains:
+ *
+ * label
+ *   Short overall message shown to the user.
+ *
+ * tone
+ *   Visual category used by WeatherCard.
+ *
+ * reasons
+ *   Specific conditions that contributed to the result.
+ */
 export function getOutdoorConditions({
   uv,
   rain,
   aqi,
   stale = false,
 }) {
+  // Validate each input before applying thresholds.
   const validUv =
     isWeatherNumber(uv) &&
     uv >= 0
@@ -401,6 +582,9 @@ export function getOutdoorConditions({
 
   const reasons = []
 
+  // --------------------------------------
+  // UV warnings
+  // --------------------------------------
   if (
     validUv &&
     uv >= 6
@@ -415,6 +599,9 @@ export function getOutdoorConditions({
     )
   }
 
+  // --------------------------------------
+  // Rain warning
+  // --------------------------------------
   if (
     validRain &&
     rain >= 60
@@ -422,6 +609,9 @@ export function getOutdoorConditions({
     reasons.push('Rain likely')
   }
 
+  // --------------------------------------
+  // Air-quality warnings
+  // --------------------------------------
   if (
     validAqi &&
     aqi > 100
@@ -438,6 +628,12 @@ export function getOutdoorConditions({
     )
   }
 
+  // --------------------------------------
+  // Stale forecast
+  // --------------------------------------
+  //
+  // Stale data should not be presented as a confident
+  // outdoor recommendation.
   if (stale) {
     reasons.push(
       'Data may be out of date',
@@ -451,6 +647,12 @@ export function getOutdoorConditions({
     }
   }
 
+  // --------------------------------------
+  // Incomplete forecast
+  // --------------------------------------
+  //
+  // All three values are required before producing a
+  // complete outdoor-condition recommendation.
   if (
     !validUv ||
     !validRain ||
@@ -468,6 +670,12 @@ export function getOutdoorConditions({
     }
   }
 
+  // --------------------------------------
+  // Strong warning
+  // --------------------------------------
+  //
+  // Extreme UV or poor air quality produces the most
+  // restrictive summary.
   if (
     uv >= 11 ||
     aqi > 150
@@ -479,6 +687,12 @@ export function getOutdoorConditions({
     }
   }
 
+  // --------------------------------------
+  // Caution
+  // --------------------------------------
+  //
+  // Any lower-level warning means outdoor conditions
+  // require some care.
   if (reasons.length) {
     return {
       label: 'Take care',
@@ -487,6 +701,9 @@ export function getOutdoorConditions({
     }
   }
 
+  // --------------------------------------
+  // No flagged conditions
+  // --------------------------------------
   return {
     label:
       'No flagged conditions',

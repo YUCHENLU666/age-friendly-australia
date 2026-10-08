@@ -18,32 +18,88 @@ import {
   getOutdoorConditions,
 } from '@/services/weatherConditions'
 
-// =========================
-// Props
-// =========================
-// ActivityCard passes the suburb
-// and activity date/time.
+
+// ======================================================
+// Weather card component
+// ======================================================
+//
+// WeatherCard displays weather and air-quality
+// information for a specific activity.
+//
+// Main data flow:
+//
+// ActivityCard
+//   ↓
+// suburb + activityTime
+//   ↓
+// WeatherCard
+//   ↓
+// weatherService
+//   ↓
+// Melbourne suburb weather dataset
+//   ↓
+// weatherConditions helpers
+//   ↓
+// Temperature / Rain / UV / AQI
+//   ↓
+// Outdoor conditions summary
+//
+// Weather data is matched to the scheduled activity time.
+//
+// If the activity time is outside the available forecast
+// range, current weather is NOT used as a replacement.
+// Instead, the card explains that the forecast is not
+// currently available.
+//
+
+
+// ======================================================
+// Props received from ActivityCard
+// ======================================================
+
 const props = defineProps({
+  // Activity suburb used to find the matching
+  // location in the weather dataset.
   suburb: {
     type: String,
     required: true,
   },
 
+  // Scheduled activity date/time.
+  //
+  // Example:
+  // 2026-10-06 14:30:00
   activityTime: {
     type: String,
     default: '',
   },
 })
 
-// =========================
+
+// ======================================================
 // Component state
-// =========================
+// ======================================================
+
+// Complete weather dataset loaded through weatherService.
 const weatherData = ref(null)
+
+// Loading state while the weather data is being read.
 const loading = ref(true)
+
+// User-facing message shown if weather loading fails.
 const errorMessage = ref('')
 
-// Find the weather record for
-// the activity suburb.
+
+// ======================================================
+// Match activity suburb to weather data
+// ======================================================
+//
+// The suburb supplied by ActivityCard is matched against
+// the weather dataset.
+//
+// Matching is case-insensitive and ignores surrounding
+// whitespace.
+//
 const locationWeather =
   computed(() => {
     const targetSuburb =
@@ -68,9 +124,19 @@ const locationWeather =
     )
   })
 
-// =========================
-// Load weather JSON
-// =========================
+
+// ======================================================
+// Load weather data
+// ======================================================
+//
+// weatherService manages shared loading and caching.
+//
+// This is important because ActivitiesView may render
+// many ActivityCard / WeatherCard components at once.
+//
+// The shared service prevents every WeatherCard from
+// independently downloading the same weather dataset.
+//
 onMounted(async () => {
   try {
     const {
@@ -92,9 +158,14 @@ onMounted(async () => {
   }
 })
 
-// =========================
-// Activity hour
-// =========================
+
+// ======================================================
+// Normalise activity time
+// ======================================================
+//
+// Convert the activity date/time into the hourly format
+// used by the weather dataset.
+//
 // Example:
 //
 // 2026-10-06 14:30:00
@@ -103,8 +174,9 @@ onMounted(async () => {
 //
 // 2026-10-06T14:00
 //
-// An unavailable activity forecast
-// is not replaced with current weather.
+// Forecast matching always uses the scheduled activity
+// hour rather than the current time.
+//
 const activityHour =
   computed(() =>
     activityTimeToHour(
@@ -112,9 +184,23 @@ const activityHour =
     ),
   )
 
-// =========================
-// Forecast coverage
-// =========================
+
+// ======================================================
+// Forecast availability
+// ======================================================
+//
+// Weather and air-quality forecasts may cover different
+// time ranges, so their availability is checked
+// separately.
+//
+// weatherState checks:
+// - temperature
+// - precipitation probability
+// - UV index
+//
+// airQualityState checks:
+// - US AQI
+//
 const weatherState =
   computed(() =>
     getForecastState(
@@ -147,6 +233,8 @@ const airQualityState =
     ),
   )
 
+// At least one type of condition must be available
+// before forecast values are displayed.
 const hasConditions =
   computed(
     () =>
@@ -156,9 +244,18 @@ const hasConditions =
         'available',
   )
 
-// =========================
+
+// ======================================================
 // Forecast unavailable message
-// =========================
+// ======================================================
+//
+// "future":
+//   The activity is outside the current forecast window.
+//
+// Other unavailable states:
+//   The requested activity hour cannot be matched to
+//   usable forecast data.
+//
 const unavailableNote =
   computed(() => {
     if (
@@ -177,9 +274,13 @@ const unavailableNote =
     )
   })
 
-// =========================
-// Read weather value
-// =========================
+
+// ======================================================
+// Hourly weather lookup
+// ======================================================
+//
+// Read one weather field for the scheduled activity hour.
+//
 function getWeatherValue(
   field,
 ) {
@@ -194,9 +295,14 @@ function getWeatherValue(
   )
 }
 
-// =========================
-// Read air quality value
-// =========================
+
+// ======================================================
+// Hourly air-quality lookup
+// ======================================================
+//
+// Read one air-quality field for the scheduled
+// activity hour.
+//
 function getAirQualityValue(
   field,
 ) {
@@ -211,12 +317,14 @@ function getAirQualityValue(
   )
 }
 
-// =========================
-// UV and AQI categories
-// =========================
+
+// ======================================================
+// UV and AQI classification
+// ======================================================
 //
-// Keep the original numbers and
-// add a simple text category.
+// Keep the original numeric values for transparency,
+// while also providing a simple user-facing category
+// and colour tone.
 //
 const uvCategory =
   computed(() =>
@@ -236,12 +344,19 @@ const aqiCategory =
     ),
   )
 
-// =========================
+
+// ======================================================
 // Outdoor conditions summary
-// =========================
+// ======================================================
 //
-// Use the same activity-hour
-// values shown in the card.
+// Combine three conditions from the same activity hour:
+//
+// - UV index
+// - rain probability
+// - air quality
+//
+// weatherConditions converts these values into a simple
+// outdoor suitability label and explanation.
 //
 const outdoorConditions =
   computed(() =>
@@ -260,15 +375,20 @@ const outdoorConditions =
         getAirQualityValue(
           'us_aqi',
         ),
-
     }),
   )
-
 </script>
 
+
 <template>
+  <!-- ==============================================
+       Activity weather card
+  =============================================== -->
   <div class="weather-card">
-    <!-- Loading -->
+
+    <!-- ============================================
+         Loading state
+    ============================================= -->
     <p
       v-if="loading"
       class="weather-message"
@@ -276,7 +396,10 @@ const outdoorConditions =
       Loading weather...
     </p>
 
-    <!-- JSON could not be loaded -->
+
+    <!-- ============================================
+         Weather loading error
+    ============================================= -->
     <p
       v-else-if="errorMessage"
       class="weather-message"
@@ -284,13 +407,27 @@ const outdoorConditions =
       {{ errorMessage }}
     </p>
 
+
+    <!-- ============================================
+         Weather content
+    ============================================= -->
     <div v-else>
+
+      <!-- ==========================================
+           Weather card heading
+      =========================================== -->
       <div class="weather-header">
         <div>
           <strong>
             Activity conditions
           </strong>
 
+          <!--
+            Show the exact hourly key currently being used
+            to match the forecast.
+
+            All displayed times use Melbourne time.
+          -->
           <small
             v-if="activityHour"
             class="weather-fallback-note"
@@ -305,12 +442,20 @@ const outdoorConditions =
           </small>
         </div>
 
+        <!-- Activity suburb -->
         <span>
           {{ suburb }}
         </span>
       </div>
 
-      <!-- Suburb not found -->
+
+      <!-- ==========================================
+           Suburb not found
+      =========================================== -->
+      <!--
+        The activity suburb could not be matched to a
+        location in the current weather dataset.
+      -->
       <p
         v-if="!locationWeather"
         class="weather-message"
@@ -318,7 +463,18 @@ const outdoorConditions =
         Local weather unavailable
       </p>
 
-      <!-- Activity has no usable date -->
+
+      <!-- ==========================================
+           Activity time unavailable
+      =========================================== -->
+      <!--
+        Weather matching requires a usable activity
+        date/time.
+
+        Current weather is not substituted because it
+        would not represent conditions at the activity
+        time.
+      -->
       <p
         v-else-if="!activityHour"
         class="weather-message"
@@ -327,8 +483,12 @@ const outdoorConditions =
         Forecast unavailable.
       </p>
 
+
       <template v-else>
-        <!-- Activity outside forecast -->
+
+        <!-- ========================================
+             Forecast outside available coverage
+        ========================================= -->
         <p
           v-if="!hasConditions"
           class="weather-message"
@@ -336,12 +496,23 @@ const outdoorConditions =
           {{ unavailableNote }}
         </p>
 
-        <!-- Forecast values -->
+
+        <!-- ========================================
+             Forecast values
+        ========================================= -->
+        <!--
+          Weather and air-quality data are displayed
+          only when at least one forecast source has
+          usable values for the activity hour.
+        -->
         <div
           v-if="hasConditions"
           class="weather-values"
         >
-          <!-- Temperature -->
+
+          <!-- ======================================
+               Temperature
+          ======================================= -->
           <div>
             <span class="weather-label">
               Temperature
@@ -368,7 +539,10 @@ const outdoorConditions =
             </strong>
           </div>
 
-          <!-- Rain -->
+
+          <!-- ======================================
+               Rain probability
+          ======================================= -->
           <div>
             <span class="weather-label">
               Rain
@@ -395,13 +569,16 @@ const outdoorConditions =
             </strong>
           </div>
 
-          <!-- UV -->
+
+          <!-- ======================================
+               UV index
+          ======================================= -->
           <div>
             <span class="weather-label">
               UV
             </span>
 
-            <!-- Keep the original value -->
+            <!-- Original numeric UV value -->
             <strong>
               {{
                 getWeatherValue(
@@ -410,7 +587,10 @@ const outdoorConditions =
               }}
             </strong>
 
-            <!-- Add the UV category -->
+            <!--
+              Add a simple category to make the numeric
+              UV value easier to interpret.
+            -->
             <span
               v-if="
                 getWeatherValue(
@@ -427,13 +607,16 @@ const outdoorConditions =
             </span>
           </div>
 
-          <!-- Air quality -->
+
+          <!-- ======================================
+               Air quality
+          ======================================= -->
           <div>
             <span class="weather-label">
               AQI (US)
             </span>
 
-            <!-- Keep the original value -->
+            <!-- Original numeric AQI value -->
             <strong>
               {{
                 getAirQualityValue(
@@ -442,7 +625,10 @@ const outdoorConditions =
               }}
             </strong>
 
-            <!-- Add the AQI category -->
+            <!--
+              Add a user-friendly AQI category while
+              preserving the original numeric value.
+            -->
             <span
               v-if="
                 getAirQualityValue(
@@ -460,7 +646,17 @@ const outdoorConditions =
           </div>
         </div>
 
-        <!-- AQI has a shorter forecast -->
+
+        <!-- ========================================
+             Air-quality forecast coverage
+        ========================================= -->
+        <!--
+          Air-quality forecasts can have a shorter
+          coverage window than general weather data.
+
+          The card therefore reports AQI availability
+          separately.
+        -->
         <p
           v-if="
             hasConditions &&
@@ -477,7 +673,14 @@ const outdoorConditions =
           }}
         </p>
 
-        <!-- Weather value unavailable -->
+
+        <!-- ========================================
+             Weather forecast coverage
+        ========================================= -->
+        <!--
+          AQI may still be available even if the general
+          weather forecast is unavailable for this hour.
+        -->
         <p
           v-if="
             hasConditions &&
@@ -489,7 +692,15 @@ const outdoorConditions =
           Weather forecast unavailable
           for this activity time.
         </p>
-        <!-- Outdoor conditions summary -->
+
+
+        <!-- ========================================
+             Outdoor conditions summary
+        ========================================= -->
+        <!--
+          Combine UV, rain probability and AQI into one
+          simple summary for planning outdoor activities.
+        -->
         <div
           v-if="hasConditions"
           class="weather-outdoor"
@@ -520,6 +731,15 @@ const outdoorConditions =
         </div>
       </template>
 
+
+      <!-- ==========================================
+           Weather data sources
+      =========================================== -->
+      <!--
+        Weather conditions come from Open-Meteo.
+
+        Air-quality information is based on CAMS data.
+      -->
       <small class="weather-source">
         Data:
 
@@ -545,7 +765,12 @@ const outdoorConditions =
   </div>
 </template>
 
+
 <style scoped>
+/* ======================================================
+   Weather card container
+====================================================== */
+
 .weather-card {
   margin-top: 16px;
   padding: 16px;
@@ -553,6 +778,11 @@ const outdoorConditions =
   border-radius: 10px;
   background: #f7faf8;
 }
+
+
+/* ======================================================
+   Header
+====================================================== */
 
 .weather-header {
   display: flex;
@@ -577,6 +807,11 @@ const outdoorConditions =
   font-size: 12px;
   font-weight: 400;
 }
+
+
+/* ======================================================
+   Weather values grid
+====================================================== */
 
 .weather-values {
   display: grid;
@@ -604,6 +839,11 @@ const outdoorConditions =
   font-size: 18px;
 }
 
+
+/* ======================================================
+   Weather condition categories
+====================================================== */
+
 .weather-category {
   display: inline-block;
   width: fit-content;
@@ -617,23 +857,27 @@ const outdoorConditions =
   line-height: 1.35;
 }
 
+
 /* Low UV or Good AQI */
 .weather-category--good {
   background: #e3f3e9;
   color: #165837;
 }
 
-/* Moderate */
+
+/* Moderate conditions */
 .weather-category--moderate {
   background: #fff4cc;
   color: #6d5000;
 }
 
-/* High UV or sensitive AQI */
+
+/* High UV or AQI concern for sensitive users */
 .weather-category--caution {
   background: #ffead6;
   color: #874100;
 }
+
 
 /* Very High UV or Unhealthy AQI */
 .weather-category--danger {
@@ -641,11 +885,13 @@ const outdoorConditions =
   color: #8f1d20;
 }
 
+
 /* Extreme UV or Very Unhealthy AQI */
 .weather-category--severe {
   background: #f2e6f8;
   color: #652680;
 }
+
 
 /* Hazardous AQI */
 .weather-category--hazardous {
@@ -653,11 +899,17 @@ const outdoorConditions =
   color: #73172e;
 }
 
-/* Invalid or missing value */
+
+/* Missing or invalid condition value */
 .weather-category--neutral {
   background: #e9edeb;
   color: #45544c;
 }
+
+
+/* ======================================================
+   Source and status messages
+====================================================== */
 
 .weather-source {
   display: block;
@@ -684,6 +936,11 @@ const outdoorConditions =
   color: #5f6b65;
 }
 
+
+/* ======================================================
+   Outdoor conditions summary
+====================================================== */
+
 .weather-outdoor {
   margin-top: 16px;
   padding-top: 12px;
@@ -706,6 +963,11 @@ const outdoorConditions =
 .weather-outdoor small {
   color: #68736e;
 }
+
+
+/* ======================================================
+   Responsive layout
+====================================================== */
 
 @media (max-width: 700px) {
   .weather-values {

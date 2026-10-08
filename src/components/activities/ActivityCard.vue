@@ -1,89 +1,85 @@
 <script setup>
-// RouterLink is used to navigate
-// from this activity card
-// to the activity detail page.
-//
-// Example:
-//
-// /activities/1
-// /activities/5
 import { RouterLink } from 'vue-router'
 
-// Import the reusable weather component.
-//
-// WeatherCard receives a suburb
-// and the activity schedule.
 import WeatherCard from '@/components/environment/WeatherCard.vue'
 
-// =========================
+
+// ======================================================
+// Activity card component
+// ======================================================
+//
+// ActivityCard displays one normalised activity received
+// from its parent component.
+//
+// Responsibilities:
+//
+// - display activity information
+// - show older-adult suitability
+// - show activity tags
+// - display activity-time weather conditions
+// - allow the user to save / unsave the activity
+// - provide navigation to the activity detail page
+//
+// ActivityCard does not fetch activity data itself and
+// does not manage saved storage directly.
+//
+// Saved activity IDs are managed by the parent through
+// savedItemsService. Other features, such as the personal
+// calendar, can later reuse those saved IDs.
+//
+
+
+// ======================================================
 // Props received from parent
-// =========================
-//
-// ActivityCard.vue does not load activity data itself.
-//
-// The parent page, such as ActivitiesView.vue,
-// passes one activity object into this component.
-//
-// Example:
-//
-// <ActivityCard
-//   :activity="activity"
-//   :saved="true"
-// />
-//
+// ======================================================
+
 defineProps({
-  // Full activity information.
-  //
-  // Example:
-  //
-  // {
-  //   id: 1,
-  //   name: 'Brain Training',
-  //   suburb: 'Oakleigh',
-  //   venue: 'Oakleigh Senior Citizens Centre'
-  // }
+  // Complete normalised activity object supplied by
+  // ActivitiesView or another parent component.
   activity: {
     type: Object,
     required: true,
   },
 
-  // Whether this activity has already
-  // been saved by the user.
+  // Indicates whether this activity is currently saved.
   saved: {
     type: Boolean,
     default: false,
   },
 })
 
-// =========================
+
+// ======================================================
 // Events sent to parent
-// =========================
+// ======================================================
 //
-// When the Save button is clicked,
-// this component sends the activity ID
-// back to the parent page.
+// ActivityCard does not manage saved activity storage.
 //
-// The parent page then handles
-// the actual save / unsave logic.
+// When the user clicks Save / Saved, the component emits:
+//
+// toggle-save(activity.id)
+//
+// The parent component then updates the saved state
+// through savedItemsService.
+//
+// Saved activities can later be reused by other features,
+// including the personal calendar.
 //
 defineEmits([
   'toggle-save',
 ])
 </script>
 
-<template>
-  <!--
-    One reusable activity card.
 
-    ActivitiesView.vue can display
-    many ActivityCard components
-    using v-for.
-  -->
+<template>
+  <!-- ==============================================
+       Activity card
+  =============================================== -->
   <article class="activity-card">
 
-    <!-- =========================
-         Activity image area
-         ========================= -->
+    <!-- ============================================
+         Activity image and save action
+    ============================================= -->
     <div class="activity-card-image-wrap">
       <img
         :src="activity.image"
@@ -91,22 +87,19 @@ defineEmits([
         class="activity-card-image"
       />
 
-      <!-- Main activity category -->
+      <!-- Primary activity category -->
       <span class="activity-card-category">
         {{ activity.primaryTag }}
       </span>
 
-      <!-- =========================
-           Save button
-           =========================
+      <!--
+        Save state is controlled by the parent.
 
-           Clicking this button sends:
+        Clicking this button emits the activity ID back
+        to the parent component.
 
-           toggle-save
-                 +
-           activity.id
-
-           back to the parent component.
+        The parent then updates savedItemsService, which
+        keeps the saved state available to other features.
       -->
       <button
         class="activity-save-button"
@@ -126,15 +119,18 @@ defineEmits([
       </button>
     </div>
 
-    <!-- =========================
-         Main card content
-         ========================= -->
+
+    <!-- ============================================
+         Main activity information
+    ============================================= -->
     <div class="activity-card-body">
 
-      <!-- Activity heading -->
       <div class="activity-card-heading">
 
-        <!-- Suitability label -->
+        <!--
+          Suitability values are normalised by
+          activityService before reaching this component.
+        -->
         <div class="activity-suitability-row">
           <span
             class="activity-suitability"
@@ -158,15 +154,7 @@ defineEmits([
           {{ activity.name }}
         </h2>
 
-        <!--
-          Activity venue and suburb.
-
-          Example:
-
-          Oakleigh Senior Citizens Centre
-          ·
-          Oakleigh
-        -->
+        <!-- Activity venue and suburb -->
         <p class="activity-location">
           {{ activity.venue }}
 
@@ -178,9 +166,10 @@ defineEmits([
         </p>
       </div>
 
-      <!-- =========================
-           Activity schedule details
-           ========================= -->
+
+      <!-- ============================================
+           Schedule information
+    ============================================= -->
       <dl class="activity-card-details">
         <div>
           <dt>
@@ -206,14 +195,13 @@ defineEmits([
         </div>
       </dl>
 
-      <!-- =========================
-           Activity tags
-           =========================
 
-           Only show this section
-           if the activity has tags.
-
-           We display up to 3 tags.
+      <!-- ============================================
+           Activity interests
+    ============================================= -->
+      <!--
+        Display up to three activity tags to keep the
+        card compact while still showing key interests.
       -->
       <div
         v-if="activity.tags.length"
@@ -231,41 +219,34 @@ defineEmits([
         </span>
       </div>
 
-      <!-- =========================
-           Reusable Weather Component
-           =========================
 
-           ActivityCard passes:
+      <!-- ============================================
+           Weather information
+    ============================================= -->
+      <!--
+        WeatherCard receives the activity suburb and
+        scheduled activity time.
 
-           activity.suburb
-                  ↓
-              "Oakleigh"
+        It attempts to match weather and air-quality
+        conditions to the specific activity hour.
 
-           and:
-
-           activity.schedule
-                  ↓
-           "2026-09-20 14:30:00"
-
-           WeatherCard first tries to show
-           weather for the activity time.
-
-           If that time is outside the
-           forecast range, WeatherCard
-           falls back to current local
-           conditions.
+        If the activity time is outside the available
+        forecast range, the component shows a forecast
+        availability message instead of substituting
+        current weather.
       -->
       <WeatherCard
         :suburb="activity.suburb"
         :activity-time="activity.schedule"
       />
 
-      <!-- =========================
+
+      <!-- ============================================
            Card footer
-           ========================= -->
+    ============================================= -->
       <div class="activity-card-footer">
 
-        <!-- Activity data source -->
+        <!-- Original activity data source -->
         <p class="activity-source">
           <span>
             Source
@@ -274,20 +255,14 @@ defineEmits([
           {{ activity.source }}
         </p>
 
+
         <!--
-          PAGE NAVIGATION
+          Navigate to the individual activity detail page.
 
-          Clicking "View details"
-          changes the URL from something like:
-
-          /activities
-
-          to:
-
+          Example route:
           /activities/1
 
-          Vue Router then loads
-          ActivityDetailView.vue.
+          Vue Router then loads ActivityDetailView.
         -->
         <RouterLink
           class="activity-details-link"

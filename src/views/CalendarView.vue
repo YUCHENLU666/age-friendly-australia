@@ -1,3 +1,42 @@
+// ======================================================
+// Personal calendar page
+// ======================================================
+//
+// CalendarView combines saved activities and saved
+// services into one personal planning view.
+//
+// Main data flow:
+//
+// savedItemsService
+//   ↓
+// saved activity IDs + saved service IDs
+//   ↓
+// activityService + serviceService
+//   ↓
+// complete activity / service objects
+//   ↓
+// CalendarView
+//
+// Activities:
+//   Use their real scheduled event date.
+//
+// Services:
+//   Do not have a personal visit date by default.
+//   Users select their own planned visit date, which is
+//   stored separately through calendarService.
+//
+// calendarService
+//   ↓
+// localStorage
+//   ↓
+// planned service visit dates
+//
+// Important:
+//
+// CalendarView is a personal planning tool only.
+// Saving a service visit date does NOT create a real
+// booking with the service provider.
+//
 <script setup>
 import {
   computed,

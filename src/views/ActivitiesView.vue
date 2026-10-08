@@ -4,81 +4,131 @@ import {
   onMounted,
   ref,
 } from 'vue'
-// computed: The result is automatically calculated based on other states
-// onMounted: Execute code after page component loads
-// ref: save reactive state
 
-//import components
-// ActivityCard: Activity name, venue, suburb, day, time, recurrence, tags, suitability, savebutton
 import ActivityCard from '@/components/activities/ActivityCard.vue'
-// ActivityFilters: Search, Area, Interest, Day, Recurrence, Suitability
 import ActivityFilters from '@/components/activities/ActivityFilters.vue'
 
-//ActivitiesVies -> activityService -> Backend API -> SQLite
 import {
   getActivities,
 } from '@/services/activityService'
 
 import {
-  getSavedActivityIds,//get the activity IDs which are saved by the user
-  toggleSavedActivityId,//if the activity ID is saved, remove it from the saved list; if not, add it to the saved list
+  getSavedActivityIds,
+  toggleSavedActivityId,
 } from '@/services/savedItemsService'
 
-//why use ref for activities, savedActivityIds, loading, errorMessage, filters
-//because vue must be aware of data changes and automatically re-render the page
-const activities = ref([])
-//[{
-//   id: 1,
-//   name: 'Activity 1',
-//   venue: 'Venue 1',
-//   suburb: 'Suburb 1',
-//   day: 'Monday',
-//   time: '10:00',
-//   recurrence: 'Weekly',
-//   tags: ['Tag 1', 'Tag 2'],
-//   suitability: 'yes'
-// }]
 
+// ======================================================
+// Activities page
+// ======================================================
+//
+// ActivitiesView is the main parent component for the
+// activity discovery feature.
+//
+// Main data flow:
+//
+// SQLite
+//   ↓
+// Backend GET /api/activities
+//   ↓
+// activityService
+//   ↓
+// Normalised activity objects
+//   ↓
+// ActivitiesView
+//   ↓
+// ActivityFilters + ActivityCard
+//
+// This component is responsible for:
+// - loading activities
+// - generating available filter options
+// - filtering the activity catalogue
+// - managing saved activity state
+// - rendering loading, error and empty states
+//
+
+
+// ======================================================
+// Page state
+// ======================================================
+
+// Complete activity catalogue returned by activityService.
+const activities = ref([])
+
+// IDs of activities currently saved by the user.
+// These IDs are persisted through savedItemsService.
 const savedActivityIds =
   ref([])
-//[
-//'1', 
-//'2', 
-//'3']
 
+// Loading state while activity data is being requested.
 const loading = ref(true)
-//after API finished, return true: activities are loading
 
+// User-facing message shown if activity loading fails.
 const errorMessage =
   ref('')
-//if API failed, return error message
 
+
+// ======================================================
+// Filter state
+// ======================================================
+
+// Return a fresh default filter object.
+//
+// Using a function allows clearFilters() to create a new
+// object whenever the filters need to be reset.
 const defaultFilters = () => ({
-  search: '', //walking, swimming, etc.
-  area: '', //clayton, melbourne, etc.
-  interest: '', //craft, music, etc.
-  day: '', //Monday, Tuesday, etc.
-  recurrence: '', // one-off, recurring calendar, series
-  suitability: 'all', //all relevance levels, marked suitable, may be suitable
+  search: '',
+  area: '',
+  interest: '',
+  day: '',
+  recurrence: '',
+  suitability: 'all',
 })
-//defaultFilters: return an object with default filter values
 
+// Current filter selections.
+//
+// ActivityFilters updates this object through emitted
+// events. Any change automatically causes the computed
+// filteredActivities list to recalculate.
 const filters = ref(
   defaultFilters(),
 )
-// This object will change if the user modifies their selection later
 
-//onMounted: Execute code after page component loads
-//homepage -> click find activities -> route to activitiesView -> ActivitiesView mounted -> onMounted()
+
+// ======================================================
+// Load activity data
+// ======================================================
+//
+// When this page opens:
+//
+// 1. Read saved activity IDs.
+// 2. Request the activity catalogue.
+// 3. Store the normalised activities.
+// 4. Display an error message if loading fails.
+// 5. End the loading state.
+//
+// Activity data flow:
+//
+// ActivitiesView
+//   ↓
+// getActivities()
+//   ↓
+// activityService
+//   ↓
+// GET /api/activities
+//   ↓
+// Express backend
+//   ↓
+// SQLite
+//
 onMounted(async () => {
-  //get the activity IDs which are saved by the user
+  // Restore previously saved activity IDs.
   savedActivityIds.value =
     getSavedActivityIds()
 
-  //wait getActivities() to finish, then assign the result to activities.value
-  //ActivitiesView -> getActivities() -> activityService.js -> get /api/activities -> Express -> SQLite -> JSON response -> ActivityService nomalise -> return activities -> activities.value
-  //if getActivities() failed, catch the error and show error message
   try {
+    // activityService returns activity data that has
+    // already been normalised for frontend use.
     activities.value =
       await getActivities()
   } catch (error) {
@@ -87,12 +137,22 @@ onMounted(async () => {
     errorMessage.value =
       'We could not load the activity information. Please try again.'
   } finally {
-    // Set loading to false once the API call is complete whether it was successful or not
+    // Stop the loading state whether the request
+    // succeeds or fails.
     loading.value = false
   }
 })
 
-//Get a list of unique suburbs from all activities
+
+// ======================================================
+// Dynamic filter options
+// ======================================================
+
+// Build a unique, alphabetically sorted suburb list
+// from the currently loaded activities.
+//
+// This means the Area filter always reflects the
+// activity catalogue rather than using hard-coded values.
 const areas = computed(() => {
   return [
     ...new Set(
@@ -104,7 +164,11 @@ const areas = computed(() => {
   ].sort()
 })
 
-//Get a list of unique interests from all activities, excluding certain tags
+
+// Build a unique interest list from activity tags.
+//
+// Generic source tags that are not useful as user-facing
+// interests are removed before the list is displayed.
 const interests =
   computed(() => {
     const excludedTags =
@@ -131,6 +195,8 @@ const interests =
     ].sort()
   })
 
+
+// Preferred display order for activity days.
 const dayOrder = [
   'Monday',
   'Tuesday',
@@ -142,7 +208,11 @@ const dayOrder = [
   'Flexible',
 ]
 
-//Get a list of unique days from all activities, sorted in a specific order
+// Build the Day filter using only days that actually
+// exist in the current activity catalogue.
+//
+// dayOrder keeps weekdays in a natural calendar order
+// instead of alphabetical order.
 const days = computed(() => {
   const availableDays =
     new Set(
@@ -158,7 +228,9 @@ const days = computed(() => {
   )
 })
 
-//Get a list of unique recurrence options from all activities, sorted alphabetically
+
+// Build a unique, alphabetically sorted list of
+// recurrence / schedule types from the activity data.
 const recurrenceOptions =
   computed(() => {
     return [
@@ -171,19 +243,36 @@ const recurrenceOptions =
     ].sort()
   })
 
-// Filter activities based on the selected filters
+
+// ======================================================
+// Activity filtering
+// ======================================================
+//
+// filteredActivities automatically recalculates whenever
+// either the activity catalogue or filter selections
+// change.
+//
+// An activity must pass every active filter before it is
+// included in the results.
+//
 const filteredActivities =
   computed(() => {
+    // Normalise the free-text search so that matching
+    // is case-insensitive and ignores surrounding spaces.
     const search =
-    // Get the search term from the filters and normalize it
       filters.value.search
         .trim()
         .toLowerCase()
 
     const results =
-    // normalize the activities and filter them based on the selected filters
       activities.value.filter(
         (activity) => {
+          // ------------------------------------------
+          // Free-text search
+          // ------------------------------------------
+          //
+          // Search across several useful activity fields
+          // instead of checking the activity name only.
           if (search) {
             const searchableText = [
               activity.name,
@@ -203,7 +292,10 @@ const filteredActivities =
               return false
             }
           }
-          // Check each filter and return false if the activity does not match the filter
+
+          // ------------------------------------------
+          // Area filter
+          // ------------------------------------------
           if (
             filters.value.area &&
             activity.suburb !==
@@ -212,6 +304,9 @@ const filteredActivities =
             return false
           }
 
+          // ------------------------------------------
+          // Interest filter
+          // ------------------------------------------
           if (
             filters.value.interest &&
             !activity.tags.includes(
@@ -221,6 +316,9 @@ const filteredActivities =
             return false
           }
 
+          // ------------------------------------------
+          // Preferred day filter
+          // ------------------------------------------
           if (
             filters.value.day &&
             activity.day !==
@@ -229,6 +327,9 @@ const filteredActivities =
             return false
           }
 
+          // ------------------------------------------
+          // Schedule / recurrence filter
+          // ------------------------------------------
           if (
             filters.value.recurrence &&
             activity.recurrence !==
@@ -237,6 +338,12 @@ const filteredActivities =
             return false
           }
 
+          // ------------------------------------------
+          // Older-adult suitability filter
+          // ------------------------------------------
+
+          // Recommended includes activities unless they
+          // are explicitly marked as unsuitable.
           if (
             filters.value
               .suitability ===
@@ -247,6 +354,8 @@ const filteredActivities =
             return false
           }
 
+          // Show only activities explicitly marked
+          // as suitable.
           if (
             filters.value
               .suitability ===
@@ -257,6 +366,8 @@ const filteredActivities =
             return false
           }
 
+          // Show only activities marked as potentially
+          // suitable.
           if (
             filters.value
               .suitability ===
@@ -274,8 +385,27 @@ const filteredActivities =
     return results
   })
 
-  // Update the filters based on user input
-  // user chooses a filter option -> ActivityFilters emit new filters -> ActivitiesView get -> updateFilters(nextFilters) -> filters.value = nextFilters -> filteredActivities recomputed
+
+// ======================================================
+// Filter actions
+// ======================================================
+
+// ActivityFilters emits a complete updated filter object.
+//
+// Data flow:
+//
+// User changes a filter
+//   ↓
+// ActivityFilters
+//   ↓
+// emit update:filters
+//   ↓
+// ActivitiesView.updateFilters()
+//   ↓
+// filters.value changes
+//   ↓
+// filteredActivities recalculates
+//
 const updateFilters = (
   nextFilters,
 ) => {
@@ -283,14 +413,23 @@ const updateFilters = (
     nextFilters
 }
 
-// Reset the filters to their default values
-//filters changed -> computed automatically reruns -> all activities are shown
+
+// Restore every filter to its default value.
+//
+// Because filteredActivities is computed, resetting
+// filters automatically refreshes the displayed results.
 const clearFilters = () => {
   filters.value =
     defaultFilters()
 }
 
-// Check if an activity is saved by the user (check by the activity ID)
+
+// ======================================================
+// Saved activity actions
+// ======================================================
+
+// Check whether a particular activity ID is currently
+// stored in the user's saved activity list.
 const isSaved = (
   activityId,
 ) => {
@@ -299,7 +438,25 @@ const isSaved = (
   )
 }
 
-//ActivityCard -> emit toggle-save -> ActivitiesView.toggleSave(id) -> savedItemsService -> update localStorage -> return latest IDs -> savedActivityIds.value updated -> update UI
+
+// Save or remove an activity.
+//
+// Data flow:
+//
+// ActivityCard
+//   ↓
+// emit toggle-save(activityId)
+//   ↓
+// ActivitiesView.toggleSave()
+//   ↓
+// savedItemsService
+//   ↓
+// localStorage
+//   ↓
+// updated saved IDs
+//   ↓
+// UI updates automatically
+//
 const toggleSave = (
   activityId,
 ) => {
@@ -310,8 +467,12 @@ const toggleSave = (
 }
 </script>
 
+
 <template>
   <div class="activities-page">
+    <!-- ==============================================
+         Page introduction
+    =============================================== -->
     <section
       class="activity-page-hero"
     >
@@ -355,10 +516,25 @@ const toggleSave = (
       </div>
     </section>
 
+
+    <!-- ==============================================
+         Activity discovery content
+    =============================================== -->
     <section
       class="activities-main"
     >
       <div class="page-container">
+
+        <!--
+          ActivityFilters receives the available filter
+          options from this parent component.
+
+          It sends filter changes back through:
+          update:filters
+
+          The Clear button sends:
+          clear
+        -->
         <ActivityFilters
           :filters="filters"
           :areas="areas"
@@ -373,6 +549,11 @@ const toggleSave = (
           @clear="clearFilters"
         />
 
+
+        <!--
+          Explain an important limitation of the pilot
+          activity dataset to the user.
+        -->
         <div
           class="activity-data-note"
         >
@@ -393,6 +574,10 @@ const toggleSave = (
           </p>
         </div>
 
+
+        <!-- ==========================================
+             Result count
+        =========================================== -->
         <div
           class="activity-results-heading"
         >
@@ -414,9 +599,12 @@ const toggleSave = (
               found
             </h2>
           </div>
-
         </div>
 
+
+        <!-- ==========================================
+             Loading state
+        =========================================== -->
         <div
           v-if="loading"
           class="activity-state-card"
@@ -435,6 +623,10 @@ const toggleSave = (
           </p>
         </div>
 
+
+        <!-- ==========================================
+             Error state
+        =========================================== -->
         <div
           v-else-if="
             errorMessage
@@ -452,6 +644,10 @@ const toggleSave = (
           </p>
         </div>
 
+
+        <!-- ==========================================
+             No matching activities
+        =========================================== -->
         <div
           v-else-if="
             filteredActivities.length ===
@@ -478,6 +674,21 @@ const toggleSave = (
           </button>
         </div>
 
+
+        <!-- ==========================================
+             Activity result cards
+        =========================================== -->
+        <!--
+          One ActivityCard is rendered for every
+          filtered activity.
+
+          The parent provides:
+          - the complete activity object
+          - whether the activity is currently saved
+
+          ActivityCard sends toggle-save back when
+          the user clicks Save / Saved.
+        -->
         <div
           v-else
           class="activity-results-grid"
