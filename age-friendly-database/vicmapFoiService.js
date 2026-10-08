@@ -50,6 +50,7 @@ async function getCommunityVenues(
   }
 
   // Keep the result limit between 1 and 200; use 50 when not set.
+  // if limit is null or undefined, return 50, max(50,1) = 50, min(50,200) = 50
   const safeLimit = Math.min(
     Math.max(Number.parseInt(limit, 10) || 50, 1),
     200,

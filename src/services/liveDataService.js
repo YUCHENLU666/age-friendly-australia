@@ -51,6 +51,7 @@ export async function getLiveCommunityVenues(
     )
   }
 
+  // covert the response to JavaScript list
   const data =
     await response.json()
 
@@ -81,7 +82,7 @@ export async function getLiveBusPositions({
   if (routeId.trim()) {
     params.set(
       'routeId',
-      routeId.trim(),
+      routeId.trim(),//delete spaces
     )
   }
 

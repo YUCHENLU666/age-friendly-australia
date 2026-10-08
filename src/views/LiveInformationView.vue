@@ -133,7 +133,7 @@ const formatVehicleTime = (
       hour: 'numeric',
       minute: '2-digit',
     },
-  ).format(
+  ).format(//value is in seconds, but Date needs milliseconds
     new Date(value * 1000),
   )
 }
@@ -245,6 +245,11 @@ onMounted(async () => {
     loadBuses(),
   ])
 })
+
+// refresh venues button 310
+// refresh buses button 475
+// apply route button 504
+// clear route button 518
 </script>
 
 <template>
