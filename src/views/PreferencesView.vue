@@ -1,3 +1,53 @@
+<!--
+src/views/PreferencesView.vue
+Let the user choose and save activity preferences and text size.
+
+How calls move:
+Selection -> toggleArrayValue -> save -> preferencesService.savePreferences -> localStorage; HomeView requests recommendations separately.
+
+Reading tips:
+  Examples show one possible case, not fixed API or model results.
+  Promise: a result to wait for; await gets the result when the work finishes.
+  computed: Vue updates this value when the data it uses changes.
+  ref: a page value; changing it lets Vue update the screen.
+
+Functions:
+  getActivityTypeMeta - Find the short name and help text for an activity type.
+  toggleArrayValue - Add a choice if it is missing; remove it if it is already selected.
+  showStatus - Show a message, then remove it after 3 seconds.
+  save - Save the current choices, remember the saved copy, and show a message.
+  reset - Clear saved choices, use the starting values, and show a message.
+
+Values Vue updates for you:
+  areas - Get area names from activities, remove repeats, and sort them.
+  interests - Get activity tags, leave out hidden tags, remove repeats, and sort them.
+  activityTypes - Get activity types, remove empty names and repeats, and sort them.
+  hasUnsavedChanges - Check if the current choices differ from the last saved choices.
+  textSizeLabel - Turn the text-size code into a name shown on the page.
+
+Fixed values and data:
+  excludedInterestTags - Tags to hide from interest choices, such as Adult and Children.
+  days - Weekday choices plus Flexible.
+  activityTypeMeta - Keep a short name and help text for each activity type.
+
+Page values and kept data:
+  activities - Activity objects loaded for this page or test.
+  loading - True while the page is loading; false when loading ends.
+  preferences - Current activity choices and text-size setting.
+  savedSnapshot - JSON copy of the last saved choices; used to check for unsaved changes.
+  statusMessage - Short save or clear message shown on the page.
+  statusTimer - Timer ID used to clear the message after 3 seconds.
+
+Page start and API handlers:
+  onMounted callback - Load activities to build choices after the page opens; do not ask AI here.
+
+Notes:
+  areas, interests, activityTypes, hasUnsavedChanges, and textSizeLabel are computed values: Vue updates them when their source data changes.
+  excludedInterestTags, days, and activityTypeMeta are fixed data, not functions.
+  Clicking a choice does not save it. Click Save to write it to localStorage.
+  Save does not call AI. HomeView asks for recommendations when it loads.
+  Flexible is shown as a choice, but the backend day rule only matches weekday names.
+-->
 <script setup>
 import {
   computed,
@@ -19,29 +69,30 @@ import {
   savePreferences,
 } from '@/services/preferencesService'
 
-//Activity and loading states
+// Activity objects loaded for this page or test.
 const activities = ref([])
+// True while the page is loading; false when loading ends.
 const loading = ref(true)
 
-//Load saved preferences
+// Current activity choices and text-size setting.
 const preferences = ref(
   getPreferences(),
 )
 
-//Preserve the original state
-//Convert the preferences present when the page first opens into a string and save them
+// JSON copy of the last saved choices; used to check for unsaved changes.
 const savedSnapshot = ref(
   JSON.stringify(preferences.value),
 )
 
-//Status Notification
-//After saving or clearing preferences, the page will display a notification
+// Short save or clear message shown on the page.
 const statusMessage = ref('')
 
+// Timer ID used to clear the message after 3 seconds.
 let statusTimer = null
 
-//Call `getActivities()`, and upon success, 
-// save the complete list of activities to `activities.value`
+// Load activities to build choices after the page opens; do not ask AI here.
+// Example input: Open Preferences; getActivities gives two records.
+// Example result: activities gets those records, choices update, and loading becomes false.
 onMounted(async () => {
   try {
     activities.value =
@@ -53,8 +104,9 @@ onMounted(async () => {
   }
 })
 
-//Generate region options
-//Set used to remove same suburb
+// Get area names from activities, remove repeats, and sort them.
+// Example input: suburbs ['Clayton', 'Box Hill', 'Clayton']
+// Example result: ['Box Hill', 'Clayton'].
 const areas = computed(() => {
   return [
     ...new Set(
@@ -68,10 +120,7 @@ const areas = computed(() => {
   ].sort()
 })
 
-// ======================================================
-// Generate interest options
-// ======================================================
-//Exclude unsuitable tags
+// Tags to hide from interest choices, such as Adult and Children.
 const excludedInterestTags =
   new Set([
     'PALS',
@@ -81,7 +130,9 @@ const excludedInterestTags =
     'Storytime',
   ])
 
-//Collect tags from all activities
+// Get activity tags, leave out hidden tags, remove repeats, and sort them.
+// Example input: tags ['Music', 'Adult', 'Music', 'Art']
+// Example result: ['Art', 'Music']; 'Adult' is hidden.
 const interests = computed(() => {
   return [
     ...new Set(
@@ -98,7 +149,7 @@ const interests = computed(() => {
   ].sort()
 })
 
-//Day of the week options
+// Weekday choices plus Flexible.
 const days = [
   'Monday',
   'Tuesday',
@@ -110,7 +161,9 @@ const days = [
   'Flexible',
 ]
 
-//Generate interests type options
+// Get activity types, remove empty names and repeats, and sort them.
+// Example input: types ['Arts & crafts', '', 'Arts & crafts']
+// Example result: ['Arts & crafts'].
 const activityTypes =
   computed(() => {
     return [
@@ -125,9 +178,9 @@ const activityTypes =
     ].sort()
   })
 
-//Add the following to the activity type buttons:
-// - Short letter/abbreviation
-// - Descriptive text
+// Keep a short name and help text for each activity type.
+// Example input: type 'Arts & crafts'
+// Example result: short name 'AC' and help text 'Creative and hands-on activities.'.
 const activityTypeMeta = {
   'Arts & crafts': {
     short: 'AC',
@@ -172,7 +225,9 @@ const activityTypeMeta = {
   },
 }
 
-//If a new activity type appears without configuration instructions, use the default content
+// Find the short name and help text for an activity type.
+// Example input: 'Arts & crafts'
+// Example result: {short: 'AC', description: 'Creative and hands-on activities.'}; an unknown type uses 'AF'.
 const getActivityTypeMeta = (
   type,
 ) => {
@@ -185,16 +240,18 @@ const getActivityTypeMeta = (
   )
 }
 
-//User selection and deselection
+// Add a choice if it is missing; remove it if it is already selected.
+// Example input: field='interests', value='Music', current list=[]
+// Example result: preferences.interests becomes ['Music']; click again and it becomes []. Returns no value.
 const toggleArrayValue = (
   field,
   value,
 ) => {
+  // Read the choices in the clicked group.
   const current =
     preferences.value[field]
 
-  //if the current value not in the field, add it in the field
-  //if in the field, remove it
+  // Already selected: remove this choice.
   if (current.includes(value)) {
     preferences.value[field] =
       current.filter(
@@ -205,15 +262,16 @@ const toggleArrayValue = (
     return
   }
 
+  // Not selected yet: add this choice.
   preferences.value[field] = [
     ...current,
     value,
   ]
 }
 
-//This state is used to control on-page prompts or the state of the save button
-//same, dont have not saved changes
-//not same, have not saved changes
+// Check if the current choices differ from the last saved choices.
+// Example input: saved interests=[], current interests=['Music']
+// Example result: true; after Save, false.
 const hasUnsavedChanges =
   computed(() => {
     return (
@@ -224,7 +282,9 @@ const hasUnsavedChanges =
     )
   })
 
-  //Font size
+// Turn the text-size code into a name shown on the page.
+// Example input: preferences.textSize='extra-large'
+// Example result: 'Extra large'.
 const textSizeLabel =
   computed(() => {
     if (
@@ -244,14 +304,16 @@ const textSizeLabel =
     return 'Standard'
   })
 
-//Save tips
-//Display a status message and automatically clear it after 3 seconds
+// Show a message, then remove it after 3 seconds.
+// Example input: message='Saved'
+// Example result: statusMessage becomes 'Saved', then ''; returns no value.
 const showStatus = (
   message,
 ) => {
   statusMessage.value =
     message
 
+  // Stop the old timer before starting a new one.
   if (statusTimer) {
     clearTimeout(
       statusTimer,
@@ -264,13 +326,16 @@ const showStatus = (
     }, 3000)
 }
 
-//Save preferences
+// Save the current choices, remember the saved copy, and show a message.
+// Example input: click Save with interests=['Music']
+// Example result: choices are saved in localStorage; hasUnsavedChanges becomes false. Returns no value.
 const save = () => {
   preferences.value =
     savePreferences(
       preferences.value,
     )
 
+  // Remember the saved choices for the unsaved-change check.
   savedSnapshot.value =
     JSON.stringify(
       preferences.value,
@@ -281,11 +346,14 @@ const save = () => {
   )
 }
 
-//Clear preferences
+// Clear saved choices, use the starting values, and show a message.
+// Example input: click Clear with interests=['Music']
+// Example result: interests=[], generalArea='', textSize='standard'. Returns no value.
 const reset = () => {
   preferences.value =
     clearPreferences()
 
+  // Remember the saved choices for the unsaved-change check.
   savedSnapshot.value =
     JSON.stringify(
       preferences.value,
@@ -296,7 +364,6 @@ const reset = () => {
   )
 }
 
-//Preference Summary is in line 818
 </script>
 
 <template>

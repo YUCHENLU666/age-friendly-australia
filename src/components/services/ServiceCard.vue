@@ -1,8 +1,29 @@
+<!--
+src/components/services/ServiceCard.vue
+Show a service card; send Save clicks to the parent page.
+
+How calls move:
+Save button -> emit toggle-save(service.id) -> parent save handler; View details -> RouterLink /services/:id.
+
+Reading tips:
+  Examples show one possible case, not fixed API or model results.
+  ref: a page value; changing it lets Vue update the screen.
+
+Notes:
+  Inputs: service is the page-ready service object; saved is true or false.
+  Save click sends toggle-save with service.id; the parent saves the ID.
+  There are no named local functions or computed values in this file.
+  Example input: service.id="7", saved=false; click Save.
+  Example result: sends toggle-save("7"); the parent handles the storage change.
+  The View details link opens /services/7 for this example.
+  Empty fields show default help text in the template.
+-->
 <script setup>
 import {
   RouterLink,
 } from 'vue-router'
 
+// Read the service object and saved true/false value sent by the parent.
 defineProps({
   service: {
     type: Object,
@@ -15,6 +36,7 @@ defineProps({
   },
 })
 
+// Allow the toggle-save event; the parent page writes the saved ID to storage.
 defineEmits([
   'toggle-save',
 ])

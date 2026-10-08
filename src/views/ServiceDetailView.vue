@@ -1,3 +1,34 @@
+<!--
+src/views/ServiceDetailView.vue
+Show one service and its nearest stop when available.
+
+How calls move:
+onMounted -> getServiceById -> getServices -> getTransitStops -> findNearestStop; toggleSave -> toggleSavedServiceId.
+
+Reading tips:
+  Examples show one possible case, not fixed API or model results.
+  Promise: a result to wait for; await gets the result when the work finishes.
+  ref: a page value; changing it lets Vue update the screen.
+
+Functions:
+  toggleSave - Save or unsave this service and update the button.
+
+Fixed values and data:
+  route - Current page URL; route.params.id is the requested service ID.
+
+Page values and kept data:
+  service - The selected service object, or null when it is missing.
+  loading - True while the page is loading; false when loading ends.
+  errorMessage - Error text shown on the page when data loading fails.
+  saved - True if this service is saved; controls the Save button.
+
+Page start and API handlers:
+  onMounted callback - Read the URL ID, load its service, and set its saved button state.
+
+Notes:
+  Details come from the service list, not a separate /api/services/:id API.
+  If stop loading fails, the service details can still be shown.
+-->
 <script setup>
 import {
   onMounted,
@@ -18,24 +49,29 @@ import {
   toggleSavedServiceId,
 } from '@/services/savedItemsService'
 
-// Get the current route to access the service ID from the URL
+// Current page URL; route.params.id is the requested service ID.
 const route =
   useRoute()
 
-// used to store the service data, loading state, error message, and saved state
+// The selected service object, or null when it is missing.
 const service =
   ref(null)
 
+// True while the page is loading; false when loading ends.
 const loading =
   ref(true)
 
+// Error text shown on the page when data loading fails.
 const errorMessage =
   ref('')
 
+// True if this service is saved; controls the Save button.
 const saved =
   ref(false)
 
-//Service loading begins after the page is mounted.
+// Read the URL ID, load its service, and set its saved button state.
+// Example input: Open /services/7 and the service exists.
+// Example result: service gets record 7 and loading=false; saved is based on stored IDs.
 onMounted(async () => {
   try {
     service.value =
@@ -64,6 +100,9 @@ onMounted(async () => {
   }
 })
 
+// Save or unsave this service and update the button.
+// Example input: service.id='7', saved=false; click Save
+// Example result: localStorage includes '7' and saved=true; returns no value.
 const toggleSave = () => {
   if (!service.value) {
     return

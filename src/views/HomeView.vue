@@ -1,3 +1,44 @@
+<!--
+src/views/HomeView.vue
+Show the homepage; join AI result IDs with full activity details.
+
+How calls move:
+onMounted/loadRecommendations -> getActivities + frontend getRecommendations -> recommendedActivities -> recommendation template.
+
+Reading tips:
+  Examples show one possible case, not fixed API or model results.
+  Promise: a result to wait for; await gets the result when the work finishes.
+  computed: Vue updates this value when the data it uses changes.
+  ref: a page value; changing it lets Vue update the screen.
+
+Functions:
+  normaliseReasons - Turn reasons into a list; remove empty items.
+  loadRecommendations - Load activity details and AI results at the same time, then update the page.
+
+Values Vue updates for you:
+  hasPreferences - Check if area, interests, days, or activity types have a choice.
+  recommendedActivities - Find each recommended activity by ID and add its score and reasons.
+
+Fixed values and data:
+  exploreCards - Fixed homepage cards and links to activities and services.
+  benefits - Fixed homepage benefit text and symbols.
+  trustItems - Fixed homepage source and access labels.
+
+Page values and kept data:
+  recommendations - AI result IDs, scores, reasons, and score details.
+  activities - Activity objects loaded for this page or test.
+  recommendationLoading - True while recommendation requests are running.
+  recommendationError - Error text for the recommendation part of the homepage.
+  preferences - Current activity choices and text-size setting.
+
+Page start and API handlers:
+  onMounted callback - Call loadRecommendations when the homepage opens.
+
+Notes:
+  Recommendation cards are written in this view, not ActivityCard.vue.
+  AI chooses from existing activities; names, images, and dates come from the activity list.
+  This view does not listen to preference-update events or reload AI results directly on Save.
+-->
 <script setup>
 import {
   computed,
@@ -21,10 +62,8 @@ import {
   getRecommendations,
 } from '@/services/recommendationService'
 
-// ======================================================
-// Homepage explore cards
-// ======================================================
 
+// Fixed homepage cards and links to activities and services.
 const exploreCards = [
   {
     title: 'Local activities',
@@ -50,10 +89,8 @@ const exploreCards = [
   },
 ]
 
-// ======================================================
-// Homepage benefits
-// ======================================================
 
+// Fixed homepage benefit text and symbols.
 const benefits = [
   {
     code: 'Aa',
@@ -81,76 +118,38 @@ const benefits = [
   },
 ]
 
-// ======================================================
-// Hero trust items
-// ======================================================
 
+// Fixed homepage source and access labels.
 const trustItems = [
   'Clear source information',
   'Accessibility details',
   'Simple navigation',
 ]
 
-// ======================================================
-// AI recommendation state
-// ======================================================
-//
-// recommendations:
-// Raw ranking results returned by the backend.
-//
-// activities:
-// Normalised activity objects returned by
-// activityService.js.
-//
-// We combine both datasets later using activity IDs.
-// ======================================================
-//Save the raw AI rankings returned by the backend.
-// [
-//   {
-//     activityId: '550',
-//     score: 0.86,
-//     reasons: [...],
-//     breakdown: {...},
-//   }
-// ]
+// AI result IDs, scores, reasons, and score details.
 const recommendations =
   ref([])
-//Save the complete event returned by the standard event API.
-// [
-//   {
-//     id: '550',
-//     name: 'Jazz Night',
-//     image: '...',
-//     suburb: 'Melbourne CBD',
-//     schedule: 'Wednesday...',
-//     primaryTag: 'Jazz',
-//   }
-// ]
+// Activity objects loaded for this page or test.
 const activities =
   ref([])
 
-//Used to control whether "Finding activities for you..." is displayed
+// True while recommendation requests are running.
 const recommendationLoading =
   ref(false)
 
+// Error text for the recommendation part of the homepage.
 const recommendationError =
   ref('')
 
-// Read preferences already saved in localStorage.
+// Current activity choices and text-size setting.
 const preferences =
   ref(
     getPreferences(),
   )
 
-// ======================================================
-// Check whether useful recommendation preferences exist
-// ======================================================
-//
-// textSize is deliberately excluded because it only
-// controls the interface and should not affect activity
-// recommendation ranking.
-// ======================================================
-//Determine whether the user has preferences
+// Check if area, interests, days, or activity types have a choice.
+// Example input: only textSize='large', other choices empty
+// Example result: false; interests=['Music'] gives true.
 const hasPreferences =
   computed(() => {
     return Boolean(
@@ -164,21 +163,9 @@ const hasPreferences =
     )
   })
 
-// ======================================================
-// Convert recommendation reasons into a safe array
-// ======================================================
-//
-// Backend normally returns:
-//
-// [
-//   'Relevant to your selected interests',
-//   'Located in Clayton'
-// ]
-//
-// This helper also protects the frontend if a plain
-// string is returned instead.
-// ======================================================
-//Reasons for the proposed handling
+// Turn reasons into a list; remove empty items.
+// Example input: ['Near you', '', null]
+// Example result: ['Near you']; 'Near you' gives ['Near you']; null gives [].
 function normaliseReasons(
   reasons,
 ) {
@@ -201,35 +188,17 @@ function normaliseReasons(
   return []
 }
 
-// ======================================================
-// Combine AI ranking results with full activity objects
-// ======================================================
-//
-// Recommendation API returns:
-//
-// activityId
-// score
-// reasons
-// breakdown
-//
-// Activity service returns:
-//
-// name
-// image
-// suburb
-// schedule
-// category
-// etc.
-//
-// The UI needs both, so they are joined by activity ID.
-// ======================================================
-//Iterate through each recommendation result, 
-// then locate the full event using the ID
+// Find each recommended activity by ID and add its score and reasons.
+// Example input: recommendation={activityId:7, score:0.8, reasons:['Near you']}, activity={id:'7',
+// name:'Walk'}
+// Example result: one card object with name:'Walk', recommendationScore:0.8, recommendationReasons:['Near
+// you']; missing IDs are skipped.
 const recommendedActivities =
   computed(() => {
     return recommendations.value
       .map(
         (recommendation) => {
+          // Find the full activity object using the recommended ID.
           const activity =
             activities.value.find(
               (item) =>
@@ -241,9 +210,7 @@ const recommendedActivities =
                 ),
             )
 
-          // If an activity cannot be found,
-          // skip that recommendation rather than
-          // showing an incomplete card.
+          // Skip a recommendation if its activity cannot be found.
           if (!activity) {
             return null
           }
@@ -251,9 +218,6 @@ const recommendedActivities =
           return {
             ...activity,
 
-            // Keep the score internally in case it is
-            // useful later, but do not display it as
-            // a percentage to the user.
             recommendationScore:
               recommendation.score,
 
@@ -270,19 +234,19 @@ const recommendedActivities =
       .filter(Boolean)
   })
 
-// ======================================================
-// Load AI recommendations
-// ======================================================
 
+// Load activity details and AI results at the same time, then update the page.
+// Example input: preferences.interests=['Music']; open Home
+// Example result: activities and recommendations are filled after both requests finish; Promise gives no
+// value. Empty choices cause no request.
 async function loadRecommendations() {
-  // Do not call the AI endpoint until the user has
-  // selected at least one meaningful preference.
   if (
     !hasPreferences.value
   ) {
     return
   }
 
+  // Set whether the recommendation loading message is shown.
   recommendationLoading.value =
     true
 
@@ -290,7 +254,7 @@ async function loadRecommendations() {
     ''
 
   try {
-    // Load activity data and AI ranking data together.
+    // Wait for the activity and recommendation requests together.
     const [
       activityResults,
       recommendationResults,
@@ -318,21 +282,20 @@ async function loadRecommendations() {
       error?.message ||
       'Personalised recommendations are temporarily unavailable.'
   } finally {
+    // Set whether the recommendation loading message is shown.
     recommendationLoading.value =
       false
   }
 }
 
-// ======================================================
-// Load recommendations when the homepage opens
-// ======================================================
 
+// Call loadRecommendations when the homepage opens.
+// Example input: Open Home with saved interests=[Music].
+// Example result: Starts activity and recommendation requests; no choices means no AI request.
 onMounted(() => {
   loadRecommendations()
 })
 
-//loading circle in line 579 and main.css 8038
-//update preference Page jump
 </script>
 
 <template>

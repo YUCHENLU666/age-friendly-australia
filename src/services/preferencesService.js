@@ -1,20 +1,46 @@
-//localStorage key name
+// src/services/preferencesService.js
+// Read, clean, save, and clear choices; set page text size.
+//
+// How calls move:
+// PreferencesView.save/reset -> normalisePreferences -> localStorage -> applyTextSizePreference -> preference update event.
+//
+// Reading tips:
+//   Examples show one possible case, not fixed API or model results.
+//   Promise: a result to wait for; await gets the result when the work finishes.
+//
+// Functions:
+//   createDefaultPreferences - Return the starting choices and standard text size.
+//   cleanStringArray - Trim each item, remove empty items, and remove repeats.
+//   normalisePreferences - Clean the choices and use standard text size for an unknown size.
+//   notifyPreferencesUpdated - Send a browser event so pages that listen can read the new choices.
+//   getPreferences - Read saved choices; return starting choices when missing or unreadable.
+//   savePreferences - Clean and save choices, apply text size, and send an update event.
+//   clearPreferences - Remove saved choices and apply the starting choices.
+//   applyTextSizePreference - Set the HTML text-size value used by CSS.
+//   applySavedTextSizePreference - Read the saved text size and apply it when the app starts.
+//
+// Fixed values and data:
+//   PREFERENCES_KEY - localStorage name for the saved preference object.
+//   TEXT_SIZE_OPTIONS - Allowed text-size values: standard, large, extra-large.
+//
+// Notes:
+//   Saving choices does not call the backend or ask AI for results.
+//   Only four activity-choice fields are sent to AI; textSize is not sent.
+
+// localStorage name for the saved preference object.
 const PREFERENCES_KEY =
   'ageFriendlyAustralia.preferences'
 
-//Valid font size
+// Allowed text-size values: standard, large, extra-large.
 const TEXT_SIZE_OPTIONS = [
   'standard',
   'large',
   'extra-large',
 ]
 
-//Return to default preferences
-//when use it
-//user first visit the web
-//not save the preferences
-//saved data broken
-//user click Clear preferences
+// Return the starting choices and standard text size.
+// Example input: no arguments
+// Example result: {generalArea:'', interests:[], preferredDays:[], activityTypes:[], textSize:'standard'}.
 function createDefaultPreferences() {
   return {
     generalArea: '',
@@ -25,7 +51,9 @@ function createDefaultPreferences() {
   }
 }
 
-//Clean the array
+// Trim each item, remove empty items, and remove repeats.
+// Example input: [' Music ', '', 'Music', null]
+// Example result: ['Music'].
 function cleanStringArray(value) {
   if (!Array.isArray(value)) {
     return []
@@ -42,7 +70,10 @@ function cleanStringArray(value) {
   ]
 }
 
-//Cleanse complete preference objects
+// Clean the choices and use standard text size for an unknown size.
+// Example input: {generalArea:' Clayton ', interests:[' Music ', 'Music'], textSize:'huge'}
+// Example result: generalArea:'Clayton', interests:['Music'], preferredDays:[], activityTypes:[],
+// textSize:'standard'.
 function normalisePreferences(value) {
   const data =
     value &&
@@ -78,12 +109,9 @@ function normalisePreferences(value) {
   }
 }
 
-// ======================================================
-// Notify other components
-// ======================================================
-//After saving or clearing preferences,
-//it dispatches a custom event within the browser window
-//Carrying the latest preferences in the event
+// Send a browser event so pages that listen can read the new choices.
+// Example input: preferences={textSize:'large'}
+// Example result: sends 'age-friendly-preferences-updated' with detail={textSize:'large'}; returns no value.
 function notifyPreferencesUpdated(
   preferences,
 ) {
@@ -103,10 +131,11 @@ function notifyPreferencesUpdated(
   )
 }
 
-//Reading preferences
+// Read saved choices; return starting choices when missing or unreadable.
+// Example input: localStorage has no preferences
+// Example result: starting object with empty choices and textSize:'standard'.
 export function getPreferences() {
   try {
-    //form the localStorage
     const stored =
       localStorage.getItem(
         PREFERENCES_KEY,
@@ -124,7 +153,9 @@ export function getPreferences() {
   }
 }
 
-//save Preferences
+// Clean and save choices, apply text size, and send an update event.
+// Example input: {generalArea:' Clayton ', interests:['Music'], textSize:'large'}
+// Example result: returns the cleaned full object, saves it, and sets the page text size to large.
 export function savePreferences(
   preferences,
 ) {
@@ -140,12 +171,10 @@ export function savePreferences(
     ),
   )
 
-  //Apply font immediately
   applyTextSizePreference(
     cleanedPreferences.textSize,
   )
 
-  //Send preference update event
   notifyPreferencesUpdated(
     cleanedPreferences,
   )
@@ -153,9 +182,10 @@ export function savePreferences(
   return cleanedPreferences
 }
 
-//Clear preferences
+// Remove saved choices and apply the starting choices.
+// Example input: saved interests=['Music'], textSize='large'; call with no arguments
+// Example result: returns empty choices with textSize:'standard'; removes storage and updates page text size.
 export function clearPreferences() {
-  //remove localStorage
   localStorage.removeItem(
     PREFERENCES_KEY,
   )
@@ -167,7 +197,6 @@ export function clearPreferences() {
     defaults.textSize,
   )
 
-  //Notify other components
   notifyPreferencesUpdated(
     defaults,
   )
@@ -175,7 +204,9 @@ export function clearPreferences() {
   return defaults
 }
 
-//Apply font size
+// Set the HTML text-size value used by CSS.
+// Example input: 'large'
+// Example result: html.dataset.textSize becomes 'large'; unknown value uses 'standard'. Returns no value.
 export function applyTextSizePreference(
   value,
 ) {
@@ -194,7 +225,9 @@ export function applyTextSizePreference(
     textSize
 }
 
-//Restore fonts when the website launches
+// Read the saved text size and apply it when the app starts.
+// Example input: stored textSize='extra-large'
+// Example result: html.dataset.textSize becomes 'extra-large'; returns no value.
 export function applySavedTextSizePreference() {
   const preferences =
     getPreferences()

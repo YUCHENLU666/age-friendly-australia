@@ -1,20 +1,55 @@
+// src/services/serviceService.js
+// Load and clean services; keep the list and add stop details for one service.
+//
+// How calls move:
+// getServices -> fetchServices -> GET /api/services -> normaliseService; getServiceById -> getTransitStops -> findNearestStop.
+//
+// Reading tips:
+//   Examples show one possible case, not fixed API or model results.
+//   Promise: a result to wait for; await gets the result when the work finishes.
+//
+// Functions:
+//   cleanText - Turn a value into text and remove spaces at both ends.
+//   normaliseAccessibility - Turn access data into a list of non-empty labels.
+//   normaliseCoordinates - Turn latitude and longitude into numbers; return null if a value is not a number.
+//   normaliseService - Build the service object used by the page; add nearest-stop details when possible.
+//   fetchServices - Request the service list from the backend and check the reply.
+//   getServices - Return the kept service list, or request and clean it once.
+//   getServiceById - Find one service by ID and try to add its nearest stop.
+//   clearServicesCache - Forget the kept service list and request so it can be loaded again.
+//
+// Fixed values and data:
+//   API_BASE_URL - Backend API address used by this file; remove the final slash if there is one.
+//
+// Page values and kept data:
+//   cachedServices - Service list kept in memory so later calls do not load it again.
+//   servicesLoadingPromise - Request already running; other calls wait for the same result.
+//
+// Notes:
+//   Number checks reject NaN; empty and out-of-range map values are not fully checked.
+//   Missing fields stay empty; this code does not make up service details.
+
 import {
   findNearestStop,
   getTransitStops,
 } from '@/services/transitStopsService'
 
-// decide where the frontend should visit the backend
+// Backend API address used by this file; remove the final slash if there is one.
 const API_BASE_URL = (
   import.meta.env.VITE_API_BASE_URL ||
   'http://localhost:3000/api'
 ).replace(/\/$/, '')
 
-// convert all service data from the backend into a consistent format for the frontend
+// Turn a value into text and remove spaces at both ends.
+// Example input: '  Care Home  '
+// Example result: 'Care Home'; null gives ''.
 function cleanText(value) {
   return String(value ?? '').trim()
 }
 
-//Normalise the accessibility field to always be an array of strings, even if the backend returns a single string or null
+// Turn access data into a list of non-empty labels.
+// Example input: 'Ramp; Lift; '
+// Example result: ['Ramp', 'Lift'].
 function normaliseAccessibility(value) {
   if (Array.isArray(value)) {
     return value
@@ -36,7 +71,9 @@ function normaliseAccessibility(value) {
     .filter(Boolean)
 }
 
-// Normalise the coordinates from the backend to always be an object with latitude and longitude as numbers, or null if invalid
+// Turn latitude and longitude into numbers; return null if a value is not a number.
+// Example input: {latitude: '-37.9', longitude: '145.1'}
+// Example result: {latitude: -37.9, longitude: 145.1}; latitude='abc' gives null.
 function normaliseCoordinates(row) {
   const latitude =
     Number(row.latitude)
@@ -57,7 +94,10 @@ function normaliseCoordinates(row) {
   }
 }
 
-// Normalise a service row from the backend into a consistent format for the frontend, including finding the nearest transit stop if coordinates are available
+// Build the service object used by the page; add nearest-stop details when possible.
+// Example input: row={id:7, name:' Care Home ', suburb:'Clayton'}, index=0, transitStops=[]
+// Example result: object includes id:'7', name:'Care Home', suburb:'Clayton', accessibility:[], and empty
+// transport text.
 function normaliseService(
   row,
   index,
@@ -66,6 +106,7 @@ function normaliseService(
   const coordinates =
     normaliseCoordinates(row)
 
+  // Find a stop only when a point and stop list are usable.
   const nearestStop =
     coordinates
       ? findNearestStop(
@@ -180,11 +221,9 @@ function normaliseService(
   }
 }
 
-/**
- * Load services from the backend.
- *
- * GET /api/services
- */
+// Request the service list from the backend and check the reply.
+// Example input: call with no arguments; API returns [{id:7, name:'Care Home'}]
+// Example result: a Promise that gives that list; HTTP 500 throws an error.
 async function fetchServices() {
   const response =
     await fetch(
@@ -209,51 +248,21 @@ async function fetchServices() {
   return data
 }
 
-// ======================================================
-// Services cache
-// ======================================================
-//
-// The services list does not change while the user is
-// navigating through the current frontend session.
-//
-// Caching prevents repeated requests when the user:
-// Services -> Home -> Services
-//
+// Service list kept in memory so later calls do not load it again.
 let cachedServices = null
+// Request already running; other calls wait for the same result.
 let servicesLoadingPromise = null
 
-/**
- * Load services from the backend.
- *
- * IMPORTANT PERFORMANCE CHANGE:
- *
- * The services LIST page no longer downloads all transit
- * stops or calculates the nearest stop for every service.
- *
- * Previously:
- *
- * services
- *   +
- * ~4,994 transit stops
- *   +
- * nearest-stop calculation for every service
- *
- * Now:
- *
- * services only
- *
- * Transit information is calculated only when the user
- * opens one individual service detail page.
- */
+// Return the kept service list, or request and clean it once.
+// Example input: call with no arguments; API row has id:7
+// Example result: Promise gives service list with id:'7'; a later call reuses that list.
 export async function getServices() {
-  // Return the existing in-memory result immediately.
+  // Reuse the service list already loaded.
   if (cachedServices) {
     return cachedServices
   }
 
-  // If another component has already started loading
-  // services, reuse the same request instead of making
-  // another backend request.
+  // Wait for the service request already running.
   if (servicesLoadingPromise) {
     return servicesLoadingPromise
   }
@@ -261,6 +270,7 @@ export async function getServices() {
   servicesLoadingPromise =
     fetchServices()
       .then((serviceRows) => {
+        // Clean the rows once and keep the result.
         cachedServices =
           serviceRows.map(
             (row, index) =>
@@ -268,9 +278,6 @@ export async function getServices() {
                 row,
                 index,
 
-                // Empty list intentionally prevents
-                // nearest-stop calculation on the
-                // services listing page.
                 [],
               ),
           )
@@ -278,25 +285,23 @@ export async function getServices() {
         return cachedServices
       })
       .finally(() => {
+        // Forget the finished request; keep the service list.
         servicesLoadingPromise = null
       })
 
   return servicesLoadingPromise
 }
 
-/**
- * Load one service by ID.
- *
- * Transit-stop information is loaded lazily here because
- * it is useful on the detail page, but unnecessary when
- * rendering the complete service catalogue.
- */
+// Find one service by ID and try to add its nearest stop.
+// Example input: id='7', service list contains '7'
+// Example result: Promise gives that service with stop details if available; unknown ID gives null.
 export async function getServiceById(
   id,
 ) {
   const services =
     await getServices()
 
+  // Find the ID in the loaded service list.
   const service =
     services.find(
       (item) =>
@@ -308,16 +313,17 @@ export async function getServiceById(
     return null
   }
 
-  // If coordinates are unavailable, we cannot calculate
-  // nearby transport, so return the service immediately.
+  // No map point: return the service without stop details.
   if (!service.coordinates) {
     return service
   }
 
   try {
+    // Load stops only for this detail request.
     const transitStops =
       await getTransitStops()
 
+    // Find a stop only when a point and stop list are usable.
     const nearestStop =
       findNearestStop(
         service.coordinates,
@@ -338,9 +344,6 @@ export async function getServiceById(
         nearestStop.distanceLabel,
     }
   } catch (error) {
-    // Transit information is supplementary.
-    // A transit failure should never prevent the service
-    // itself from being displayed.
     console.error(
       'Unable to load nearby transport for service:',
       error,
@@ -350,13 +353,12 @@ export async function getServiceById(
   }
 }
 
-/**
- * Clear the in-memory service cache.
- *
- * This can be used later if live service refreshing is
- * introduced.
- */
+// Forget the kept service list and request so it can be loaded again.
+// Example input: call after services were loaded
+// Example result: cachedServices=null, servicesLoadingPromise=null; returns no value.
 export function clearServicesCache() {
+  // Clean the rows once and keep the result.
   cachedServices = null
+  // Forget the finished request; keep the service list.
   servicesLoadingPromise = null
 }

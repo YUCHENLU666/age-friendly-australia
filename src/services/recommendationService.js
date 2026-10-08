@@ -1,36 +1,34 @@
-// ======================================================
-// AI Recommendation Service
-// ======================================================
+// src/services/recommendationService.js
+// Send activity preferences to the backend recommendation API.
 //
-// This file is responsible for:
-// 1. Sending the user's saved preferences to the backend
-// 2. Calling POST /api/recommendations
-// 3. Returning the AI recommendation results to Vue
+// How calls move:
+// HomeView.loadRecommendations -> getRecommendations -> POST /api/recommendations -> array of ranking results.
 //
-// Backend endpoint:
-// POST /api/recommendations
+// Reading tips:
+//   Examples show one possible case, not fixed API or model results.
+//   Promise: a result to wait for; await gets the result when the work finishes.
 //
-// ======================================================
+// Functions:
+//   cleanArray - Turn items into text and remove spaces and empty items.
+//   getRecommendations - Send the four activity choices to the backend and return its recommendation list.
+//
+// Fixed values and data:
+//   API_BASE_URL - Backend API address used by this file; remove the final slash if there is one.
+//
+// Notes:
+//   This file sends HTTP requests. Scoring happens in age-friendly-database/ai/recommendationService.js.
+//   textSize and saved service or activity IDs are not sent in this request.
 
-// Decide which backend API the frontend should use.
-//
-// Local development:
-// http://localhost:3000/api
-//
-// Production:
-// VITE_API_BASE_URL can be configured in .env.
+
+// Backend API address used by this file; remove the final slash if there is one.
 const API_BASE_URL = (
   import.meta.env.VITE_API_BASE_URL ||
   'http://localhost:3000/api'
 ).replace(/\/$/, '')
 
-// ======================================================
-// Clean preference arrays
-// ======================================================
-//
-// This protects the backend from receiving unexpected
-// values such as null, undefined or non-array data.
-//
+// Turn items into text and remove spaces and empty items.
+// Example input: [' Music ', '', null, 'Music']
+// Example result: ['Music', 'Music']; repeats are kept here.
 function cleanArray(value) {
   if (!Array.isArray(value)) {
     return []
@@ -43,38 +41,14 @@ function cleanArray(value) {
     .filter(Boolean)
 }
 
-// ======================================================
-// Request AI recommendations
-// ======================================================
-//
-// preferences should contain:
-//
-// {
-//   generalArea: '',
-//   interests: [],
-//   preferredDays: [],
-//   activityTypes: []
-// }
-//
-// The backend returns:
-//
-// {
-//   recommendations: [
-//     {
-//       activityId,
-//       score,
-//       reasons,
-//       breakdown
-//     }
-//   ]
-// }
-//
+// Send the four activity choices to the backend and return its recommendation list.
+// Example input: {generalArea:'Clayton', interests:['Music'], textSize:'large'}
+// Example result: sends generalArea, interests, preferredDays, activityTypes; leaves out textSize; Promise
+// gives recommendation objects.
 export async function getRecommendations(
   preferences,
 ) {
-  // Prepare only the fields required by the AI model.
-  // textSize is intentionally excluded because it is
-  // a UI preference rather than an activity preference.
+  // Copy only generalArea, interests, preferredDays, and activityTypes; do not send textSize.
   const requestBody = {
     generalArea:
       String(
@@ -96,7 +70,7 @@ export async function getRecommendations(
         preferences?.activityTypes,
       ),
   }
-  //Send a POST request
+  // Send the request and wait for the HTTP reply.
   const response =
     await fetch(
       `${API_BASE_URL}/recommendations`,
@@ -115,9 +89,7 @@ export async function getRecommendations(
       },
     )
 
-  // If the backend returns a non-200 response,
-  // turn it into a normal JavaScript error so the
-  // homepage can display an accessible error message.
+  // Read the backend error message if the status is not successful.
   if (!response.ok) {
     let message =
       `Unable to generate recommendations (${response.status}).`
@@ -131,17 +103,15 @@ export async function getRecommendations(
           String(errorData.error)
       }
     } catch {
-      // Keep the default message if the response
-      // is not valid JSON.
     }
 
     throw new Error(message)
   }
 
+  // Read JSON from the successful reply.
   const data =
     await response.json()
 
-  // Protect the UI against malformed backend responses.
   if (
     !data ||
     !Array.isArray(

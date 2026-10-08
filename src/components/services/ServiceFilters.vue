@@ -1,4 +1,27 @@
+<!--
+src/components/services/ServiceFilters.vue
+Show service filters and send changes to ServicesView.
+
+How calls move:
+Input/change -> updateField -> emit update:filters -> ServicesView.updateFilters; Clear -> emit clear.
+
+Reading tips:
+  Examples show one possible case, not fixed API or model results.
+  Promise: a result to wait for; await gets the result when the work finishes.
+  ref: a page value; changing it lets Vue update the screen.
+
+Functions:
+  updateField - Change one filter and send the full filter object to the parent page.
+
+Props and events:
+  props - Receive filters, area/type/accessibility options and the dataAvailable flag from the parent.
+  emit - Notify the parent through update:filters and clear component events.
+
+Notes:
+  This component does not load services or directly change the parent filters.
+-->
 <script setup>
+// Receive filters, area/type/accessibility options and the dataAvailable flag from the parent.
 const props = defineProps({
   filters: {
     type: Object,
@@ -26,15 +49,20 @@ const props = defineProps({
   },
 })
 
+// Notify the parent through update:filters and clear component events.
 const emit = defineEmits([
   'update:filters',
   'clear',
 ])
 
+// Change one filter and send the full filter object to the parent page.
+// Example input: field='search', value='care', current area='Clayton'
+// Example result: sends update:filters with search='care' and area='Clayton'; returns no value.
 const updateField = (
   field,
   value,
 ) => {
+  // Send new filters to the parent; keep the other choices.
   emit('update:filters', {
     ...props.filters,
     [field]: value,

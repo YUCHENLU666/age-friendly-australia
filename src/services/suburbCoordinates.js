@@ -1,8 +1,24 @@
-// Suburb centroid coordinates (South-East Melbourne)
-// Used as a reference point for distance-based sorting when a user
-// selects a General area filter (not a precise address, just the
-// suburb's approximate centre). Coordinates verified via Google Places, Aug 2026.
+// src/services/suburbCoordinates.js
+// Keep a fixed map point for each supported area.
+//
+// How calls move:
+// ServicesView.filteredServices -> getSuburbCoordinates -> SUBURB_COORDINATES lookup.
+//
+// Reading tips:
+//   Examples show one possible case, not fixed API or model results.
+//   Promise: a result to wait for; await gets the result when the work finishes.
+//
+// Functions:
+//   getSuburbCoordinates - Find the fixed map point for an exact area name.
+//
+// Fixed values and data:
+//   SUBURB_COORDINATES - Fixed latitude/longitude points for the supported area names.
+//
+// Notes:
+//   These fixed map points are not the current user GPS location.
 
+
+// Fixed latitude/longitude points for the supported area names.
 export const SUBURB_COORDINATES = {
   'Ashwood': { latitude: -37.8683075, longitude: 145.1054275 },
   'Bentleigh': { latitude: -37.9188435, longitude: 145.0417166 },
@@ -56,6 +72,9 @@ export const SUBURB_COORDINATES = {
   'Wheelers Hill': { latitude: -37.9067871, longitude: 145.1890123 },
 }
 
+// Find the fixed map point for an exact area name.
+// Example input: 'Clayton'
+// Example result: {latitude:-37.9145479, longitude:145.127492}; 'Unknown' gives null.
 export function getSuburbCoordinates(suburbName) {
   return SUBURB_COORDINATES[suburbName] ?? null
 }

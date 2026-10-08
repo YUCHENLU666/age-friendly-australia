@@ -1,3 +1,49 @@
+<!--
+src/views/LiveInformationView.vue
+Show live places and bus positions; let users refresh each list.
+
+How calls move:
+loadVenues -> liveDataService.getLiveCommunityVenues; loadBuses -> getLiveBusPositions; getMapUrl -> external map link.
+
+Reading tips:
+  Examples show one possible case, not fixed API or model results.
+  Promise: a result to wait for; await gets the result when the work finishes.
+  computed: Vue updates this value when the data it uses changes.
+  ref: a page value; changing it lets Vue update the screen.
+
+Functions:
+  formatCoordinate - Show a map number with five numbers after the dot.
+  formatUpdatedTime - Show when the page received data, using the browser time zone.
+  formatVehicleTime - Turn the bus time in seconds into a clock time.
+  getMapUrl - Make a Google Maps link for one point.
+  loadVenues - Load up to 10 places; update the list, loading flag, time, or error.
+  loadBuses - Load up to 10 bus positions for the current route choice.
+  clearRoute - Clear the route text and load buses without a route filter.
+
+Values Vue updates for you:
+  venueCount - Count the places in the venue list.
+  busCount - Count the buses in the bus list.
+
+Page values and kept data:
+  venues - Venue objects from the backend Vicmap request.
+  buses - Bus position objects from the backend PTV request.
+  venuesLoading - True while the venue request is running; disables its Refresh button.
+  busesLoading - True while the bus request is running; disables its buttons.
+  venuesError - Venue error text; separate from bus errors.
+  busesError - Bus error text; separate from venue errors.
+  routeId - Route text entered by the user; typing alone does not load buses.
+  venuesUpdatedAt - Time when the page last got a successful venue reply.
+  busesUpdatedAt - Time when the page last got a successful bus reply, even if the backend reused data.
+
+Page start and API handlers:
+  onMounted callback - Load places and buses at the same time after the page opens.
+
+Notes:
+  Opening the page starts both requests together; each list has its own error.
+  There is no timed refresh loop; users click Refresh to request data again.
+  Updated means when this page got the data. Reported means the bus feed time.
+  The Maps link shows a point; this code does not plan a route.
+-->
 <script setup>
 import {
   computed,
@@ -10,20 +56,32 @@ import {
   getLiveCommunityVenues,
 } from '@/services/liveDataService'
 
+// Venue objects from the backend Vicmap request.
 const venues = ref([])
+// Bus position objects from the backend PTV request.
 const buses = ref([])
 
+// True while the venue request is running; disables its Refresh button.
 const venuesLoading = ref(false)
+// True while the bus request is running; disables its buttons.
 const busesLoading = ref(false)
 
+// Venue error text; separate from bus errors.
 const venuesError = ref('')
+// Bus error text; separate from venue errors.
 const busesError = ref('')
 
+// Route text entered by the user; typing alone does not load buses.
 const routeId = ref('')
 
+// Time when the page last got a successful venue reply.
 const venuesUpdatedAt = ref(null)
+// Time when the page last got a successful bus reply, even if the backend reused data.
 const busesUpdatedAt = ref(null)
 
+// Show a map number with five numbers after the dot.
+// Example input: -37.9
+// Example result: '-37.90000'; 'abc' gives 'Not available'.
 const formatCoordinate = (value) => {
   const number = Number(value)
 
@@ -34,6 +92,9 @@ const formatCoordinate = (value) => {
   return number.toFixed(5)
 }
 
+// Show when the page received data, using the browser time zone.
+// Example input: null
+// Example result: 'Not updated yet'; a Date object shows its time, including seconds.
 const formatUpdatedTime = (date) => {
   if (!date) {
     return 'Not updated yet'
@@ -49,6 +110,10 @@ const formatUpdatedTime = (date) => {
   ).format(date)
 }
 
+// Turn the bus time in seconds into a clock time.
+// Example input: 0
+// Example result: 'Live time unavailable'; a positive timestamp shows hours and minutes in the browser time
+// zone.
 const formatVehicleTime = (
   timestamp,
 ) => {
@@ -73,6 +138,9 @@ const formatVehicleTime = (
   )
 }
 
+// Make a Google Maps link for one point.
+// Example input: latitude=-37.9, longitude=145.1
+// Example result: 'https://www.google.com/maps?q=-37.9%2C145.1'.
 const getMapUrl = (
   latitude,
   longitude,
@@ -81,7 +149,12 @@ const getMapUrl = (
     `${latitude},${longitude}`,
   )}`
 
+// Load up to 10 places; update the list, loading flag, time, or error.
+// Example input: click venue Refresh; API returns two venues
+// Example result: venues has two items, venuesUpdatedAt gets the current time, venuesLoading=false. Promise
+// gives no value.
 const loadVenues = async () => {
+  // Start venue loading; buses keep their own loading state.
   venuesLoading.value = true
   venuesError.value = ''
 
@@ -94,6 +167,7 @@ const loadVenues = async () => {
     venuesUpdatedAt.value =
       new Date()
   } catch (error) {
+    // On error, clear only the venue list.
     venues.value = []
 
     venuesError.value =
@@ -105,7 +179,12 @@ const loadVenues = async () => {
   }
 }
 
+// Load up to 10 bus positions for the current route choice.
+// Example input: routeId='R1'; API returns two matching buses
+// Example result: buses has two items, busesUpdatedAt gets the current time, busesLoading=false. Promise gives
+// no value.
 const loadBuses = async () => {
+  // Start bus loading using the current route text.
   busesLoading.value = true
   busesError.value = ''
 
@@ -120,6 +199,7 @@ const loadBuses = async () => {
     busesUpdatedAt.value =
       new Date()
   } catch (error) {
+    // On error, clear only the bus list.
     buses.value = []
 
     busesError.value =
@@ -131,21 +211,34 @@ const loadBuses = async () => {
   }
 }
 
+// Clear the route text and load buses without a route filter.
+// Example input: routeId='R1'; click Clear
+// Example result: routeId='', then loadBuses runs; Promise gives no value.
 const clearRoute = async () => {
+  // Clear the route text, then load buses again.
   routeId.value = ''
   await loadBuses()
 }
 
+// Count the places in the venue list.
+// Example input: venues=[place A, place B]
+// Example result: 2.
 const venueCount =
   computed(
     () => venues.value.length,
   )
 
+// Count the buses in the bus list.
+// Example input: buses=[]
+// Example result: 0.
 const busCount =
   computed(
     () => buses.value.length,
   )
 
+// Load places and buses at the same time after the page opens.
+// Example input: Open Live Information with routeId empty.
+// Example result: loadVenues and loadBuses each update their own list, time, and error state.
 onMounted(async () => {
   await Promise.all([
     loadVenues(),

@@ -1,67 +1,46 @@
-// ======================================================
-// Saved items service
-// ======================================================
+// src/services/savedItemsService.js
+// Save activity and service IDs in this browser.
 //
-// This service manages saved activity and service IDs
-// using browser localStorage.
+// How calls move:
+// Toggle/remove -> readSavedItems -> cleanIds -> update ID array -> writeSavedItems -> return updated IDs.
 //
-// Main responsibilities:
+// Reading tips:
+//   Examples show one possible case, not fixed API or model results.
+//   Promise: a result to wait for; await gets the result when the work finishes.
 //
-// 1. Read saved activity and service IDs.
-// 2. Save updated IDs back to localStorage.
-// 3. Add / remove IDs through toggle operations.
-// 4. Clean and normalise stored IDs.
-// 5. Migrate activity saves created by an older version
-//    of the application.
+// Functions:
+//   createDefaultSavedItems - Return empty lists for saved activity and service IDs.
+//   cleanIds - Turn IDs into text, remove spaces, empty IDs, and repeats.
+//   writeSavedItems - Save the full saved-item object as JSON in localStorage.
+//   readSavedItems - Read saved IDs; clean them or use empty lists if reading fails.
+//   toggleId - Return a new list with this ID added or removed.
+//   getSavedItems - Read the full saved-item object.
+//   getSavedActivityIds - Read only the saved activity IDs.
+//   getSavedServiceIds - Read only the saved service IDs.
+//   toggleSavedActivityId - Add or remove an activity ID, save the object, and return activity IDs.
+//   toggleSavedServiceId - Add or remove a service ID, save the object, and return service IDs.
+//   removeSavedActivityId - Remove an activity ID, save the object, and return the IDs left.
+//   removeSavedServiceId - Remove a service ID, save the object, and return the IDs left.
 //
-// Main data flow:
+// Fixed values and data:
+//   SAVED_ITEMS_KEY - localStorage name for the saved activity and service IDs.
+//   LEGACY_ACTIVITY_KEY - Old localStorage name that held only saved activity IDs.
 //
-// ActivityCard / ServiceCard
-//   ↓
-// parent view
-//   ↓
-// savedItemsService
-//   ↓
-// localStorage
-//   ↓
-// SavedView / CalendarView
-//
-// Only IDs are stored here.
-//
-// Full activity and service objects are loaded separately
-// from their corresponding data services.
-//
+// Notes:
+//   Only IDs are stored; the full service or activity is loaded separately.
+//   Saves stay in this browser and are not shared across devices.
 
-
-// ======================================================
-// Local storage keys
-// ======================================================
-
-// Current storage key.
-//
-// One object is used to store both activity IDs
-// and service IDs.
+// localStorage name for the saved activity and service IDs.
 const SAVED_ITEMS_KEY =
   'ageFriendlyAustralia.savedItems'
 
-// Storage key used by an earlier version of the app.
-//
-// Existing activity saves stored under this key are
-// automatically migrated to SAVED_ITEMS_KEY.
+// Old localStorage name that held only saved activity IDs.
 const LEGACY_ACTIVITY_KEY =
   'ageFriendlyAustralia.savedActivityIds'
 
-
-// ======================================================
-// Default saved-items structure
-// ======================================================
-
-/**
- * Create an empty saved-items object.
- *
- * Keeping one consistent structure simplifies storage
- * handling across Activities, Services, Saved and Calendar.
- */
+// Return empty lists for saved activity and service IDs.
+// Example input: no arguments
+// Example result: {activityIds:[], serviceIds:[]}.
 function createDefaultSavedItems() {
   return {
     activityIds: [],
@@ -69,27 +48,9 @@ function createDefaultSavedItems() {
   }
 }
 
-
-// ======================================================
-// ID normalisation
-// ======================================================
-
-/**
- * Clean and normalise an array of saved IDs.
- *
- * All IDs are converted to trimmed strings.
- *
- * Invalid / empty values are removed and duplicates are
- * removed using Set.
- *
- * Example:
- *
- * [1, 2, '3', null, undefined, '']
- *
- * becomes:
- *
- * ['1', '2', '3']
- */
+// Turn IDs into text, remove spaces, empty IDs, and repeats.
+// Example input: [1, ' 2 ', 1, null, '']
+// Example result: ['1', '2'].
 function cleanIds(value) {
   if (!Array.isArray(value)) {
     return []
@@ -106,15 +67,9 @@ function cleanIds(value) {
   ]
 }
 
-
-// ======================================================
-// Write saved items
-// ======================================================
-
-/**
- * Convert the saved-items object to JSON and store it
- * under the current localStorage key.
- */
+// Save the full saved-item object as JSON in localStorage.
+// Example input: {activityIds:['1'], serviceIds:['7']}
+// Example result: localStorage stores that object as JSON; returns no value.
 function writeSavedItems(savedItems) {
   localStorage.setItem(
     SAVED_ITEMS_KEY,
@@ -122,27 +77,9 @@ function writeSavedItems(savedItems) {
   )
 }
 
-
-// ======================================================
-// Read saved items
-// ======================================================
-
-/**
- * Read saved activity and service IDs from localStorage.
- *
- * The returned object always follows this structure:
- *
- * {
- *   activityIds: [],
- *   serviceIds: []
- * }
- *
- * Stored IDs are cleaned before being returned.
- *
- * If current saved-item data does not exist, the function
- * also checks for activity saves created by the earlier
- * version of the application and migrates them.
- */
+// Read saved IDs; clean them or use empty lists if reading fails.
+// Example input: localStorage has no saved IDs
+// Example result: {activityIds:[], serviceIds:[]}; old activity IDs are moved to the new key.
 function readSavedItems() {
   try {
     const stored =
@@ -150,7 +87,6 @@ function readSavedItems() {
         SAVED_ITEMS_KEY,
       )
 
-    // Current saved-items format.
     if (stored) {
       const parsed =
         JSON.parse(stored)
@@ -168,24 +104,12 @@ function readSavedItems() {
       }
     }
 
-    // ==================================================
-    // Legacy activity-save migration
-    // ==================================================
-    //
-    // Earlier versions stored only activity IDs under a
-    // separate localStorage key.
-    //
-    // When legacy data is found:
-    //
-    // 1. Convert it to the current saved-items structure.
-    // 2. Save the migrated structure.
-    // 3. Remove the old localStorage entry.
-    //
     const legacyActivities =
       localStorage.getItem(
         LEGACY_ACTIVITY_KEY,
       )
 
+    // Move old activity saves to the current storage format.
     if (legacyActivities) {
       const migrated = {
         activityIds:
@@ -209,8 +133,6 @@ function readSavedItems() {
       return migrated
     }
   } catch (error) {
-    // Corrupted or invalid localStorage data should not
-    // prevent the rest of the application from loading.
     console.error(
       'Unable to read saved items.',
       error,
@@ -220,104 +142,54 @@ function readSavedItems() {
   return createDefaultSavedItems()
 }
 
-
-// ======================================================
-// Generic ID toggle
-// ======================================================
-
-/**
- * Toggle one ID inside an array.
- *
- * If the ID already exists:
- *   remove it.
- *
- * If the ID does not exist:
- *   add it.
- *
- * IDs are stored as strings for consistency.
- */
+// Return a new list with this ID added or removed.
+// Example input: ids=['1'], id=2
+// Example result: ['1', '2']; ids=['1', '2'], id=2 gives ['1'].
 function toggleId(
   ids,
   id,
 ) {
   const itemId =
     String(id)
-
-  // Unsave existing item.
+  // Remove an ID already saved; otherwise add it.
   if (ids.includes(itemId)) {
     return ids.filter(
       (savedId) =>
         savedId !== itemId,
     )
   }
-
-  // Save new item.
   return [
     ...ids,
     itemId,
   ]
 }
 
-
-// ======================================================
-// Read saved IDs
-// ======================================================
-
-/**
- * Return the complete saved-items object.
- */
+// Read the full saved-item object.
+// Example input: localStorage has activityIds=['1'], serviceIds=['7']
+// Example result: {activityIds:['1'], serviceIds:['7']}.
 export function getSavedItems() {
   return readSavedItems()
 }
 
-
-/**
- * Return only saved activity IDs.
- *
- * Used by features such as:
- *
- * - ActivitiesView
- * - SavedView
- * - CalendarView
- */
+// Read only the saved activity IDs.
+// Example input: stored activityIds=['1'], serviceIds=['7']
+// Example result: ['1'].
 export function getSavedActivityIds() {
   return readSavedItems()
     .activityIds
 }
 
-
-/**
- * Return only saved service IDs.
- *
- * Used by features such as:
- *
- * - Services views
- * - SavedView
- * - CalendarView
- */
+// Read only the saved service IDs.
+// Example input: stored activityIds=['1'], serviceIds=['7']
+// Example result: ['7'].
 export function getSavedServiceIds() {
   return readSavedItems()
     .serviceIds
 }
 
-
-// ======================================================
-// Toggle saved activity
-// ======================================================
-
-/**
- * Save or unsave one activity ID.
- *
- * Flow:
- *
- * read current saved items
- *   ↓
- * toggle activity ID
- *   ↓
- * write updated saved items
- *   ↓
- * return updated activity IDs
- */
+// Add or remove an activity ID, save the object, and return activity IDs.
+// Example input: id=1, stored activityIds=[]
+// Example result: returns ['1'] and saves it; serviceIds do not change.
 export function toggleSavedActivityId(
   id,
 ) {
@@ -337,16 +209,9 @@ export function toggleSavedActivityId(
   return savedItems.activityIds
 }
 
-
-// ======================================================
-// Toggle saved service
-// ======================================================
-
-/**
- * Save or unsave one service ID.
- *
- * Uses the same shared saved-items object as activities.
- */
+// Add or remove a service ID, save the object, and return service IDs.
+// Example input: id=7, stored serviceIds=[]
+// Example result: returns ['7'] and saves it; activityIds do not change.
 export function toggleSavedServiceId(
   id,
 ) {
@@ -366,17 +231,9 @@ export function toggleSavedServiceId(
   return savedItems.serviceIds
 }
 
-
-// ======================================================
-// Remove saved activity
-// ======================================================
-
-/**
- * Remove one activity ID without using toggle behaviour.
- *
- * This is useful when a caller explicitly needs to remove
- * a saved activity regardless of its current state.
- */
+// Remove an activity ID, save the object, and return the IDs left.
+// Example input: id=1, stored activityIds=['1', '2']
+// Example result: ['2'], also saved in localStorage.
 export function removeSavedActivityId(
   id,
 ) {
@@ -396,14 +253,9 @@ export function removeSavedActivityId(
   return savedItems.activityIds
 }
 
-
-// ======================================================
-// Remove saved service
-// ======================================================
-
-/**
- * Remove one service ID without using toggle behaviour.
- */
+// Remove a service ID, save the object, and return the IDs left.
+// Example input: id=7, stored serviceIds=['7', '8']
+// Example result: ['8'], also saved in localStorage.
 export function removeSavedServiceId(
   id,
 ) {

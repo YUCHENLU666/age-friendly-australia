@@ -1,3 +1,45 @@
+// age-friendly-database/server.js
+// Handle API requests, read SQLite, and serve the built website.
+//
+// How calls move:
+// Frontend fetch -> matching anonymous Express route callback -> queryAll/recommendActivities/external service -> res.json.
+//
+// Reading tips:
+//   Examples show one possible case, not fixed API or model results.
+//   Promise: a result to wait for; await gets the result when the work finishes.
+//
+// Functions:
+//   queryAll - Run a SQLite query and return its rows through a Promise.
+//   shutdown - Stop the HTTP server, close the database, and exit the process.
+//
+// Fixed values and data:
+//   app - Express app that handles requests and sends replies.
+//   PORT - Server port from the environment, or 3000 if not set.
+//   DB_PATH - Path to the SQLite database file.
+//   FRONTEND_DIST_PATH - Path to the built website folder.
+//   FRONTEND_INDEX_PATH - Path to the built website index.html file.
+//   db - SQLite connection opened for reading only.
+//   PTV_CACHE_DURATION_MS - Keep a successful bus reply for 30 seconds (30000 milliseconds).
+//   ptvCache - Keep bus replies by route ID and limit, with the request time.
+//   server - Running HTTP server; used when stopping the app.
+//
+// Page start and API handlers:
+//   GET /api/health callback - Reply with a basic message that the backend is running.
+//   GET /api/activities callback - Read activity rows with queryAll and send their JSON.
+//   GET /api/services callback - Read service rows with queryAll and send their JSON.
+//   GET /api/transit-stops callback - Read static stop IDs, names, and map points from SQLite.
+//   POST /api/recommendations callback - Read the choices, find upcoming activities, and call
+//   recommendActivities.
+//   GET /api/realtime/community-venues callback - Call getCommunityVenues and send venues, or HTTP 502 on
+//   failure.
+//   GET /api/realtime/bus-positions callback - Reuse bus data less than 30 seconds old; otherwise call
+//   getBusPositions.
+//
+// Notes:
+//   API handlers are unnamed callback functions; look for the method and API path below.
+//   Unknown /api paths return JSON 404; other GET paths return the Vue entry page.
+//   Starting this server does not start the separate data-update scripts.
+
 require('dotenv').config()
 
 const express = require('express')
@@ -12,37 +54,37 @@ const {
 const { getCommunityVenues } = require('./vicmapFoiService')
 const { getBusPositions } = require('./ptvRealtimeService')
 
+// Express app that handles requests and sends replies.
 const app = express()
 
+// Server port from the environment, or 3000 if not set.
 const PORT = process.env.PORT || 3000
 
+// Path to the SQLite database file.
 const DB_PATH = path.join(
   __dirname,
   'age-friendly.db',
 )
 
+// Path to the built website folder.
 const FRONTEND_DIST_PATH = path.join(
   __dirname,
   '..',
   'dist',
 )
 
+// Path to the built website index.html file.
 const FRONTEND_INDEX_PATH = path.join(
   FRONTEND_DIST_PATH,
   'index.html',
 )
 
-// =========================
-// Middleware
-// =========================
 
 app.use(cors())
 app.use(express.json())
 
-// =========================
-// SQLite connection
-// =========================
 
+// SQLite connection opened for reading only.
 const db = new sqlite3.Database(
   DB_PATH,
   sqlite3.OPEN_READONLY,
@@ -65,10 +107,10 @@ const db = new sqlite3.Database(
   },
 )
 
-// =========================
-// SQLite helper
-// =========================
 
+// Run a SQLite query and return its rows through a Promise.
+// Example input: sql='SELECT id FROM services WHERE id = ?', params=[7] with row 7 in database
+// Example result: Promise gives [{id:7}]; SQL errors reject the Promise.
 function queryAll(
   sql,
   params = [],
@@ -91,10 +133,11 @@ function queryAll(
   )
 }
 
-// =========================
-// Health check
-// =========================
 
+// GET /api/health
+// Reply with a basic message that the backend is running.
+// Example input: GET /api/health
+// Example result: JSON {status:"ok", message:"Age-Friendly Australia backend is running."}.
 app.get(
   '/api/health',
   (req, res) => {
@@ -106,11 +149,11 @@ app.get(
   },
 )
 
-// =========================
-// Activities
-// =========================
 
 // GET /api/activities
+// Read activity rows with queryAll and send their JSON.
+// Example input: GET /api/activities; database contains event ID 7
+// Example result: JSON list of activity rows, including ID 7; database error gives HTTP 500.
 app.get(
   '/api/activities',
   async (req, res) => {
@@ -153,11 +196,11 @@ app.get(
   },
 )
 
-// =========================
-// Services
-// =========================
 
 // GET /api/services
+// Read service rows with queryAll and send their JSON.
+// Example input: GET /api/services; database contains service ID 7
+// Example result: JSON list of service rows, including ID 7; database error gives HTTP 500.
 app.get(
   '/api/services',
   async (req, res) => {
@@ -195,11 +238,11 @@ app.get(
   },
 )
 
-// =========================
-// Transit stops
-// =========================
 
 // GET /api/transit-stops
+// Read static stop IDs, names, and map points from SQLite.
+// Example input: GET /api/transit-stops; database contains stop S1
+// Example result: JSON list with stop_id, stop_name, latitude, longitude; not live arrivals.
 app.get(
   '/api/transit-stops',
   async (req, res) => {
@@ -230,27 +273,22 @@ app.get(
   },
 )
 
-// =========================
-// AI recommendations
-// =========================
 
 // POST /api/recommendations
-//The frontend sends user preferences to the backend as the request content
+// Read the choices, find upcoming activities, and call recommendActivities.
+// Example input: POST /api/recommendations with {generalArea:"Clayton"}
+// Example result: JSON {recommendations:[...]} with up to 3 future activities, scores, reasons, and breakdown;
+// names come from the activity list.
 app.post(
   '/api/recommendations',
   async (req, res) => {
     try {
-      //{
-      //   generalArea: 'Melbourne CBD',
-      //   interests: ['Jazz'],
-      //   preferredDays: ['Wednesday'],
-      //   activityTypes: ['Social'],
-      // }
 
+      // Use the JSON choices received from the frontend.
       const requestBody =
         req.body ?? {}
 
-      //Organize user preferences
+      // Keep only the four supported activity-choice fields.
       const preferences = {
         generalArea:
           String(
@@ -280,8 +318,6 @@ app.post(
             : [],
       }
 
-      //Query the database for upcoming events
-      //Exclude past events
       const activities =
         await queryAll(`
           SELECT
@@ -305,7 +341,7 @@ app.post(
           ORDER BY day_time
         `)
 
-      //Call the AI recommendation function
+      // Score future activities and take up to 3 results.
       const recommendations =
         await recommendActivities(
           preferences,
@@ -313,7 +349,6 @@ app.post(
           3,
         )
 
-      //Format the data to be returned to the frontend
       res.json({
         recommendations:
           recommendations.map(
@@ -368,11 +403,11 @@ app.post(
   },
 )
 
-// =========================
-// Realtime / external APIs
-// =========================
 
 // GET /api/realtime/community-venues
+// Call getCommunityVenues and send venues, or HTTP 502 on failure.
+// Example input: GET /api/realtime/community-venues?type=community%20venue&subtype=senior%20citizens&limit=10
+// Example result: JSON list of up to 10 places; outside-API failure gives HTTP 502.
 app.get(
   '/api/realtime/community-venues',
   async (req, res) => {
@@ -406,15 +441,17 @@ app.get(
   },
 )
 
-// =========================
-// PTV realtime cache
-// =========================
 
+// Keep a successful bus reply for 30 seconds (30000 milliseconds).
 const PTV_CACHE_DURATION_MS = 30 * 1000
 
+// Keep bus replies by route ID and limit, with the request time.
 const ptvCache = new Map()
 
 // GET /api/realtime/bus-positions
+// Reuse bus data less than 30 seconds old; otherwise call getBusPositions.
+// Example input: GET /api/realtime/bus-positions?routeId=R1&limit=10
+// Example result: JSON list of up to 10 buses on feed route R1; same query within 30 seconds can reuse data.
 app.get(
   '/api/realtime/bus-positions',
   async (req, res) => {
@@ -424,8 +461,10 @@ app.get(
       const limit =
         Number.parseInt(req.query.limit, 10) || 50
 
+      // Use route ID and limit together as the key for kept bus data.
       const cacheKey = `${routeId || 'all'}:${limit}`
 
+      // Look for a previous bus reply with this key.
       const cached = ptvCache.get(cacheKey)
 
       const now = Date.now()
@@ -437,11 +476,13 @@ app.get(
         return res.json(cached.data)
       }
 
+      // Fetch the PTV feed when no fresh reply is kept.
       const buses = await getBusPositions(
         routeId,
         limit,
       )
 
+      // Keep this successful reply for the next request.
       ptvCache.set(cacheKey, {
         timestamp: now,
         data: buses,
@@ -461,10 +502,10 @@ app.get(
   },
 )
 
-// =========================
-// Unknown API routes
-// =========================
 
+// No matching API path: reply with HTTP 404 JSON.
+// Example input: GET /api/unknown
+// Example result: HTTP 404 with an API endpoint not found error.
 app.use(
   '/api',
   (req, res) => {
@@ -475,9 +516,6 @@ app.use(
   },
 )
 
-// =========================
-// Vue production frontend
-// =========================
 
 app.use(
   express.static(
@@ -485,7 +523,9 @@ app.use(
   ),
 )
 
-// Vue Router history fallback
+// Send index.html for other GET paths so Vue can show the requested page.
+// Example input: GET /services/7 after a browser refresh
+// Example result: sends index.html; Vue Router shows the service detail page.
 app.use(
   (req, res) => {
     if (req.method === 'GET') {
@@ -503,10 +543,8 @@ app.use(
   },
 )
 
-// =========================
-// Start server
-// =========================
 
+// Running HTTP server; used when stopping the app.
 const server = app.listen(
   PORT,
   () => {
@@ -552,10 +590,10 @@ const server = app.listen(
   },
 )
 
-// =========================
-// Graceful shutdown
-// =========================
 
+// Stop the HTTP server, close the database, and exit the process.
+// Example input: process receives SIGTERM and calls shutdown() with no arguments.
+// Example result: stops new connections, closes SQLite, and exits; returns no result for a page.
 function shutdown() {
   console.log(
     '\nShutting down backend...',

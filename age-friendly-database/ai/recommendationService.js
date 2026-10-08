@@ -1,6 +1,43 @@
+// age-friendly-database/ai/recommendationService.js
+// Score activities and return the best matches for the user.
+//
+// How calls move:
+// server POST callback -> recommendActivities -> optional preference embedding -> getPrecomputedEmbedding -> cosineSimilarity -> weighted ranking.
+//
+// Reading tips:
+//   Examples show one possible case, not fixed API or model results.
+//   Promise: a result to wait for; await gets the result when the work finishes.
+//   vector / embedding: a list of numbers for the meaning of text.
+//   hash: a text check code; changed text gets a different code.
+//
+// Functions:
+//   normaliseText - Remove end spaces and use lowercase letters.
+//   createTextHash - Make a SHA-256 check code for text; the same text gets the same code.
+//   cosineSimilarity - Multiply matching vector numbers and add them; vectors should already have length 1.
+//   getActivityDay - Read an activity date and return its weekday name.
+//   hasSemanticPreferences - Check if interests or activity types have a choice, so AI text scoring is needed.
+//   getPrecomputedEmbedding - Find the saved activity vector; check model name, activity ID, and text check
+//   code.
+//   recommendActivities - Score activities by text meaning, area, and day; return the top results.
+//
+// Fixed values and data:
+//   precomputedData - Activity vectors and model details read from activityEmbeddings.json.
+//   DAY_NAMES - Weekday names; index 0 is Sunday and index 1 is Monday.
+//   precomputedEmbeddingMap - Map of activity ID to its saved text check code and vector.
+//   precomputedModelMatches - True when the saved vectors use the same model as the current code.
+//
+// Notes:
+//   With all choices present, weights are: text 0.70, area 0.15, day 0.15.
+//   Missing choice parts have weight 0; divide by the sum of the weights in use.
+//   Area and day add points; activities that do not match them can still appear.
+//   There is no minimum score; even weak matches can be in the top results.
+//   Missing or changed saved vectors add 0 text points; they are not rebuilt here.
+//   Reasons use fixed sentences, not AI-written text. A score is not a chance that the activity suits the user.
+
 const crypto =
   require('crypto')
 
+// Activity vectors and model details read from activityEmbeddings.json.
 const precomputedData =
   require('./activityEmbeddings.json')
 
@@ -18,10 +55,7 @@ const {
   './embeddingService',
 )
 
-// ======================================================
-// Day names
-// ======================================================
-//used to convert the getDay() to text, 0->Sunday, 1->Monday
+// Weekday names; index 0 is Sunday and index 1 is Monday.
 const DAY_NAMES = [
   'Sunday',
   'Monday',
@@ -32,31 +66,20 @@ const DAY_NAMES = [
   'Saturday',
 ]
 
-// ======================================================
-// Normalise text
-// ======================================================
 
+// Remove end spaces and use lowercase letters.
+// Example input: ' Clayton '
+// Example result: 'clayton'; null gives ''.
 function normaliseText(value) {
   return String(value ?? '')
     .trim()
     .toLowerCase()
 }
 
-// ======================================================
-// Create activity text hash
-// ======================================================
-//
-// This must use the same SHA-256 logic as
-// generateActivityEmbeddings.js.
-//
-// It allows the live recommendation system to verify
-// that a saved embedding still belongs to the current
-// activity text.
-//
-// If an activity name/category/description changes,
-// the stored embedding will no longer be trusted.
-// ======================================================
-//Check if the active vector has expired
+// Make a SHA-256 check code for text; the same text gets the same code.
+// Example input: 'abc'
+// Example result: 'ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad'; changing the text
+// changes the code.
 function createTextHash(text) {
   return crypto
     .createHash('sha256')
@@ -64,28 +87,11 @@ function createTextHash(text) {
     .digest('hex')
 }
 
-// ======================================================
-// Prepare precomputed embeddings
-// ======================================================
-//
-// activityEmbeddings.json is generated locally.
-//
-// Render no longer needs to generate embeddings for all
-// activities during a user's request.
-//
-// Instead:
-//
-// activity ID
-//      ↓
-// precomputed embedding lookup
-//      ↓
-// cosine similarity with user preference embedding
-//
-// ======================================================
-//Locate vectors directly using the event ID
+// Map of activity ID to its saved text check code and vector.
 const precomputedEmbeddingMap =
   new Map()
 
+// Build an ID map from the saved vector JSON.
 if (
   precomputedData &&
   Array.isArray(
@@ -110,21 +116,12 @@ if (
   }
 }
 
-// ======================================================
-// Validate embedding model
-// ======================================================
-//
-// The stored activity embeddings must use the same
-// model as the user preference embedding.
-//
-// Otherwise cosine similarity would not be meaningful.
-// ======================================================
-//check the activity model and perference model is same,
-//different model will give different vector, the number space is also different,Therefore, cosine similarity is meaningless
+// True when the saved vectors use the same model as the current code.
 const precomputedModelMatches =
   precomputedData?.model ===
   MODEL_NAME
 
+// Do not use saved vectors from a different model.
 if (
   !precomputedModelMatches
 ) {
@@ -148,18 +145,9 @@ if (
   )
 }
 
-// ======================================================
-// Cosine similarity
-// ======================================================
-//
-// Both activity and preference embeddings are already
-// normalised by embeddingService.js.
-//
-// Therefore their dot product is cosine similarity.
-// ======================================================
-// calculate the similarity
-//vector A is user perference, vector B is activity
-//Closer to 1 → more semantically similar
+// Multiply matching vector numbers and add them; vectors should already have length 1.
+// Example input: vectorA=[1,0], vectorB=[1,0]
+// Example result: 1; [1,0] and [0,1] give 0; different list sizes give 0.
 function cosineSimilarity(
   vectorA,
   vectorB,
@@ -186,10 +174,10 @@ function cosineSimilarity(
   )
 }
 
-// ======================================================
-// Determine activity weekday
-// ======================================================
 
+// Read an activity date and return its weekday name.
+// Example input: '2026-10-08 10:00:00'
+// Example result: 'Thursday'; 'bad date' gives ''.
 function getActivityDay(
   dateTime,
 ) {
@@ -219,10 +207,9 @@ function getActivityDay(
   ]
 }
 
-// ======================================================
-// Check whether semantic AI ranking is needed
-// ======================================================
-//The AI ​​model is used only if the user has configured any of the following settings
+// Check if interests or activity types have a choice, so AI text scoring is needed.
+// Example input: {interests:['Music'], activityTypes:[]}
+// Example result: true; both empty gives false.
 function hasSemanticPreferences(
   preferences,
 ) {
@@ -234,18 +221,9 @@ function hasSemanticPreferences(
   )
 }
 
-// ======================================================
-// Get one precomputed activity embedding
-// ======================================================
-//
-// Activity ID must match.
-//
-// Activity text hash must also match.
-//
-// This prevents stale embeddings from silently being
-// used after activity data has changed.
-// ======================================================
-//check the model, activity id, Hash text, then return a vector of a activity
+// Find the saved activity vector; check model name, activity ID, and text check code.
+// Example input: activity.id='7' and saved item uses the same model and text
+// Example result: its embedding list; missing ID or changed text gives null.
 function getPrecomputedEmbedding(
   activity,
 ) {
@@ -266,6 +244,7 @@ function getPrecomputedEmbedding(
     return null
   }
 
+  // Build the same activity text used when saving vectors.
   const currentText =
     buildActivityText(
       activity,
@@ -276,6 +255,7 @@ function getPrecomputedEmbedding(
       currentText,
     )
 
+  // Changed text check code: do not use this saved vector.
   if (
     item.textHash !==
     currentHash
@@ -290,19 +270,17 @@ function getPrecomputedEmbedding(
   return item.embedding
 }
 
-// ======================================================
-// Recommend activities
-// ======================================================
 
+// Score activities by text meaning, area, and day; return the top results.
+// Example input: preferences={generalArea:'Clayton'}, activities=[{id:1,suburb:'Clayton'}, {id:2,suburb:'Box
+// Hill'}], limit=1
+// Example result: Promise gives activity 1 with score:1, areaMatch:true, and reason 'Located in Clayton'. No
+// preferences gives [].
 async function recommendActivities(
   preferences = {},
   activities = [],
-  //return number
   limit = 3,
 ) {
-  // ------------------------------------
-  // Validate activity input
-  // ------------------------------------
 
   if (
     !Array.isArray(
@@ -313,11 +291,8 @@ async function recommendActivities(
     return []
   }
 
-  // ------------------------------------
-  // Determine which scoring dimensions
-  // are currently available
-  // ------------------------------------
 
+  // Use text scoring only when interests or activity types have choices.
   const useSemanticScore =
     hasSemanticPreferences(
       preferences,
@@ -337,9 +312,6 @@ async function recommendActivities(
     preferences.preferredDays
       .length > 0
 
-  // ------------------------------------
-  // No usable recommendation preferences
-  // ------------------------------------
 
   if (
     !useSemanticScore &&
@@ -349,10 +321,8 @@ async function recommendActivities(
     return []
   }
 
-  // ------------------------------------
-  // Recommendation weights
-  // ------------------------------------
 
+  // Text weight is 0.70 when used, otherwise 0.
   const semanticWeight =
     useSemanticScore
       ? 0.7
@@ -373,26 +343,8 @@ async function recommendActivities(
     areaWeight +
     dayWeight
 
-  // ====================================================
-  // Generate ONLY the user's preference embedding
-  // ====================================================
-  //
-  // OLD behaviour:
-  //
-  // preference embedding
-  // +
-  // 141 activity embeddings generated on Render
-  //
-  // NEW behaviour:
-  //
-  // preference embedding only
-  // +
-  // activity embeddings loaded from JSON
-  //
-  // This removes the expensive batch embedding process
-  // from the Render request path.
-  // ====================================================
 
+  // Make at most one user vector for this request.
   let preferenceEmbedding =
     null
 
@@ -412,24 +364,17 @@ async function recommendActivities(
       )
   }
 
-  // ------------------------------------
-  // Track missing/stale embeddings
-  // ------------------------------------
 
   let missingEmbeddingCount =
     0
 
-  // ------------------------------------
-  // Score every candidate activity
-  // ------------------------------------
 
+  // Score the activities supplied by server.js.
   const results =
     activities.map(
       (activity) => {
-        // ================================
-        // Semantic AI score
-        // ================================
 
+        // Start text score at 0; keep 0 if no matching saved vector exists.
         let semanticScore =
           0
 
@@ -455,10 +400,8 @@ async function recommendActivities(
           }
         }
 
-        // ================================
-        // Area match
-        // ================================
 
+        // Compare area names after trimming and lowercasing.
         const areaMatch =
           useAreaScore &&
           normaliseText(
@@ -468,10 +411,8 @@ async function recommendActivities(
               preferences.generalArea,
             )
 
-        // ================================
-        // Day match
-        // ================================
 
+        // Read the date to get a weekday for the day rule.
         const activityDay =
           getActivityDay(
             activity.day_time,
@@ -493,10 +434,8 @@ async function recommendActivities(
                 ),
             )
 
-        // ================================
-        // Weighted recommendation score
-        // ================================
 
+        // Add text score times its weight, plus area and day match points.
         const weightedScore =
           semanticScore *
             semanticWeight +
@@ -511,16 +450,15 @@ async function recommendActivities(
               : 0
           )
 
+        // Divide by the total weight of the choice parts in use.
         const score =
           totalWeight > 0
             ? weightedScore /
               totalWeight
             : 0
 
-        // ================================
-        // Human-readable reasons
-        // ================================
 
+        // Use fixed sentences to explain matches.
         const reasons = []
 
         if (
@@ -565,9 +503,6 @@ async function recommendActivities(
       },
     )
 
-  // ------------------------------------
-  // Diagnostic logging
-  // ------------------------------------
 
   if (
     useSemanticScore
@@ -589,10 +524,8 @@ async function recommendActivities(
     }
   }
 
-  // ------------------------------------
-  // Rank and return Top N
-  // ------------------------------------
 
+  // Sort from highest score to lowest, then take the first results.
   return results
     .sort(
       (
@@ -608,9 +541,6 @@ async function recommendActivities(
     )
 }
 
-// ======================================================
-// Exports
-// ======================================================
 
 module.exports = {
   cosineSimilarity,

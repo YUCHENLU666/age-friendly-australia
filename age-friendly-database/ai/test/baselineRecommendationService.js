@@ -1,3 +1,28 @@
+// age-friendly-database/ai/test/baselineRecommendationService.js
+// Score activities with fixed area, interest, and day rules for comparison.
+//
+// How calls move:
+// baselineRecommendActivities -> normaliseText/getActivityDay -> area, category and day points -> sort and slice.
+//
+// Reading tips:
+//   Examples show one possible case, not fixed API or model results.
+//   Promise: a result to wait for; await gets the result when the work finishes.
+//   vector / embedding: a list of numbers for the meaning of text.
+//   hash: a text check code; changed text gets a different code.
+//
+// Functions:
+//   normaliseText - Remove end spaces and use lowercase letters.
+//   getActivityDay - Read a date and return its weekday name.
+//   baselineRecommendActivities - Add 4 points for area, 3 for category interest, and 2 for weekday; return
+//   top results.
+//
+// Fixed values and data:
+//   DAY_NAMES - Weekday names; index 0 is Sunday and index 1 is Monday.
+//
+// Notes:
+//   This method uses rules only. It does not use vectors or score activityTypes.
+
+// Weekday names; index 0 is Sunday and index 1 is Monday.
 const DAY_NAMES = [
   'Sunday',
   'Monday',
@@ -8,12 +33,18 @@ const DAY_NAMES = [
   'Saturday',
 ]
 
+// Remove end spaces and use lowercase letters.
+// Example input: ' Clayton '
+// Example result: 'clayton'.
 function normaliseText(value) {
   return String(value ?? '')
     .trim()
     .toLowerCase()
 }
 
+// Read a date and return its weekday name.
+// Example input: '2026-10-08 10:00:00'
+// Example result: 'Thursday'; 'bad date' gives ''.
 function getActivityDay(
   dateTime,
 ) {
@@ -42,6 +73,10 @@ function getActivityDay(
   ]
 }
 
+// Add 4 points for area, 3 for category interest, and 2 for weekday; return top results.
+// Example input: preferences={generalArea:'Clayton', interests:[], preferredDays:[]},
+// activities=[{id:1,suburb:'Clayton'}], limit=1
+// Example result: one result with activityId:1 and score:4.
 function baselineRecommendActivities(
   preferences = {},
   activities = [],

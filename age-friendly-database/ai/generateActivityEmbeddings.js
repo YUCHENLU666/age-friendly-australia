@@ -1,41 +1,39 @@
-// ======================================================
-// Pre-generate activity embeddings
-// ======================================================
+// age-friendly-database/ai/generateActivityEmbeddings.js
+// Make activity number lists before deployment and save them to JSON.
 //
-// Why this file exists:
+// How calls move:
+// main -> loadActivities -> buildActivityText -> createEmbeddingsInBatches -> createTextHash -> write JSON -> closeDatabase.
 //
-// The Render Free instance has limited CPU and memory.
-// Generating embeddings for every activity during a
-// user's recommendation request is too expensive.
+// Reading tips:
+//   Examples show one possible case, not fixed API or model results.
+//   Promise: a result to wait for; await gets the result when the work finishes.
+//   vector / embedding: a list of numbers for the meaning of text.
+//   hash: a text check code; changed text gets a different code.
 //
-// Instead:
+// Functions:
+//   createTextHash - Make the same SHA-256 text check code used by the live AI service.
+//   loadActivities - Read activity rows from SQLite in ID order.
+//   closeDatabase - Close the SQLite connection and wait for it to finish.
+//   main - Read activities, make their vectors, and write IDs, text check codes, and vectors to JSON.
 //
-// 1. Run this script locally.
-// 2. Read all activities from SQLite.
-// 3. Convert each activity into the same text used by
-//    the recommendation system.
-// 4. Generate embeddings locally.
-// 5. Save them into activityEmbeddings.json.
-// 6. Commit the JSON file to Git.
+// Fixed values and data:
+//   DATABASE_PATH - Path to the SQLite database file used as input.
+//   OUTPUT_PATH - Path to the activityEmbeddings.json file to write.
 //
-// Render then only needs to generate ONE embedding for
-// the user's preferences.
-//
-// ======================================================
+// Notes:
+//   Run this file separately; homepage requests do not run it.
+//   After names, descriptions, model, or activity IDs change, make matching vectors again.
 
-//Write to activityEmbeddings.json
+
 const fs =
   require('fs')
 
-//Safely concatenate database and output file paths
 const path =
   require('path')
 
-//Generate SHA-256 text hash
 const crypto =
   require('crypto')
 
-//Read active database
 const sqlite3 =
   require('sqlite3')
     .verbose()
@@ -51,11 +49,8 @@ const {
 } =
   require('./embeddingService')
 
-// ======================================================
-// File paths
-// ======================================================
 
-//input path
+// Path to the SQLite database file used as input.
 const DATABASE_PATH =
   path.join(
     __dirname,
@@ -63,26 +58,17 @@ const DATABASE_PATH =
     'age-friendly.db',
   )
 
-//output path
+// Path to the activityEmbeddings.json file to write.
 const OUTPUT_PATH =
   path.join(
     __dirname,
     'activityEmbeddings.json',
   )
 
-// ======================================================
-// Create a stable hash for activity text
-// ======================================================
-//
-// The hash allows recommendationService.js to check
-// whether the stored embedding still belongs to the
-// current activity text.
-//
-// If an activity name/category/description changes,
-// the hash changes as well.
-// ======================================================
 
-//Convert the event text into a fixed-length hash to verify that the event content has not been altered
+// Make the same SHA-256 text check code used by the live AI service.
+// Example input: 'abc'
+// Example result: 'ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad'.
 function createTextHash(
   text,
 ) {
@@ -92,10 +78,10 @@ function createTextHash(
     .digest('hex')
 }
 
-// ======================================================
-// Read activities from SQLite
-// ======================================================
 
+// Read activity rows from SQLite in ID order.
+// Example input: database has activities with IDs 2 and 1
+// Example result: Promise gives rows in order [1, 2].
 function loadActivities(
   database,
 ) {
@@ -140,10 +126,9 @@ function loadActivities(
   )
 }
 
-// ======================================================
-// Close SQLite safely
-// ======================================================
-//The database connection will be closed after the script finishes, preventing the database file from remaining locked
+// Close the SQLite connection and wait for it to finish.
+// Example input: an open database connection
+// Example result: Promise finishes after the connection closes; gives no value, or throws on error.
 function closeDatabase(
   database,
 ) {
@@ -166,10 +151,11 @@ function closeDatabase(
   )
 }
 
-// ======================================================
-// Main generation process
-// ======================================================
 
+// Read activities, make their vectors, and write IDs, text check codes, and vectors to JSON.
+// Example input: database has two activity rows
+// Example result: writes activityEmbeddings.json with two items and model details; closes the database.
+// Promise gives no value.
 async function main() {
   console.log(
     '----------------------------------------',
@@ -191,7 +177,6 @@ async function main() {
     '----------------------------------------',
   )
 
-  //open database
   const database =
     new sqlite3.Database(
       DATABASE_PATH,
@@ -199,9 +184,6 @@ async function main() {
     )
 
   try {
-    // ------------------------------------
-    // 1. Load activities
-    // ------------------------------------
 
     const activities =
       await loadActivities(
@@ -220,15 +202,8 @@ async function main() {
       )
     }
 
-    // ------------------------------------
-    // 2. Build semantic text
-    // ------------------------------------
-    //
-    // IMPORTANT:
-    // This uses the same buildActivityText()
-    // function as the live recommendation system.
-    //
 
+    // Use the shared text builder so saved and live text checks match.
     const activityTexts =
       activities.map(
         (activity) =>
@@ -241,19 +216,12 @@ async function main() {
       'Activity text prepared.',
     )
 
-    // ------------------------------------
-    // 3. Generate embeddings locally
-    // ------------------------------------
-    //
-    // A batch size of 16 already works on the
-    // developer machine and matches the existing
-    // AI implementation.
-    //
 
     console.log(
       'Generating embeddings...',
     )
 
+    // Make activity vectors in groups of 16.
     const embeddings =
       await createEmbeddingsInBatches(
         activityTexts,
@@ -269,10 +237,8 @@ async function main() {
       )
     }
 
-    // ------------------------------------
-    // 4. Build JSON output
-    // ------------------------------------
 
+    // Keep each activity ID with its text check code and vector.
     const items =
       activities.map(
         (
@@ -299,6 +265,7 @@ async function main() {
         },
       )
 
+    // Keep the model name, time, and activity vector items in one JSON object.
     const output = {
       model:
         MODEL_NAME,
@@ -313,10 +280,8 @@ async function main() {
       items,
     }
 
-    // ------------------------------------
-    // 5. Save JSON
-    // ------------------------------------
 
+    // Write the JSON file that the live service will read at startup.
     fs.writeFileSync(
       OUTPUT_PATH,
       JSON.stringify(
@@ -351,9 +316,6 @@ async function main() {
   }
 }
 
-// ======================================================
-// Run script
-// ======================================================
 
 main().catch(
   (error) => {

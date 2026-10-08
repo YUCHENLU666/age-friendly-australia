@@ -1,12 +1,50 @@
+<!--
+src/views/ServicesView.vue
+Show services, filters, and Save buttons.
+
+How calls move:
+ServiceFilters.updateField -> updateFilters -> filteredServices -> ServiceCard; toggleServiceSave -> savedItemsService.
+
+Reading tips:
+  Examples show one possible case, not fixed API or model results.
+  Promise: a result to wait for; await gets the result when the work finishes.
+  computed: Vue updates this value when the data it uses changes.
+  ref: a page value; changing it lets Vue update the screen.
+
+Functions:
+  updateFilters - Copy the new filter choices into the page filters.
+  clearFilters - Set all filter choices to empty text.
+  isServiceSaved - Check if this service ID is in the saved ID list.
+  toggleServiceSave - Save or unsave a service and update the page saved ID list.
+
+Values Vue updates for you:
+  dataAvailable - Check if the service list has any items.
+  areas - Get area names from services, remove repeats, and sort them.
+  serviceTypes - Get service types, remove repeats, and sort them.
+  accessibilityOptions - Get access labels from services and remove repeats.
+  filteredServices - Keep services that match the filters; sort by distance when an area point is known.
+
+Page values and kept data:
+  services - Service objects loaded for this page.
+  savedServiceIds - Saved service IDs read from this browser storage.
+  loading - True while the page is loading; false when loading ends.
+  errorMessage - Error text shown on the page when data loading fails.
+  filters - Current search, area, type, and access choices.
+
+Page start and API handlers:
+  onMounted callback - Read saved IDs and load the service list after the page opens.
+
+Notes:
+  Filters run in the browser on the loaded list; they do not send a new database query.
+  Distance starts from a fixed area point, not the user GPS location.
+  dataAvailable checks if there are rows; it does not check if every field is filled.
+-->
 <script setup>
 import {
   computed,
   onMounted,
   ref,
 } from 'vue'
-// computed: The result is automatically calculated based on other states
-// onMounted: Execute code after page component loads
-// ref: save reactive state
 
 import ServiceCard from '@/components/services/ServiceCard.vue'
 import ServiceFilters from '@/components/services/ServiceFilters.vue'
@@ -23,50 +61,37 @@ import {
 import { getSuburbCoordinates } from '@/services/suburbCoordinates'
 import { calculateDistanceKm, formatDistance } from '@/services/distanceService'
 
-//why use ref for activities, savedActivityIds, loading, errorMessage, filters
-//because vue must be aware of data changes and automatically re-render the page
 
+// Service objects loaded for this page.
 const services = ref([])
-//([
-// service1, 
-// service2, 
-// service3
-//])
 
+// Saved service IDs read from this browser storage.
 const savedServiceIds =
   ref([])
-//([
-// '1',
-// '2',
-// '3'
-// ])
 
+// True while the page is loading; false when loading ends.
 const loading =
   ref(true)
-  //after API finished, return true: services are loading
 
+// Error text shown on the page when data loading fails.
 const errorMessage =
   ref('')
-  //if API failed, return error message
 
+// Current search, area, type, and access choices.
 const filters = ref({
   search: '',
   area: '',
   type: '',
   accessibility: '',
 })
-//defaultFilters: return an object with default filter values
 
-//onMounted: Execute code after page component loads
-//homepage -> click find services -> route to ServicesView -> ServicesView mounted -> onMounted()
+// Read saved IDs and load the service list after the page opens.
+// Example input: Open Services; saved IDs include 7 and the API gives two services.
+// Example result: services has two page objects, savedServiceIds includes 7, loading=false.
 onMounted(async () => {
-  //get the service IDs which are saved by the user
   savedServiceIds.value =
     getSavedServiceIds()
 
-    //wait getServices() to finish, then assign the result to services.value
-  //ServicesView -> getServices() -> serviceService.js -> get /api/services -> Express -> SQLite -> JSON response -> ServiceService normalise -> return services -> services.value
-  //if getServices() failed, catch the error and show error message
   try {
     services.value =
       await getServices()
@@ -76,15 +101,13 @@ onMounted(async () => {
     errorMessage.value =
       'We could not load the service directory.'
   } finally {
-    // Set loading to false once the API call is complete whether it was successful or not
     loading.value = false
   }
 })
 
-/*
- * Filters automatically become available
- * once verified service records are connected.
- */
+// Check if the service list has any items.
+// Example input: services=[]
+// Example result: false; services=[one service] gives true.
 const dataAvailable =
   computed(() => {
     return (
@@ -92,10 +115,9 @@ const dataAvailable =
     )
   })
 
-/*
- * General area options come directly
- * from the connected dataset.
- */
+// Get area names from services, remove repeats, and sort them.
+// Example input: suburbs ['Clayton', 'Box Hill', 'Clayton']
+// Example result: ['Box Hill', 'Clayton'].
 const areas = computed(() => {
   return [
     ...new Set(
@@ -109,11 +131,9 @@ const areas = computed(() => {
   ].sort()
 })
 
-/*
- * Service types come directly
- * from verified service records.
- */
-//Get a list of unique service types from all services
+// Get service types, remove repeats, and sort them.
+// Example input: types ['Home Care', 'Residential', 'Home Care']
+// Example result: ['Home Care', 'Residential'].
 const serviceTypes =
   computed(() => {
     return [
@@ -128,11 +148,9 @@ const serviceTypes =
     ].sort()
   })
 
-/*
- * Accessibility options are built
- * only from supplied source data.
- */
-//Get a list of unique accessibility options from all services
+// Get access labels from services and remove repeats.
+// Example input: access lists [['Ramp'], ['Ramp', 'Lift']]
+// Example result: ['Lift', 'Ramp'] after sorting.
 const accessibilityOptions =
   computed(() => {
     return [
@@ -145,10 +163,9 @@ const accessibilityOptions =
     ].sort()
   })
 
-/*
- * Apply all search and filter choices.
- */
-// Filter services based on the selected filters
+// Keep services that match the filters; sort by distance when an area point is known.
+// Example input: filters.area='Clayton', services in Clayton and Box Hill
+// Example result: only Clayton services remain; measured distances are sorted from near to far.
 const filteredServices =
   computed(() => {
     const search =
@@ -159,7 +176,7 @@ const filteredServices =
     const results = services.value.filter(
       (service) => {
         if (search) {
-          //// normalize the services and filter them based on the selected filters
+          // Join service fields into one lowercase search text.
           const searchableText = [
             service.name,
             service.provider,
@@ -180,7 +197,6 @@ const filteredServices =
           }
         }
         
-        // Check each filter and return false if the service does not match the filter
         if (
           filters.value.area &&
           service.suburb !==
@@ -212,19 +228,20 @@ const filteredServices =
       },
     )
 
-    // If a general area is selected, calculate the distance for each service and sort by distance
+    // Find the fixed map point for the selected area.
     const referenceCoordinates =
       filters.value.area
         ? getSuburbCoordinates(filters.value.area)
         : null
 
+    // No known area point: return the list without distance sorting.
     if (!referenceCoordinates) {
       return results
     }
 
-    // Map each service to include suburb center distance from the reference coordinates, then sort by distance
     return results
       .map((service) => {
+        // Find the straight-line distance from the area point to this service.
         const distanceKm = service.coordinates
           ? calculateDistanceKm(
               referenceCoordinates,
@@ -241,8 +258,8 @@ const filteredServices =
               : null,
         }
       })
-      // Sort the services by distance, placing those without a distance at the end
       .sort((serviceA, serviceB) => {
+        // Treat missing distance as Infinity so it sorts after known distances.
         const distanceA =
           serviceA.distanceKm ?? Infinity
         const distanceB =
@@ -252,8 +269,9 @@ const filteredServices =
       })
   })
 
-  // Update the filters based on user input
-  // user chooses a filter option -> ServiceFilters emit new filters -> ServicesView get -> updateFilters(nextFilters) -> filters.value = nextFilters -> filteredServices recomputed
+// Copy the new filter choices into the page filters.
+// Example input: new filters with search='care' and area='Clayton'
+// Example result: the page filters now use those values; returns no value.
 const updateFilters = (
   nextFilters,
 ) => {
@@ -261,8 +279,9 @@ const updateFilters = (
     nextFilters
 }
 
-// Reset the filters to their default values
-//filters changed -> computed automatically reruns -> all services are shown
+// Set all filter choices to empty text.
+// Example input: click Clear with search='care', area='Clayton'
+// Example result: all filters become ''; saved services stay saved. Returns no value.
 const clearFilters = () => {
   filters.value = {
     search: '',
@@ -272,7 +291,9 @@ const clearFilters = () => {
   }
 }
 
-// Check if a service is saved by the user (check by the Service ID)
+// Check if this service ID is in the saved ID list.
+// Example input: id=7, savedServiceIds=['7']
+// Example result: true.
 const isServiceSaved = (
   id,
 ) => {
@@ -281,7 +302,9 @@ const isServiceSaved = (
   )
 }
 
-//ServiceCard -> emit toggle-save -> ServicesView.toggleSave(id) -> savedItemsService -> update localStorage -> return latest IDs -> savedServiceIds.value updated -> update UI
+// Save or unsave a service and update the page saved ID list.
+// Example input: id=7, savedServiceIds=[]
+// Example result: savedServiceIds becomes ['7']; click again and it becomes []. Returns no value.
 const toggleServiceSave = (
   id,
 ) => {

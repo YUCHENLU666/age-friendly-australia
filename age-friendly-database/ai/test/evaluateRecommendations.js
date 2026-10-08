@@ -1,3 +1,35 @@
+// age-friendly-database/ai/test/evaluateRecommendations.js
+// Check AI results with fixed test cases and human match labels.
+//
+// How calls move:
+// runEvaluation -> loadFutureActivities -> validateEvaluationCases -> recommendActivities -> ranking metrics -> averages.
+//
+// Reading tips:
+//   Examples show one possible case, not fixed API or model results.
+//   Promise: a result to wait for; await gets the result when the work finishes.
+//   vector / embedding: a list of numbers for the meaning of text.
+//   hash: a text check code; changed text gets a different code.
+//
+// Functions:
+//   loadFutureActivities - Read activity rows at or after the fixed test date; do not change the database.
+//   calculatePrecisionAtK - Count matched items in the first K results and divide by K.
+//   calculateHitRateAtK - Return 1 if the first K results have any matched item; otherwise return 0.
+//   calculateDcg - Give more points to strong matches near the top of the list.
+//   calculateNdcgAtK - Compare this order with the best possible order using DCG.
+//   average - Add all numbers and divide by the list size.
+//   validateEvaluationCases - Check test IDs and match labels; throw an error for bad test data.
+//   runEvaluation - Run all test cases and print average match scores and time taken.
+//
+// Fixed values and data:
+//   databasePath - Path to the SQLite file used by this test.
+//   casesPath - Path to the JSON test cases and human match labels.
+//   evaluationReferenceTime - Fixed test date, so results do not change just because time passes.
+//
+// Notes:
+//   Human labels can be 0, 1, 2, or 3; 0 means no match and higher numbers mean a stronger match.
+//   Returned IDs with no human label are warned about and get 0 points.
+//   This is a test script; the homepage does not run it.
+
 const fs = require('fs')
 const path = require('path')
 const {
@@ -13,6 +45,7 @@ const {
   '../recommendationService',
 )
 
+// Path to the SQLite file used by this test.
 const databasePath =
   path.join(
     __dirname,
@@ -21,18 +54,20 @@ const databasePath =
     'age-friendly.db',
   )
 
+// Path to the JSON test cases and human match labels.
 const casesPath =
   path.join(
     __dirname,
     'evaluationCases.json',
   )
 
-// Keep evaluation results reproducible. Production uses the
-// current time, but this benchmark evaluates the activity
-// snapshot that was labelled on 6 October 2026.
+// Fixed test date, so results do not change just because time passes.
 const evaluationReferenceTime =
   '2026-10-06 00:00:00'
 
+// Read activity rows at or after the fixed test date; do not change the database.
+// Example input: fixed date='2026-10-06 00:00:00'; database has Oct 5 and Oct 7 events
+// Example result: Promise gives only the Oct 7 event.
 function loadFutureActivities() {
   return new Promise(
     (resolve, reject) => {
@@ -76,6 +111,9 @@ function loadFutureActivities() {
   )
 }
 
+// Count matched items in the first K results and divide by K.
+// Example input: recommendedIds=['1','2','3'], relevanceMap=new Map([['1',2],['2',0],['3',1]]), k=3
+// Example result: 2/3, about 0.667.
 function calculatePrecisionAtK(
   recommendedIds,
   relevanceMap,
@@ -97,6 +135,9 @@ function calculatePrecisionAtK(
   return relevantCount / k
 }
 
+// Return 1 if the first K results have any matched item; otherwise return 0.
+// Example input: recommendedIds=['1','2'], relevanceMap=new Map([['1',0],['2',1]]), k=2
+// Example result: 1; if both labels are 0, returns 0.
 function calculateHitRateAtK(
   recommendedIds,
   relevanceMap,
@@ -119,6 +160,9 @@ function calculateHitRateAtK(
     : 0
 }
 
+// Give more points to strong matches near the top of the list.
+// Example input: relevanceScores=[2,0]
+// Example result: 3; [0,2] gives about 1.893 because the strong match is lower.
 function calculateDcg(
   relevanceScores,
 ) {
@@ -148,6 +192,9 @@ function calculateDcg(
   )
 }
 
+// Compare this order with the best possible order using DCG.
+// Example input: recommendedIds=['1','2'], relevanceMap=new Map([['1',2],['2',0]]), k=2
+// Example result: 1, the best order; ['2','1'] gives about 0.631.
 function calculateNdcgAtK(
   recommendedIds,
   relevanceMap,
@@ -189,6 +236,9 @@ function calculateNdcgAtK(
   return dcg / idealDcg
 }
 
+// Add all numbers and divide by the list size.
+// Example input: [1,2,3]
+// Example result: 2; [] gives 0.
 function average(values) {
   if (values.length === 0) {
     return 0
@@ -203,6 +253,9 @@ function average(values) {
   )
 }
 
+// Check test IDs and match labels; throw an error for bad test data.
+// Example input: two cases with the same id
+// Example result: throws a duplicate-case error; good cases with valid activity IDs pass and return no value.
 function validateEvaluationCases(
   evaluationCases,
   activities,
@@ -296,6 +349,9 @@ function validateEvaluationCases(
   }
 }
 
+// Run all test cases and print average match scores and time taken.
+// Example input: valid test cases and a matching database
+// Example result: prints each case and overall Precision, Hit Rate, NDCG, and time; Promise gives no value.
 async function runEvaluation() {
   const activities =
     await loadFutureActivities()

@@ -1,31 +1,39 @@
+// age-friendly-database/vicmapFoiService.js
+// Ask Vicmap for community places and clean the map reply.
+//
+// How calls move:
+// server realtime/community-venues callback -> getCommunityVenues -> ArcGIS fetch -> normalised venue array.
+//
+// Reading tips:
+//   Examples show one possible case, not fixed API or model results.
+//   Promise: a result to wait for; await gets the result when the work finishes.
+//
+// Functions:
+//   escapeArcgisString - Double each quote so text can be used inside the ArcGIS query.
+//   getCommunityVenues - Ask Vicmap for places of this type and turn map data into venue objects.
+//
+// Fixed values and data:
+//   BASE_URL - Vicmap ArcGIS API address for place queries.
+//
+// Notes:
+//   The query does not limit results by user location or a Melbourne map box.
+//   GeoJSON stores longitude first and latitude second.
+
+// Vicmap ArcGIS API address for place queries.
 const BASE_URL =
   'https://services-ap1.arcgis.com/P744lA0wf4LlBZ84/ArcGIS/rest/services/Vicmap_Features_of_Interest/FeatureServer/1/query'
 
-/**
- * Escape string values used inside an ArcGIS SQL where clause.
- *
- * @param {string} value
- * @returns {string}
- */
+// Double each quote so text can be used inside the ArcGIS query.
+// Example input: "O'Brien"
+// Example result: "O''Brien".
 function escapeArcgisString(value) {
   return String(value).replace(/'/g, "''")
 }
 
-/**
- * Query community venue facilities from Vicmap Features of Interest.
- *
- * @param {string} featureType
- *   Example: 'community venue'
- *
- * @param {string|null} featureSubtype
- *   Optional.
- *   Example: 'senior citizens'
- *
- * @param {number} limit
- *   Maximum number of results to return.
- *
- * @returns {Promise<Array>}
- */
+// Ask Vicmap for places of this type and turn map data into venue objects.
+// Example input: featureType='community venue', featureSubtype='senior citizens', limit=10; feature has
+// coordinates=[145.1,-37.9]
+// Example result: Promise gives up to 10 venues with latitude:-37.9, longitude:145.1.
 async function getCommunityVenues(
   featureType = 'community venue',
   featureSubtype = null,
@@ -33,6 +41,7 @@ async function getCommunityVenues(
 ) {
   const safeFeatureType = escapeArcgisString(featureType)
 
+  // Start with feature type; add subtype when given.
   let where = `feature_type='${safeFeatureType}'`
 
   if (featureSubtype) {
@@ -40,7 +49,7 @@ async function getCommunityVenues(
     where += ` AND feature_subtype='${safeFeatureSubtype}'`
   }
 
-  // Keep request size within a reasonable range.
+  // Keep the result limit between 1 and 200; use 50 when not set.
   const safeLimit = Math.min(
     Math.max(Number.parseInt(limit, 10) || 50, 1),
     200,
@@ -67,7 +76,7 @@ async function getCommunityVenues(
 
     const data = await response.json()
 
-    // ArcGIS can return an API error object as valid JSON.
+    // ArcGIS can return JSON that contains an API error.
     if (data.error) {
       throw new Error(
         `Vicmap API error: ${data.error.message || 'Unknown ArcGIS error'}`,
@@ -80,6 +89,7 @@ async function getCommunityVenues(
       )
     }
 
+    // Keep usable map features and build page-ready place objects.
     return data.features
       .filter(
         (feature) =>

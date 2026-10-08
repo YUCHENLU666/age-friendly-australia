@@ -1,3 +1,27 @@
+// age-friendly-database/ai/test/testDatabaseRecommendation.js
+// Print real database recommendations and compare two call times.
+//
+// How calls move:
+// runTest -> loadFutureActivities -> recommendActivities twice -> timing and result table.
+//
+// Reading tips:
+//   Examples show one possible case, not fixed API or model results.
+//   Promise: a result to wait for; await gets the result when the work finishes.
+//   vector / embedding: a list of numbers for the meaning of text.
+//   hash: a text check code; changed text gets a different code.
+//
+// Functions:
+//   loadFutureActivities - Read upcoming database activities using the current time, then close the
+//   connection.
+//   runTest - Run the same recommendation request twice and print times and results.
+//
+// Fixed values and data:
+//   databasePath - Path to the SQLite file used by this test.
+//
+// Notes:
+//   The first call may load the model; the second call can reuse it.
+//   Printed times describe this run, not a promise of website speed.
+
 const path = require('path')
 
 const sqlite3 =
@@ -9,6 +33,7 @@ const {
   '../recommendationService',
 )
 
+// Path to the SQLite file used by this test.
 const databasePath =
   path.join(
     __dirname,
@@ -17,6 +42,9 @@ const databasePath =
     'age-friendly.db',
   )
 
+// Read upcoming database activities using the current time, then close the connection.
+// Example input: database has one past event and two future events
+// Example result: Promise gives the two future rows; database connection is closed.
 function loadFutureActivities() {
   return new Promise(
     (resolve, reject) => {
@@ -60,6 +88,10 @@ function loadFutureActivities() {
   )
 }
 
+// Run the same recommendation request twice and print times and results.
+// Example input: run this script with the built-in preferences
+// Example result: prints first-call time, second-call time, and recommendation details; Promise gives no
+// value.
 async function runTest() {
   const activities =
     await loadFutureActivities()
