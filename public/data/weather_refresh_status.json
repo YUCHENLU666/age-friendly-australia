@@ -1,17 +1,18 @@
 {
   "status": "partial",
-  "last_attempt_at": "2026-10-10T00:03:35.077235+00:00",
-  "last_success_at": "2026-10-10T00:03:34.961538+00:00",
-  "refreshed_count": 40,
+  "last_attempt_at": "2026-10-10T23:33:34.033922+00:00",
+  "last_success_at": "2026-10-10T23:33:33.878164+00:00",
+  "refreshed_count": 39,
   "failed_suburbs": [
+    "Brunswick East",
     "Carlton",
-    "Carlton North",
+    "Dandenong North",
+    "Docklands",
     "Elsternwick",
-    "Eltham",
-    "Fitzroy North",
-    "Melbourne CBD",
-    "Moonee Ponds",
-    "Richmond"
+    "Hawthorn",
+    "Laverton",
+    "Northcote",
+    "St Kilda Road"
   ],
   "message": "Some locations could not refresh. Previous data was retained where available."
 }
