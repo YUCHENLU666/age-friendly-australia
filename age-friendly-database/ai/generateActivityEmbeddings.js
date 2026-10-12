@@ -14,7 +14,7 @@
 //   createTextHash - Make the same SHA-256 text check code used by the live AI service.
 //   loadActivities - Read activity rows from SQLite in ID order.
 //   closeDatabase - Close the SQLite connection and wait for it to finish.
-//   main - Read activities, make their vectors, and write IDs, text check codes, and vectors to JSON.
+//   generateActivityEmbeddings - Read activities, make their vectors, and atomically write IDs, text check codes, and vectors to JSON.
 //
 // Fixed values and data:
 //   DATABASE_PATH - Path to the SQLite database file used as input.
@@ -156,7 +156,7 @@ function closeDatabase(
 // Example input: database has two activity rows
 // Example result: writes activityEmbeddings.json with two items and model details; closes the database.
 // Promise gives no value.
-async function main() {
+async function generateActivityEmbeddings() {
   console.log(
     '----------------------------------------',
   )
@@ -281,14 +281,36 @@ async function main() {
     }
 
 
-    // Write the JSON file that the live service will read at startup.
-    fs.writeFileSync(
-      OUTPUT_PATH,
-      JSON.stringify(
-        output,
-      ),
-      'utf8',
-    )
+    // Write to a temporary file first, then replace the live file in one
+    // operation. A recommendation request can therefore never read a
+    // half-written JSON document while the weekly sync is running.
+    const temporaryOutputPath =
+      `${OUTPUT_PATH}.${process.pid}.tmp`
+
+    try {
+      fs.writeFileSync(
+        temporaryOutputPath,
+        JSON.stringify(
+          output,
+        ),
+        'utf8',
+      )
+
+      fs.renameSync(
+        temporaryOutputPath,
+        OUTPUT_PATH,
+      )
+    } finally {
+      if (
+        fs.existsSync(
+          temporaryOutputPath,
+        )
+      ) {
+        fs.unlinkSync(
+          temporaryOutputPath,
+        )
+      }
+    }
 
     console.log(
       '----------------------------------------',
@@ -317,16 +339,24 @@ async function main() {
 }
 
 
-main().catch(
-  (error) => {
-    console.error(
-      'Failed to generate activity embeddings:',
-    )
+if (
+  require.main === module
+) {
+  generateActivityEmbeddings().catch(
+    (error) => {
+      console.error(
+        'Failed to generate activity embeddings:',
+      )
 
-    console.error(
-      error,
-    )
+      console.error(
+        error,
+      )
 
-    process.exit(1)
-  },
-)
+      process.exitCode = 1
+    },
+  )
+}
+
+module.exports = {
+  generateActivityEmbeddings,
+}

@@ -13,6 +13,7 @@
 // Functions:
 //   normaliseText - Remove end spaces and use lowercase letters.
 //   createTextHash - Make a SHA-256 check code for text; the same text gets the same code.
+//   reloadPrecomputedEmbeddings - Reload the saved vectors after the JSON file changes.
 //   cosineSimilarity - Multiply matching vector numbers and add them; vectors should already have length 1.
 //   getActivityDay - Read an activity date and return its weekday name.
 //   hasSemanticPreferences - Check if interests or activity types have a choice, so AI text scoring is needed.
@@ -21,7 +22,6 @@
 //   recommendActivities - Score activities by text meaning, area, and day; return the top results.
 //
 // Fixed values and data:
-//   precomputedData - Activity vectors and model details read from activityEmbeddings.json.
 //   DAY_NAMES - Weekday names; index 0 is Sunday and index 1 is Monday.
 //   precomputedEmbeddingMap - Map of activity ID to its saved text check code and vector.
 //   precomputedModelMatches - True when the saved vectors use the same model as the current code.
@@ -37,9 +37,11 @@
 const crypto =
   require('crypto')
 
-// Activity vectors and model details read from activityEmbeddings.json.
-const precomputedData =
-  require('./activityEmbeddings.json')
+const fs =
+  require('fs')
+
+const path =
+  require('path')
 
 const {
   buildActivityText,
@@ -66,6 +68,12 @@ const DAY_NAMES = [
   'Saturday',
 ]
 
+const EMBEDDINGS_PATH =
+  path.join(
+    __dirname,
+    'activityEmbeddings.json',
+  )
+
 
 // Remove end spaces and use lowercase letters.
 // Example input: ' Clayton '
@@ -87,63 +95,130 @@ function createTextHash(text) {
     .digest('hex')
 }
 
-// Map of activity ID to its saved text check code and vector.
-const precomputedEmbeddingMap =
+// These values are replaced together only after a complete, valid JSON
+// document has been read. If a reload fails, the last good vectors remain
+// available to recommendation requests.
+let precomputedEmbeddingMap =
   new Map()
 
-// Build an ID map from the saved vector JSON.
-if (
-  precomputedData &&
-  Array.isArray(
-    precomputedData.items,
-  )
+let precomputedModelMatches =
+  false
+
+let loadedEmbeddingFileSignature =
+  ''
+
+// Reload vectors when the generator atomically replaces the JSON file.
+// A cheap file-stat check is performed for each semantic recommendation;
+// the larger JSON file is read only when its timestamp or size changes.
+function reloadPrecomputedEmbeddings(
+  force = false,
 ) {
-  for (
-    const item of
-      precomputedData.items
-  ) {
+  try {
+    const stats =
+      fs.statSync(
+        EMBEDDINGS_PATH,
+      )
+
+    const fileSignature =
+      `${stats.mtimeMs}:${stats.size}`
+
     if (
-      item?.id &&
-      Array.isArray(
-        item.embedding,
+      !force &&
+      fileSignature ===
+        loadedEmbeddingFileSignature
+    ) {
+      return false
+    }
+
+    const nextData =
+      JSON.parse(
+        fs.readFileSync(
+          EMBEDDINGS_PATH,
+          'utf8',
+        ),
+      )
+
+    if (
+      !Array.isArray(
+        nextData?.items,
       )
     ) {
-      precomputedEmbeddingMap.set(
-        String(item.id),
-        item,
+      throw new Error(
+        'The embedding file does not contain an items array.',
       )
     }
+
+    const nextEmbeddingMap =
+      new Map()
+
+    for (
+      const item of
+        nextData.items
+    ) {
+      if (
+        item?.id !== undefined &&
+        item?.id !== null &&
+        Array.isArray(
+          item.embedding,
+        )
+      ) {
+        nextEmbeddingMap.set(
+          String(item.id),
+          item,
+        )
+      }
+    }
+
+    const nextModelMatches =
+      nextData.model ===
+      MODEL_NAME
+
+    precomputedEmbeddingMap =
+      nextEmbeddingMap
+
+    precomputedModelMatches =
+      nextModelMatches
+
+    loadedEmbeddingFileSignature =
+      fileSignature
+
+    if (
+      !nextModelMatches
+    ) {
+      console.warn(
+        'Precomputed activity embedding model does not match the current model.',
+      )
+
+      console.warn(
+        `Stored model: ${
+          nextData.model ||
+          'unknown'
+        }`,
+      )
+
+      console.warn(
+        `Current model: ${MODEL_NAME}`,
+      )
+    } else {
+      console.log(
+        `Loaded ${precomputedEmbeddingMap.size} precomputed activity embeddings.`,
+      )
+    }
+
+    return true
+  } catch (error) {
+    console.error(
+      `Unable to reload activity embeddings: ${error.message}`,
+    )
+
+    return false
   }
 }
 
-// True when the saved vectors use the same model as the current code.
-const precomputedModelMatches =
-  precomputedData?.model ===
-  MODEL_NAME
-
-// Do not use saved vectors from a different model.
-if (
-  !precomputedModelMatches
-) {
-  console.warn(
-    'Precomputed activity embedding model does not match the current model.',
-  )
-
-  console.warn(
-    `Stored model: ${
-      precomputedData?.model ||
-      'unknown'
-    }`,
-  )
-
-  console.warn(
-    `Current model: ${MODEL_NAME}`,
-  )
-} else {
-  console.log(
-    `Loaded ${precomputedEmbeddingMap.size} precomputed activity embeddings.`,
-  )
-}
+// Load the initial file when the backend starts.
+reloadPrecomputedEmbeddings(
+  true,
+)
 
 // Multiply matching vector numbers and add them; vectors should already have length 1.
 // Example input: vectorA=[1,0], vectorB=[1,0]
@@ -297,6 +372,10 @@ async function recommendActivities(
     hasSemanticPreferences(
       preferences,
     )
+
+  if (useSemanticScore) {
+    reloadPrecomputedEmbeddings()
+  }
 
   const useAreaScore =
     Boolean(

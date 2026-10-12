@@ -10,6 +10,8 @@
 //    the previous day's data rather than guessing a classification.
 //  - Flagged content is excluded unless its event ID is already on
 //    the confirmed-safe whitelist (eventfinda_whitelist.json).
+//  - Activity embeddings are rebuilt only after the database and image
+//    updates finish successfully.
 
 const fs = require('fs')
 const path = require('path')
@@ -223,6 +225,12 @@ async function runSync() {
     log(`Imported ${importedCount} activities (transactional, activities table only).`)
 
     runStep('updateActivityImages.js')
+
+    // The activity table has now reached its final state for this sync.
+    // Rebuild the saved vectors so the recommendation service can match
+    // the new activity IDs and text hashes.
+    runStep(path.join('ai', 'generateActivityEmbeddings.js'))
+    log('Activity embeddings refreshed successfully.')
 
     const durationSec = ((Date.now() - startTime) / 1000).toFixed(1)
     log(`Sync complete in ${durationSec}s.`)
