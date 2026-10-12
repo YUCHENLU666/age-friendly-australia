@@ -1,9 +1,12 @@
 <!--
 src/views/ServiceDetailView.vue
+
 Show one service and its nearest stop when available.
 
 How calls move:
-onMounted -> getServiceById -> getServices -> getTransitStops -> findNearestStop; toggleSave -> toggleSavedServiceId.
+onMounted -> getServiceById -> getServices ->
+getTransitStops -> findNearestStop;
+toggleSave -> toggleSavedServiceId.
 
 Reading tips:
   Examples show one possible case, not fixed API or model results.
@@ -23,12 +26,22 @@ Page values and kept data:
   saved - True if this service is saved; controls the Save button.
 
 Page start and API handlers:
-  onMounted callback - Read the URL ID, load its service, and set its saved button state.
+  onMounted callback - Read the URL ID, load its service,
+  and set its saved button state.
 
 Notes:
-  Details come from the service list, not a separate /api/services/:id API.
+  Details come from the service list, not a separate
+  /api/services/:id API.
+
   If stop loading fails, the service details can still be shown.
+
+  Optional service fields are displayed only when real data
+  is available.
+
+  Missing fields are hidden instead of displaying
+  "Not provided by source".
 -->
+
 <script setup>
 import {
   onMounted,
@@ -49,29 +62,54 @@ import {
   toggleSavedServiceId,
 } from '@/services/savedItemsService'
 
-// Current page URL; route.params.id is the requested service ID.
+
+// ======================================================
+// Current route
+// ======================================================
+
+// Current page URL.
+// route.params.id is the requested service ID.
 const route =
   useRoute()
 
-// The selected service object, or null when it is missing.
+
+// ======================================================
+// Page state
+// ======================================================
+
+// The selected service object,
+// or null when it is missing.
 const service =
   ref(null)
 
-// True while the page is loading; false when loading ends.
+// True while the page is loading.
 const loading =
   ref(true)
 
-// Error text shown on the page when data loading fails.
+// Error text shown when service loading fails.
 const errorMessage =
   ref('')
 
-// True if this service is saved; controls the Save button.
+// True if this service is currently saved.
 const saved =
   ref(false)
 
-// Read the URL ID, load its service, and set its saved button state.
-// Example input: Open /services/7 and the service exists.
-// Example result: service gets record 7 and loading=false; saved is based on stored IDs.
+
+// ======================================================
+// Load service
+// ======================================================
+
+// Read the service ID from the URL,
+// load the matching service,
+// and restore its saved state.
+//
+// Example input:
+// /services/7
+//
+// Example result:
+// service contains record 7,
+// loading becomes false,
+// and saved reflects localStorage.
 onMounted(async () => {
   try {
     service.value =
@@ -100,9 +138,20 @@ onMounted(async () => {
   }
 })
 
-// Save or unsave this service and update the button.
-// Example input: service.id='7', saved=false; click Save
-// Example result: localStorage includes '7' and saved=true; returns no value.
+
+// ======================================================
+// Save / unsave service
+// ======================================================
+
+// Save or unsave this service
+// and update the button state.
+//
+// Example input:
+// service.id='7', saved=false
+//
+// Example result:
+// localStorage includes '7'
+// and saved becomes true.
 const toggleSave = () => {
   if (!service.value) {
     return
@@ -120,9 +169,14 @@ const toggleSave = () => {
 }
 </script>
 
+
 <template>
   <main class="service-detail-page">
     <div class="page-container">
+
+      <!-- ============================================
+           Back navigation
+      ============================================= -->
       <RouterLink
         to="/services"
         class="service-back-link"
@@ -130,7 +184,10 @@ const toggleSave = () => {
         ← Back to services
       </RouterLink>
 
-      <!-- ================= LOADING ================= -->
+
+      <!-- ============================================
+           Loading state
+      ============================================= -->
       <div
         v-if="loading"
         class="service-state-card"
@@ -151,7 +208,10 @@ const toggleSave = () => {
         </p>
       </div>
 
-      <!-- ================= ERROR ================= -->
+
+      <!-- ============================================
+           Error state
+      ============================================= -->
       <div
         v-else-if="
           errorMessage
@@ -181,19 +241,32 @@ const toggleSave = () => {
         </RouterLink>
       </div>
 
-      <!-- ================= SERVICE ================= -->
+
+      <!-- ============================================
+           Service content
+      ============================================= -->
       <template v-else>
-        <!-- Header -->
+
+        <!-- ==========================================
+             Service header
+        =========================================== -->
         <section class="service-detail-header">
           <div class="service-detail-header-copy">
-            <p class="section-kicker">
+
+            <!-- Service type -->
+            <p
+              v-if="service.type"
+              class="section-kicker"
+            >
               {{ service.type }}
             </p>
 
+            <!-- Service name -->
             <h1>
               {{ service.name }}
             </h1>
 
+            <!-- Provider -->
             <p
               v-if="
                 service.provider
@@ -203,6 +276,8 @@ const toggleSave = () => {
             </p>
           </div>
 
+
+          <!-- Save button -->
           <button
             type="button"
             class="service-detail-save"
@@ -231,9 +306,15 @@ const toggleSave = () => {
           </button>
         </section>
 
-        <!-- Main detail layout -->
+
+        <!-- ==========================================
+             Main detail layout
+        =========================================== -->
         <div class="service-detail-grid">
-          <!-- Service information -->
+
+          <!-- ========================================
+               Service information
+          ========================================= -->
           <section class="service-detail-card">
             <p class="section-kicker">
               Service information
@@ -243,47 +324,72 @@ const toggleSave = () => {
               What you need to know
             </h2>
 
+
+            <!--
+              Only fields containing real service
+              information are rendered.
+
+              Empty values are hidden instead of showing
+              placeholder text such as
+              "Not provided by source".
+            -->
             <dl>
-              <div>
+
+              <!-- Service purpose -->
+              <div
+                v-if="
+                  service.purpose
+                "
+              >
                 <dt>
                   Service purpose
                 </dt>
 
                 <dd>
-                  {{
-                    service.purpose ||
-                    'Not provided by source'
-                  }}
+                  {{ service.purpose }}
                 </dd>
               </div>
 
-              <div>
+
+              <!-- Eligibility -->
+              <div
+                v-if="
+                  service.eligibility
+                "
+              >
                 <dt>
                   Eligibility
                 </dt>
 
                 <dd>
-                  {{
-                    service.eligibility ||
-                    'Not provided by source'
-                  }}
+                  {{ service.eligibility }}
                 </dd>
               </div>
 
-              <div>
+
+              <!-- Opening hours -->
+              <div
+                v-if="
+                  service.openingHours
+                "
+              >
                 <dt>
                   Opening hours
                 </dt>
 
                 <dd>
-                  {{
-                    service.openingHours ||
-                    'Not provided by source'
-                  }}
+                  {{ service.openingHours }}
                 </dd>
               </div>
 
-              <div>
+
+              <!-- Location -->
+              <div
+                v-if="
+                  service.address ||
+                  service.suburb
+                "
+              >
                 <dt>
                   Location
                 </dt>
@@ -291,35 +397,40 @@ const toggleSave = () => {
                 <dd>
                   {{
                     service.address ||
-                    service.suburb ||
-                    'Not provided by source'
+                    service.suburb
                   }}
                 </dd>
               </div>
 
-              <div>
+
+              <!-- Contact phone -->
+              <div
+                v-if="
+                  service.phone
+                "
+              >
                 <dt>
                   Contact phone
                 </dt>
 
                 <dd>
-                  {{
-                    service.phone ||
-                    'Not provided by source'
-                  }}
+                  {{ service.phone }}
                 </dd>
               </div>
 
-              <div>
+
+              <!-- Website -->
+              <div
+                v-if="
+                  service.website
+                "
+              >
                 <dt>
                   Website
                 </dt>
 
                 <dd>
                   <a
-                    v-if="
-                      service.website
-                    "
                     :href="
                       service.website
                     "
@@ -328,32 +439,36 @@ const toggleSave = () => {
                   >
                     Visit service website
                   </a>
-
-                  <span v-else>
-                    Not provided by source
-                  </span>
                 </dd>
               </div>
 
-              <div>
+
+              <!-- Accessibility -->
+              <div
+                v-if="
+                  service.accessibility?.length
+                "
+              >
                 <dt>
                   Access details
                 </dt>
 
                 <dd>
                   {{
-                    service.accessibility.length
-                      ? service.accessibility.join(
-                          ', ',
-                        )
-                      : 'Not provided by source'
+                    service.accessibility.join(
+                      ', ',
+                    )
                   }}
                 </dd>
               </div>
+
             </dl>
           </section>
 
-          <!-- Trusted source -->
+
+          <!-- ========================================
+               Trusted information
+          ========================================= -->
           <aside class="service-detail-source">
             <p class="section-kicker">
               Trusted information
@@ -363,13 +478,18 @@ const toggleSave = () => {
               Data source
             </h2>
 
-            <p>
-              {{
-                service.source ||
-                'Source not provided'
-              }}
+
+            <!-- Source description -->
+            <p
+              v-if="
+                service.source
+              "
+            >
+              {{ service.source }}
             </p>
 
+
+            <!-- Original source link -->
             <a
               v-if="
                 service.sourceUrl
@@ -382,12 +502,16 @@ const toggleSave = () => {
               class="service-source-link"
             >
               View original source
+
               <span aria-hidden="true">
                 ↗
               </span>
             </a>
 
-            <!-- Transport -->
+
+            <!-- ======================================
+                 Nearby transport
+            ======================================= -->
             <div
               v-if="
                 service.nearestTransportStop
@@ -416,13 +540,17 @@ const toggleSave = () => {
               </p>
             </div>
 
-            <!-- Data integrity notice -->
+
+            <!-- ======================================
+                 Data integrity notice
+            ======================================= -->
             <div class="activity-source-notice">
               Details that are not supplied
               by the verified source are not
               guessed or generated.
             </div>
           </aside>
+
         </div>
       </template>
     </div>

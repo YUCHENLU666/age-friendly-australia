@@ -14,7 +14,7 @@ import WeatherCard from '@/components/environment/WeatherCard.vue'
 // Responsibilities:
 //
 // - display activity information
-// - show older-adult suitability
+// - show older-adult suitability when available
 // - show activity tags
 // - display activity-time weather conditions
 // - allow the user to save / unsave the activity
@@ -26,6 +26,10 @@ import WeatherCard from '@/components/environment/WeatherCard.vue'
 // Saved activity IDs are managed by the parent through
 // savedItemsService. Other features, such as the personal
 // calendar, can later reuse those saved IDs.
+//
+// Optional fields are displayed only when useful data is
+// available. Missing values are hidden instead of showing
+// "Not provided" placeholder text.
 //
 
 
@@ -88,7 +92,10 @@ defineEmits([
       />
 
       <!-- Primary activity category -->
-      <span class="activity-card-category">
+      <span
+        v-if="activity.primaryTag"
+        class="activity-card-category"
+      >
         {{ activity.primaryTag }}
       </span>
 
@@ -109,13 +116,26 @@ defineEmits([
             saved,
         }"
         :aria-pressed="saved"
-        @click="$emit('toggle-save', activity.id)"
+        @click="
+          $emit(
+            'toggle-save',
+            activity.id,
+          )
+        "
       >
         <span aria-hidden="true">
-          {{ saved ? '★' : '☆' }}
+          {{
+            saved
+              ? '★'
+              : '☆'
+          }}
         </span>
 
-        {{ saved ? 'Saved' : 'Save' }}
+        {{
+          saved
+            ? 'Saved'
+            : 'Save'
+        }}
       </button>
     </div>
 
@@ -130,61 +150,147 @@ defineEmits([
         <!--
           Suitability values are normalised by
           activityService before reaching this component.
+
+          "unknown" means the source did not provide
+          suitability information, so the label is hidden.
         -->
-        <div class="activity-suitability-row">
+        <div
+          v-if="
+            activity.suitability !==
+            'unknown'
+          "
+          class="activity-suitability-row"
+        >
           <span
             class="activity-suitability"
             :class="{
               'activity-suitability--yes':
-                activity.suitability === 'yes',
+                activity.suitability ===
+                'yes',
 
               'activity-suitability--partial':
-                activity.suitability === 'partial',
+                activity.suitability ===
+                'partial',
 
               'activity-suitability--no':
-                activity.suitability === 'no',
+                activity.suitability ===
+                'no',
             }"
           >
             {{ activity.suitabilityLabel }}
           </span>
         </div>
 
+
         <!-- Activity name -->
         <h2>
           {{ activity.name }}
         </h2>
 
-        <!-- Activity venue and suburb -->
-        <p class="activity-location">
-          {{ activity.venue }}
 
-          <span aria-hidden="true">
+        <!--
+          Activity venue and suburb.
+
+          The normalised activity data may contain
+          fallback values such as "Venue not provided"
+          and "Area not provided".
+
+          These fallback values are hidden from the UI.
+        -->
+        <p
+          v-if="
+            (
+              activity.venue &&
+              activity.venue !==
+                'Venue not provided'
+            ) ||
+            (
+              activity.suburb &&
+              activity.suburb !==
+                'Area not provided'
+            )
+          "
+          class="activity-location"
+        >
+          <span
+            v-if="
+              activity.venue &&
+              activity.venue !==
+                'Venue not provided'
+            "
+          >
+            {{ activity.venue }}
+          </span>
+
+          <span
+            v-if="
+              activity.venue &&
+              activity.venue !==
+                'Venue not provided' &&
+              activity.suburb &&
+              activity.suburb !==
+                'Area not provided'
+            "
+            aria-hidden="true"
+          >
             ·
           </span>
 
-          {{ activity.suburb }}
+          <span
+            v-if="
+              activity.suburb &&
+              activity.suburb !==
+                'Area not provided'
+            "
+          >
+            {{ activity.suburb }}
+          </span>
         </p>
       </div>
 
 
       <!-- ============================================
            Schedule information
-    ============================================= -->
-      <dl class="activity-card-details">
-        <div>
+
+           Only display schedule fields when useful
+           information is available.
+      ============================================= -->
+      <dl
+        v-if="
+          activity.schedule ||
+          (
+            activity.recurrence &&
+            activity.recurrence !==
+              'Not provided'
+          )
+        "
+        class="activity-card-details"
+      >
+
+        <!-- Activity time -->
+        <div
+          v-if="
+            activity.schedule
+          "
+        >
           <dt>
             When
           </dt>
 
           <dd>
-            {{
-              activity.schedule ||
-              'Schedule not provided'
-            }}
+            {{ activity.schedule }}
           </dd>
         </div>
 
-        <div>
+
+        <!-- Schedule type -->
+        <div
+          v-if="
+            activity.recurrence &&
+            activity.recurrence !==
+              'Not provided'
+          "
+        >
           <dt>
             Schedule
           </dt>
@@ -198,19 +304,26 @@ defineEmits([
 
       <!-- ============================================
            Activity interests
-    ============================================= -->
+      ============================================= -->
+
       <!--
         Display up to three activity tags to keep the
         card compact while still showing key interests.
       -->
       <div
-        v-if="activity.tags.length"
+        v-if="
+          activity.tags?.length
+        "
         class="activity-tag-list"
         aria-label="Activity interests"
       >
         <span
           v-for="
-            tag in activity.tags.slice(0, 3)
+            tag in
+            activity.tags.slice(
+              0,
+              3,
+            )
           "
           :key="tag"
           class="activity-tag"
@@ -222,20 +335,26 @@ defineEmits([
 
       <!-- ============================================
            Weather information
-    ============================================= -->
+      ============================================= -->
+
       <!--
         WeatherCard receives the activity suburb and
         scheduled activity time.
 
-        It attempts to match weather and air-quality
-        conditions to the specific activity hour.
+        Weather is displayed only when both a usable
+        suburb and schedule are available.
 
-        If the activity time is outside the available
-        forecast range, the component shows a forecast
-        availability message instead of substituting
-        current weather.
+        This prevents missing location or schedule
+        information from creating unnecessary placeholder
+        messages in the card.
       -->
       <WeatherCard
+        v-if="
+          activity.schedule &&
+          activity.suburb &&
+          activity.suburb !==
+            'Area not provided'
+        "
         :suburb="activity.suburb"
         :activity-time="activity.schedule"
       />
@@ -243,11 +362,23 @@ defineEmits([
 
       <!-- ============================================
            Card footer
-    ============================================= -->
+      ============================================= -->
       <div class="activity-card-footer">
 
-        <!-- Original activity data source -->
-        <p class="activity-source">
+        <!--
+          Original activity data source.
+
+          Do not display the normalised fallback
+          "Source not provided".
+        -->
+        <p
+          v-if="
+            activity.source &&
+            activity.source !==
+              'Source not provided'
+          "
+          class="activity-source"
+        >
           <span>
             Source
           </span>
@@ -266,7 +397,9 @@ defineEmits([
         -->
         <RouterLink
           class="activity-details-link"
-          :to="`/activities/${activity.id}`"
+          :to="
+            `/activities/${activity.id}`
+          "
         >
           View details
 

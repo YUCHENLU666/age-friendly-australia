@@ -3,7 +3,8 @@ src/components/services/ServiceCard.vue
 Show a service card; send Save clicks to the parent page.
 
 How calls move:
-Save button -> emit toggle-save(service.id) -> parent save handler; View details -> RouterLink /services/:id.
+Save button -> emit toggle-save(service.id) -> parent save handler;
+View details -> RouterLink /services/:id.
 
 Reading tips:
   Examples show one possible case, not fixed API or model results.
@@ -16,8 +17,10 @@ Notes:
   Example input: service.id="7", saved=false; click Save.
   Example result: sends toggle-save("7"); the parent handles the storage change.
   The View details link opens /services/7 for this example.
-  Empty fields show default help text in the template.
+  Optional service fields are shown only when real data is available.
+  Missing fields are hidden instead of displaying placeholder text.
 -->
+
 <script setup>
 import {
   RouterLink,
@@ -44,6 +47,9 @@ defineEmits([
 
 <template>
   <article class="service-card">
+    <!-- ============================================
+         Service heading and save button
+    ============================================= -->
     <div class="service-card-top">
       <div>
         <span class="service-type-badge">
@@ -77,10 +83,17 @@ defineEmits([
           )
         "
       >
-        {{ saved ? '★ Saved' : '☆ Save' }}
+        {{
+          saved
+            ? '★ Saved'
+            : '☆ Save'
+        }}
       </button>
     </div>
 
+    <!-- ============================================
+         Service purpose
+    ============================================= -->
     <p
       v-if="service.purpose"
       class="service-purpose"
@@ -88,64 +101,100 @@ defineEmits([
       {{ service.purpose }}
     </p>
 
+    <!-- ============================================
+         Service details
+
+         Only fields containing real data are shown.
+         Missing fields are hidden instead of showing
+         "Not provided by source".
+    ============================================= -->
     <dl class="service-card-details">
-      <div v-if="service.distanceLabel">
-        <dt>Distance</dt>
+      <!-- Distance -->
+      <div
+        v-if="
+          service.distanceLabel
+        "
+      >
+        <dt>
+          Distance
+        </dt>
 
         <dd>
           {{ service.distanceLabel }}
         </dd>
       </div>
 
-      <div>
-        <dt>Location</dt>
+      <!-- Location -->
+      <div
+        v-if="
+          service.address ||
+          service.suburb
+        "
+      >
+        <dt>
+          Location
+        </dt>
 
         <dd>
           {{
             service.address ||
-            service.suburb ||
-            'Not provided by source'
+            service.suburb
           }}
         </dd>
       </div>
 
-      <div>
-        <dt>Opening hours</dt>
+      <!-- Opening hours -->
+      <div
+        v-if="
+          service.openingHours
+        "
+      >
+        <dt>
+          Opening hours
+        </dt>
 
         <dd>
-          {{
-            service.openingHours ||
-            'Not provided by source'
-          }}
+          {{ service.openingHours }}
         </dd>
       </div>
 
-      <div>
-        <dt>Eligibility</dt>
+      <!-- Eligibility -->
+      <div
+        v-if="
+          service.eligibility
+        "
+      >
+        <dt>
+          Eligibility
+        </dt>
 
         <dd>
-          {{
-            service.eligibility ||
-            'Not provided by source'
-          }}
+          {{ service.eligibility }}
         </dd>
       </div>
 
-      <div>
-        <dt>Contact</dt>
+      <!-- Contact -->
+      <div
+        v-if="
+          service.phone
+        "
+      >
+        <dt>
+          Contact
+        </dt>
 
         <dd>
-          {{
-            service.phone ||
-            'Not provided by source'
-          }}
+          {{ service.phone }}
         </dd>
       </div>
-    </dl>   
+    </dl>
 
+    <!-- ============================================
+         Accessibility information
+    ============================================= -->
     <div
       v-if="
-        service.accessibility.length
+        service.accessibility?.length
       "
       class="service-access-list"
     >
@@ -160,14 +209,23 @@ defineEmits([
       </span>
     </div>
 
+    <!-- ============================================
+         Card footer
+    ============================================= -->
     <div class="service-card-footer">
-      <p class="service-source">
-        <strong>Source</strong>
+      <!--
+        Only show the source label when source
+        information is actually available.
+      -->
+      <p
+        v-if="service.source"
+        class="service-source"
+      >
+        <strong>
+          Source
+        </strong>
 
-        {{
-          service.source ||
-          'Source not provided'
-        }}
+        {{ service.source }}
       </p>
 
       <RouterLink
@@ -177,6 +235,7 @@ defineEmits([
         class="service-details-link"
       >
         View details
+
         <span aria-hidden="true">
           →
         </span>

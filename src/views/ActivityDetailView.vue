@@ -18,16 +18,49 @@ import {
   toggleSavedActivityId,
 } from '@/services/savedItemsService'
 
-// Get the current route to access the activity ID from the URL
-const route = useRoute()
 
-// used to store the activity data, loading state, error message, and saved state
-const activity = ref(null)
-const loading = ref(true)
-const errorMessage = ref('')
-const saved = ref(false)
+// ======================================================
+// Current route
+// ======================================================
 
-//Activity loading begins after the page is mounted.
+// Get the current route so the activity ID
+// can be read from route.params.id.
+const route =
+  useRoute()
+
+
+// ======================================================
+// Page state
+// ======================================================
+
+// Selected activity returned by activityService.
+const activity =
+  ref(null)
+
+// True while activity data is loading.
+const loading =
+  ref(true)
+
+// Message displayed when activity loading fails.
+const errorMessage =
+  ref('')
+
+// True when the current activity has been saved.
+const saved =
+  ref(false)
+
+
+// ======================================================
+// Load activity
+// ======================================================
+
+// Load the requested activity when the page opens.
+//
+// Example:
+// /activities/7
+//
+// The activity with ID 7 is loaded and its saved
+// state is restored from savedItemsService.
 onMounted(async () => {
   try {
     activity.value =
@@ -38,6 +71,7 @@ onMounted(async () => {
     if (!activity.value) {
       errorMessage.value =
         'This activity could not be found.'
+
       return
     }
 
@@ -55,6 +89,13 @@ onMounted(async () => {
   }
 })
 
+
+// ======================================================
+// Save / unsave activity
+// ======================================================
+
+// Save or unsave the current activity
+// and update the button state.
 const toggleSave = () => {
   if (!activity.value) {
     return
@@ -72,9 +113,14 @@ const toggleSave = () => {
 }
 </script>
 
+
 <template>
   <section class="activity-detail-page">
     <div class="page-container">
+
+      <!-- ============================================
+           Back navigation
+      ============================================= -->
       <RouterLink
         class="activity-back-link"
         to="/activities"
@@ -82,6 +128,10 @@ const toggleSave = () => {
         ← Back to activities
       </RouterLink>
 
+
+      <!-- ============================================
+           Loading state
+      ============================================= -->
       <div
         v-if="loading"
         class="activity-state-card"
@@ -91,6 +141,10 @@ const toggleSave = () => {
         </h1>
       </div>
 
+
+      <!-- ============================================
+           Error state
+      ============================================= -->
       <div
         v-else-if="errorMessage"
         class="activity-state-card"
@@ -104,8 +158,18 @@ const toggleSave = () => {
         </p>
       </div>
 
+
+      <!-- ============================================
+           Activity content
+      ============================================= -->
       <template v-else>
+
+        <!-- ==========================================
+             Activity hero
+        =========================================== -->
         <div class="activity-detail-hero">
+
+          <!-- Activity image -->
           <div class="activity-detail-image-wrap">
             <img
               :src="activity.image"
@@ -114,30 +178,99 @@ const toggleSave = () => {
             />
           </div>
 
+
+          <!-- Activity summary -->
           <div class="activity-detail-summary">
-            <p class="section-kicker">
+
+            <!-- Primary category -->
+            <p
+              v-if="activity.primaryTag"
+              class="section-kicker"
+            >
               {{ activity.primaryTag }}
             </p>
 
+
+            <!-- Activity name -->
             <h1>
               {{ activity.name }}
             </h1>
 
-            <p class="activity-detail-location">
-              {{ activity.venue }}
-              <span aria-hidden="true">·</span>
-              {{ activity.suburb }}
+
+            <!-- Location -->
+            <p
+              v-if="
+                (
+                  activity.venue &&
+                  activity.venue !==
+                    'Venue not provided'
+                ) ||
+                (
+                  activity.suburb &&
+                  activity.suburb !==
+                    'Area not provided'
+                )
+              "
+              class="activity-detail-location"
+            >
+              <span
+                v-if="
+                  activity.venue &&
+                  activity.venue !==
+                    'Venue not provided'
+                "
+              >
+                {{ activity.venue }}
+              </span>
+
+              <span
+                v-if="
+                  activity.venue &&
+                  activity.venue !==
+                    'Venue not provided' &&
+                  activity.suburb &&
+                  activity.suburb !==
+                    'Area not provided'
+                "
+                aria-hidden="true"
+              >
+                ·
+              </span>
+
+              <span
+                v-if="
+                  activity.suburb &&
+                  activity.suburb !==
+                    'Area not provided'
+                "
+              >
+                {{ activity.suburb }}
+              </span>
             </p>
 
+
+            <!--
+              Suitability is displayed only when
+              actual suitability information exists.
+
+              activityService uses "unknown" when
+              suitability was not provided.
+            -->
             <span
+              v-if="
+                activity.suitability !==
+                'unknown'
+              "
               class="activity-suitability"
               :class="{
                 'activity-suitability--yes':
                   activity.suitability ===
                   'yes',
+
                 'activity-suitability--partial':
                   activity.suitability ===
                   'partial',
+
                 'activity-suitability--no':
                   activity.suitability ===
                   'no',
@@ -148,6 +281,8 @@ const toggleSave = () => {
               }}
             </span>
 
+
+            <!-- Save button -->
             <button
               class="activity-detail-save-button"
               type="button"
@@ -155,7 +290,11 @@ const toggleSave = () => {
               @click="toggleSave"
             >
               <span aria-hidden="true">
-                {{ saved ? '★' : '☆' }}
+                {{
+                  saved
+                    ? '★'
+                    : '☆'
+                }}
               </span>
 
               {{
@@ -167,7 +306,15 @@ const toggleSave = () => {
           </div>
         </div>
 
+
+        <!-- ==========================================
+             Main detail layout
+        =========================================== -->
         <div class="activity-detail-grid">
+
+          <!-- ========================================
+               Activity information
+          ========================================= -->
           <section class="activity-detail-card">
             <p class="section-kicker">
               Activity information
@@ -177,78 +324,138 @@ const toggleSave = () => {
               What you need to know
             </h2>
 
+
+            <!--
+              Only fields containing useful activity
+              information are displayed.
+
+              Missing values are hidden instead of
+              showing "Not provided by this source".
+            -->
             <dl class="activity-detail-list">
-              <div>
-                <dt>Schedule</dt>
+
+              <!-- Schedule -->
+              <div
+                v-if="
+                  activity.schedule
+                "
+              >
+                <dt>
+                  Schedule
+                </dt>
+
+                <dd>
+                  {{ activity.schedule }}
+                </dd>
+              </div>
+
+
+              <!-- Exact date -->
+              <div
+                v-if="
+                  activity.exactDate
+                "
+              >
+                <dt>
+                  Exact date
+                </dt>
+
+                <dd>
+                  {{ activity.exactDate }}
+                </dd>
+              </div>
+
+
+              <!-- Schedule type -->
+              <div
+                v-if="
+                  activity.recurrence &&
+                  activity.recurrence !==
+                    'Not provided'
+                "
+              >
+                <dt>
+                  Schedule type
+                </dt>
+
+                <dd>
+                  {{ activity.recurrence }}
+                </dd>
+              </div>
+
+
+              <!-- Organiser -->
+              <div
+                v-if="
+                  activity.organiser
+                "
+              >
+                <dt>
+                  Organiser
+                </dt>
+
+                <dd>
+                  {{ activity.organiser }}
+                </dd>
+              </div>
+
+
+              <!-- Availability -->
+              <div
+                v-if="
+                  activity.availability
+                "
+              >
+                <dt>
+                  Availability
+                </dt>
+
+                <dd>
+                  {{ activity.availability }}
+                </dd>
+              </div>
+
+
+              <!-- Access details -->
+              <div
+                v-if="
+                  activity.accessibility
+                "
+              >
+                <dt>
+                  Access details
+                </dt>
+
+                <dd>
+                  {{ activity.accessibility }}
+                </dd>
+              </div>
+
+
+              <!-- Joining information -->
+              <div
+                v-if="
+                  activity.joiningInformation
+                "
+              >
+                <dt>
+                  Joining information
+                </dt>
+
                 <dd>
                   {{
-                    activity.schedule ||
-                    'Not provided by this source'
+                    activity.joiningInformation
                   }}
                 </dd>
               </div>
 
-              <div>
-                <dt>Exact date</dt>
-                <dd>
-                  {{
-                    activity.exactDate ||
-                    'Not provided by this source'
-                  }}
-                </dd>
-              </div>
-
-              <div>
-                <dt>Schedule type</dt>
-                <dd>
-                  {{
-                    activity.recurrence
-                  }}
-                </dd>
-              </div>
-
-              <div>
-                <dt>Organiser</dt>
-                <dd>
-                  {{
-                    activity.organiser ||
-                    'Not provided by this source'
-                  }}
-                </dd>
-              </div>
-
-              <div>
-                <dt>Availability</dt>
-                <dd>
-                  {{
-                    activity.availability ||
-                    'Not provided by this source'
-                  }}
-                </dd>
-              </div>
-
-              <div>
-                <dt>Access details</dt>
-                <dd>
-                  {{
-                    activity.accessibility ||
-                    'Not provided by this source'
-                  }}
-                </dd>
-              </div>
-
-              <div>
-                <dt>Joining information</dt>
-                <dd>
-                  {{
-                    activity.joiningInformation ||
-                    'Not provided by this source'
-                  }}
-                </dd>
-              </div>
             </dl>
           </section>
 
+
+          <!-- ========================================
+               Source information
+          ========================================= -->
           <aside class="activity-source-card">
             <p class="section-kicker">
               Source information
@@ -258,12 +465,32 @@ const toggleSave = () => {
               Where this information came from
             </h2>
 
-            <p>
+
+            <!--
+              activityService may use
+              "Source not provided" as a fallback.
+
+              Do not display the fallback as real
+              source information.
+            -->
+            <p
+              v-if="
+                activity.source &&
+                activity.source !==
+                  'Source not provided'
+              "
+            >
               {{ activity.source }}
             </p>
 
+
+            <!-- ======================================
+                 Nearby transport
+            ======================================= -->
             <div
-              v-if="activity.nearestTransportStop"
+              v-if="
+                activity.nearestTransportStop
+              "
               class="service-detail-transport"
             >
               <strong>
@@ -271,18 +498,50 @@ const toggleSave = () => {
               </strong>
 
               <p>
-                {{ activity.nearestTransportStop.stopName }}
-                <span aria-hidden="true">·</span>
-                {{ activity.nearestTransportStop.distanceLabel }}
+                {{
+                  activity
+                    .nearestTransportStop
+                    .stopName
+                }}
+
+                <span
+                  v-if="
+                    activity
+                      .nearestTransportStop
+                      .distanceLabel
+                  "
+                  aria-hidden="true"
+                >
+                  ·
+                </span>
+
+                <span
+                  v-if="
+                    activity
+                      .nearestTransportStop
+                      .distanceLabel
+                  "
+                >
+                  {{
+                    activity
+                      .nearestTransportStop
+                      .distanceLabel
+                  }}
+                </span>
               </p>
-            </div>  
-            
+            </div>
+
+
+            <!-- ======================================
+                 Data integrity notice
+            ======================================= -->
             <div class="activity-source-notice">
               Details that are not supplied by the
               current source are not guessed or
               generated.
             </div>
           </aside>
+
         </div>
       </template>
     </div>
