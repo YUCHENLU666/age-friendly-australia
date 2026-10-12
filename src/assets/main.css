@@ -7962,44 +7962,6 @@ select:disabled {
   background: #f2f6f5;
 }
 
-.ai-confidence {
-  margin-bottom: 16px;
-  padding-bottom: 16px;
-  border-bottom: 1px solid #d5e1de;
-}
-
-.ai-confidence-heading {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 16px;
-  margin-bottom: 10px;
-}
-
-.ai-confidence-heading strong {
-  margin-bottom: 0;
-}
-
-.ai-confidence-value {
-  font-size: 1.1rem;
-  font-weight: 800;
-  color: #174f46;
-}
-
-.ai-confidence-track {
-  overflow: hidden;
-  height: 10px;
-  border-radius: 999px;
-  background: #d5e1de;
-}
-
-.ai-confidence-fill {
-  display: block;
-  height: 100%;
-  border-radius: inherit;
-  background: #2f7569;
-}
-
 .ai-reason-box strong {
   display: block;
   margin-bottom: 8px;

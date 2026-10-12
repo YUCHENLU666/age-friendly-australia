@@ -13,7 +13,6 @@ Reading tips:
 
 Functions:
   normaliseReasons - Turn reasons into a list; remove empty items.
-  toConfidencePercent - Convert the recommendation score to a safe 0-100 display value.
   loadRecommendations - Load activity details and AI results at the same time, then update the page.
 
 Values Vue updates for you:
@@ -189,36 +188,6 @@ function normaliseReasons(
   return []
 }
 
-// Convert the backend's relative match score into a percentage for display.
-// The value is clamped because cosine similarity can theoretically be below
-// zero, and future scoring changes could otherwise place it above 100%.
-// Example input: 0.5767
-// Example result: 58; invalid values give null.
-function toConfidencePercent(
-  score,
-) {
-  const numericScore =
-    Number(score)
-
-  if (
-    !Number.isFinite(
-      numericScore,
-    )
-  ) {
-    return null
-  }
-
-  return Math.round(
-    Math.min(
-      1,
-      Math.max(
-        0,
-        numericScore,
-      ),
-    ) * 100,
-  )
-}
-
 // Find each recommended activity by ID and add its score and reasons.
 // Example input: recommendation={activityId:7, score:0.8, reasons:['Near you']}, activity={id:'7',
 // name:'Walk'}
@@ -251,11 +220,6 @@ const recommendedActivities =
 
             recommendationScore:
               recommendation.score,
-
-            recommendationConfidence:
-              toConfidencePercent(
-                recommendation.score,
-              ),
 
             recommendationReasons:
               normaliseReasons(
@@ -515,9 +479,7 @@ onMounted(() => {
               <p class="ai-recommendation-intro">
                 Suggestions are ranked using your saved
                 interests, preferred area, activity types
-                and preferred days. The confidence score
-                shows the relative match with those choices,
-                not a guarantee.
+                and preferred days.
               </p>
             </div>
 
@@ -697,38 +659,6 @@ onMounted(() => {
                      ========================= -->
 
                 <div class="ai-reason-box">
-                  <div
-                    v-if="activity.recommendationConfidence !== null"
-                    class="ai-confidence"
-                  >
-                    <div class="ai-confidence-heading">
-                      <strong>
-                        Confidence score
-                      </strong>
-
-                      <span class="ai-confidence-value">
-                        {{ activity.recommendationConfidence }}%
-                      </span>
-                    </div>
-
-                    <div
-                      class="ai-confidence-track"
-                      role="progressbar"
-                      aria-label="Recommendation confidence score"
-                      aria-valuemin="0"
-                      aria-valuemax="100"
-                      :aria-valuenow="activity.recommendationConfidence"
-                      :aria-valuetext="`${activity.recommendationConfidence} percent preference match`"
-                    >
-                      <span
-                        class="ai-confidence-fill"
-                        :style="{
-                          width: `${activity.recommendationConfidence}%`,
-                        }"
-                      ></span>
-                    </div>
-                  </div>
-
                   <strong>
                     Why this may suit you
                   </strong>
