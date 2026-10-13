@@ -1,19 +1,18 @@
 {
   "status": "partial",
-  "last_attempt_at": "2026-10-11T23:41:45.327015+00:00",
-  "last_success_at": "2026-10-11T23:41:45.170299+00:00",
-  "refreshed_count": 38,
+  "last_attempt_at": "2026-10-13T01:59:37.841833+00:00",
+  "last_success_at": "2026-10-13T01:59:37.684413+00:00",
+  "refreshed_count": 39,
   "failed_suburbs": [
-    "Brunswick East",
-    "Carlton",
+    "Dandenong North",
     "Docklands",
     "Elsternwick",
-    "Eltham",
-    "Hawthorn",
-    "Main Ridge",
-    "Malvern",
-    "Newport",
-    "Ringwood East"
+    "Melbourne CBD",
+    "Moonee Ponds",
+    "Moorabbin",
+    "South Wharf",
+    "Southbank",
+    "St Kilda"
   ],
   "message": "Some locations could not refresh. Previous data was retained where available."
 }
