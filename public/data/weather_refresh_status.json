@@ -1,18 +1,18 @@
 {
   "status": "partial",
-  "last_attempt_at": "2026-10-13T01:59:37.841833+00:00",
-  "last_success_at": "2026-10-13T01:59:37.684413+00:00",
+  "last_attempt_at": "2026-10-13T23:46:18.907166+00:00",
+  "last_success_at": "2026-10-13T23:46:18.755399+00:00",
   "refreshed_count": 39,
   "failed_suburbs": [
-    "Dandenong North",
-    "Docklands",
-    "Elsternwick",
-    "Melbourne CBD",
-    "Moonee Ponds",
-    "Moorabbin",
-    "South Wharf",
-    "Southbank",
-    "St Kilda"
+    "Clayton South",
+    "Coburg",
+    "Collingwood",
+    "Hampton East",
+    "Hawthorn",
+    "Laverton",
+    "Noble Park",
+    "North Melbourne",
+    "St Kilda West"
   ],
   "message": "Some locations could not refresh. Previous data was retained where available."
 }
