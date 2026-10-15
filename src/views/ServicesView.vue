@@ -3,7 +3,8 @@ src/views/ServicesView.vue
 Show services, filters, and Save buttons.
 
 How calls move:
-ServiceFilters.updateField -> updateFilters -> filteredServices -> ServiceCard; toggleServiceSave -> savedItemsService.
+ServiceFilters.updateField -> updateFilters -> filteredServices -> ServiceCard;
+toggleServiceSave -> savedItemsService.
 
 Reading tips:
   Examples show one possible case, not fixed API or model results.
@@ -13,7 +14,7 @@ Reading tips:
 
 Functions:
   updateFilters - Copy the new filter choices into the page filters.
-  clearFilters - Set all filter choices to empty text.
+  clearFilters - Reset all filter choices.
   isServiceSaved - Check if this service ID is in the saved ID list.
   toggleServiceSave - Save or unsave a service and update the page saved ID list.
 
@@ -22,23 +23,29 @@ Values Vue updates for you:
   areas - Get area names from services, remove repeats, and sort them.
   serviceTypes - Get service types, remove repeats, and sort them.
   accessibilityOptions - Get access labels from services and remove repeats.
-  filteredServices - Keep services that match the filters; sort by distance when an area point is known.
+  filteredServices - Keep services that match the filters;
+                     sort by distance when an area point is known.
 
 Page values and kept data:
   services - Service objects loaded for this page.
   savedServiceIds - Saved service IDs read from this browser storage.
   loading - True while the page is loading; false when loading ends.
   errorMessage - Error text shown on the page when data loading fails.
-  filters - Current search, area, type, and access choices.
+  filters - Current area, type, and accessibility choices.
 
 Page start and API handlers:
-  onMounted callback - Read saved IDs and load the service list after the page opens.
+  onMounted callback - Read saved IDs and load the service list
+                       after the page opens.
 
 Notes:
-  Filters run in the browser on the loaded list; they do not send a new database query.
-  Distance starts from a fixed area point, not the user GPS location.
-  dataAvailable checks if there are rows; it does not check if every field is filled.
+  Filters run in the browser on the loaded list;
+  they do not send a new database query.
+  Distance starts from a fixed area point,
+  not the user GPS location.
+  dataAvailable checks if there are rows;
+  it does not check if every field is filled.
 -->
+
 <script setup>
 import {
   computed,
@@ -58,36 +65,56 @@ import {
   toggleSavedServiceId,
 } from '@/services/savedItemsService'
 
-import { getSuburbCoordinates } from '@/services/suburbCoordinates'
-import { calculateDistanceKm, formatDistance } from '@/services/distanceService'
+import {
+  getSuburbCoordinates,
+} from '@/services/suburbCoordinates'
 
+import {
+  calculateDistanceKm,
+  formatDistance,
+} from '@/services/distanceService'
+
+
+// ======================================================
+// Page state
+// ======================================================
 
 // Service objects loaded for this page.
 const services = ref([])
 
-// Saved service IDs read from this browser storage.
+// Saved service IDs read from browser storage.
 const savedServiceIds =
   ref([])
 
-// True while the page is loading; false when loading ends.
+// True while the page is loading.
 const loading =
   ref(true)
 
-// Error text shown on the page when data loading fails.
+// Error text shown when loading fails.
 const errorMessage =
   ref('')
 
-// Current search, area, type, and access choices.
+
+// ======================================================
+// Filter state
+// ======================================================
+
+// Current area, service type,
+// and accessibility choices.
 const filters = ref({
-  search: '',
   area: '',
   type: '',
   accessibility: '',
 })
 
-// Read saved IDs and load the service list after the page opens.
-// Example input: Open Services; saved IDs include 7 and the API gives two services.
-// Example result: services has two page objects, savedServiceIds includes 7, loading=false.
+
+// ======================================================
+// Load service data
+// ======================================================
+//
+// Read saved IDs and load the service list
+// after the page opens.
+//
 onMounted(async () => {
   savedServiceIds.value =
     getSavedServiceIds()
@@ -105,9 +132,12 @@ onMounted(async () => {
   }
 })
 
+
+// ======================================================
+// Data availability
+// ======================================================
+
 // Check if the service list has any items.
-// Example input: services=[]
-// Example result: false; services=[one service] gives true.
 const dataAvailable =
   computed(() => {
     return (
@@ -115,9 +145,13 @@ const dataAvailable =
     )
   })
 
-// Get area names from services, remove repeats, and sort them.
-// Example input: suburbs ['Clayton', 'Box Hill', 'Clayton']
-// Example result: ['Box Hill', 'Clayton'].
+
+// ======================================================
+// Dynamic filter options
+// ======================================================
+
+// Get area names from services,
+// remove repeats, and sort them.
 const areas = computed(() => {
   return [
     ...new Set(
@@ -131,9 +165,9 @@ const areas = computed(() => {
   ].sort()
 })
 
-// Get service types, remove repeats, and sort them.
-// Example input: types ['Home Care', 'Residential', 'Home Care']
-// Example result: ['Home Care', 'Residential'].
+
+// Get service types,
+// remove repeats, and sort them.
 const serviceTypes =
   computed(() => {
     return [
@@ -148,9 +182,9 @@ const serviceTypes =
     ].sort()
   })
 
-// Get access labels from services and remove repeats.
-// Example input: access lists [['Ramp'], ['Ramp', 'Lift']]
-// Example result: ['Lift', 'Ramp'] after sorting.
+
+// Get access labels from services
+// and remove repeats.
 const accessibilityOptions =
   computed(() => {
     return [
@@ -163,115 +197,135 @@ const accessibilityOptions =
     ].sort()
   })
 
-// Keep services that match the filters; sort by distance when an area point is known.
-// Example input: filters.area='Clayton', services in Clayton and Box Hill
-// Example result: only Clayton services remain; measured distances are sorted from near to far.
+
+// ======================================================
+// Service filtering
+// ======================================================
+//
+// Keep services that match the selected filters.
+//
+// If an area is selected and its reference coordinates
+// are known, calculate service distance and sort
+// from nearest to furthest.
+//
 const filteredServices =
   computed(() => {
-    const search =
-      filters.value.search
-        .trim()
-        .toLowerCase()
-
-    const results = services.value.filter(
-      (service) => {
-        if (search) {
-          // Join service fields into one lowercase search text.
-          const searchableText = [
-            service.name,
-            service.provider,
-            service.type,
-            service.purpose,
-            service.suburb,
-            service.address,
-          ]
-            .join(' ')
-            .toLowerCase()
-
+    const results =
+      services.value.filter(
+        (service) => {
+          // ------------------------------------------
+          // Area filter
+          // ------------------------------------------
           if (
-            !searchableText.includes(
-              search,
+            filters.value.area &&
+            service.suburb !==
+              filters.value.area
+          ) {
+            return false
+          }
+
+          // ------------------------------------------
+          // Service type filter
+          // ------------------------------------------
+          if (
+            filters.value.type &&
+            service.type !==
+              filters.value.type
+          ) {
+            return false
+          }
+
+          // ------------------------------------------
+          // Accessibility filter
+          // ------------------------------------------
+          if (
+            filters.value
+              .accessibility &&
+            !service.accessibility.includes(
+              filters.value
+                .accessibility,
             )
           ) {
             return false
           }
-        }
-        
-        if (
-          filters.value.area &&
-          service.suburb !==
-            filters.value.area
-        ) {
-          return false
-        }
 
-        if (
-          filters.value.type &&
-          service.type !==
-            filters.value.type
-        ) {
-          return false
-        }
+          return true
+        },
+      )
 
-        if (
-          filters.value
-            .accessibility &&
-          !service.accessibility.includes(
-            filters.value
-              .accessibility,
-          )
-        ) {
-          return false
-        }
-
-        return true
-      },
-    )
-
-    // Find the fixed map point for the selected area.
+    // Find the fixed map point
+    // for the selected area.
     const referenceCoordinates =
       filters.value.area
-        ? getSuburbCoordinates(filters.value.area)
+        ? getSuburbCoordinates(
+            filters.value.area,
+          )
         : null
 
-    // No known area point: return the list without distance sorting.
+    // If there is no known area point,
+    // return the filtered list without
+    // distance sorting.
     if (!referenceCoordinates) {
       return results
     }
 
     return results
       .map((service) => {
-        // Find the straight-line distance from the area point to this service.
-        const distanceKm = service.coordinates
-          ? calculateDistanceKm(
-              referenceCoordinates,
-              service.coordinates,
-            )
-          : null
+        // Find the straight-line distance
+        // from the selected area point
+        // to this service.
+        const distanceKm =
+          service.coordinates
+            ? calculateDistanceKm(
+                referenceCoordinates,
+                service.coordinates,
+              )
+            : null
 
         return {
           ...service,
+
           distanceKm,
+
           distanceLabel:
             distanceKm !== null
-              ? formatDistance(distanceKm)
+              ? formatDistance(
+                  distanceKm,
+                )
               : null,
         }
       })
-      .sort((serviceA, serviceB) => {
-        // Treat missing distance as Infinity so it sorts after known distances.
-        const distanceA =
-          serviceA.distanceKm ?? Infinity
-        const distanceB =
-          serviceB.distanceKm ?? Infinity
+      .sort(
+        (
+          serviceA,
+          serviceB,
+        ) => {
+          // Missing distance is treated
+          // as Infinity so services with
+          // known distances appear first.
+          const distanceA =
+            serviceA.distanceKm ??
+            Infinity
 
-        return distanceA - distanceB
-      })
+          const distanceB =
+            serviceB.distanceKm ??
+            Infinity
+
+          return (
+            distanceA -
+            distanceB
+          )
+        },
+      )
   })
 
-// Copy the new filter choices into the page filters.
-// Example input: new filters with search='care' and area='Clayton'
-// Example result: the page filters now use those values; returns no value.
+
+// ======================================================
+// Filter actions
+// ======================================================
+
+// Copy the new filter choices
+// into the page filters.
 const updateFilters = (
   nextFilters,
 ) => {
@@ -279,21 +333,23 @@ const updateFilters = (
     nextFilters
 }
 
-// Set all filter choices to empty text.
-// Example input: click Clear with search='care', area='Clayton'
-// Example result: all filters become ''; saved services stay saved. Returns no value.
+
+// Reset every service filter.
 const clearFilters = () => {
   filters.value = {
-    search: '',
     area: '',
     type: '',
     accessibility: '',
   }
 }
 
-// Check if this service ID is in the saved ID list.
-// Example input: id=7, savedServiceIds=['7']
-// Example result: true.
+
+// ======================================================
+// Saved service actions
+// ======================================================
+
+// Check if this service ID
+// is in the saved ID list.
 const isServiceSaved = (
   id,
 ) => {
@@ -302,9 +358,9 @@ const isServiceSaved = (
   )
 }
 
-// Save or unsave a service and update the page saved ID list.
-// Example input: id=7, savedServiceIds=[]
-// Example result: savedServiceIds becomes ['7']; click again and it becomes []. Returns no value.
+
+// Save or unsave a service
+// and update the page saved ID list.
 const toggleServiceSave = (
   id,
 ) => {
@@ -315,8 +371,10 @@ const toggleServiceSave = (
 }
 </script>
 
+
 <template>
   <main class="services-page">
+
     <!-- ================= HERO ================= -->
     <section class="services-hero">
       <div class="page-container">
@@ -336,11 +394,13 @@ const toggleServiceSave = (
               aged-care support and
               everyday services using
               simple, privacy-aware
-              search options.
+              filter options.
             </p>
           </div>
 
-          <aside class="services-privacy-note">
+          <aside
+            class="services-privacy-note"
+          >
             <span aria-hidden="true">
               ✓
             </span>
@@ -351,7 +411,7 @@ const toggleServiceSave = (
               </strong>
 
               <p>
-                Search uses only broad,
+                Filters use only broad,
                 optional choices such as
                 general area and service
                 type.
@@ -362,9 +422,11 @@ const toggleServiceSave = (
       </div>
     </section>
 
+
     <!-- ================= MAIN ================= -->
     <section class="services-main">
       <div class="page-container">
+
         <!-- ================= CATEGORIES ================= -->
         <div class="service-category-intro">
           <article>
@@ -414,6 +476,7 @@ const toggleServiceSave = (
           </article>
         </div>
 
+
         <!-- ================= FILTERS ================= -->
         <ServiceFilters
           :filters="filters"
@@ -435,6 +498,7 @@ const toggleServiceSave = (
           "
         />
 
+
         <!-- ================= DATA NOTE ================= -->
         <div class="services-data-note">
           <span aria-hidden="true">
@@ -451,8 +515,11 @@ const toggleServiceSave = (
           </p>
         </div>
 
+
         <!-- ================= RESULTS HEADING ================= -->
-        <div class="service-results-heading">
+        <div
+          class="service-results-heading"
+        >
           <div>
             <p class="section-kicker">
               Results
@@ -472,6 +539,7 @@ const toggleServiceSave = (
             </h2>
           </div>
         </div>
+
 
         <!-- ================= LOADING ================= -->
         <div
@@ -493,6 +561,7 @@ const toggleServiceSave = (
             Please wait a moment.
           </p>
         </div>
+
 
         <!-- ================= ERROR ================= -->
         <div
@@ -517,6 +586,7 @@ const toggleServiceSave = (
             {{ errorMessage }}
           </p>
         </div>
+
 
         <!-- ================= DATA NOT CONNECTED ================= -->
         <div
@@ -554,7 +624,9 @@ const toggleServiceSave = (
             connected.
           </p>
 
-          <div class="service-source-plan">
+          <div
+            class="service-source-plan"
+          >
             <span>
               Healthcare & care facilities
             </span>
@@ -568,6 +640,7 @@ const toggleServiceSave = (
             </span>
           </div>
         </div>
+
 
         <!-- ================= NO MATCHES ================= -->
         <div
@@ -590,7 +663,7 @@ const toggleServiceSave = (
 
           <p>
             Try changing one or more
-            search options to see more
+            filter options to see more
             results.
           </p>
 
@@ -604,6 +677,7 @@ const toggleServiceSave = (
             Clear filters
           </button>
         </div>
+
 
         <!-- ================= SERVICE RESULTS ================= -->
         <div
@@ -627,6 +701,7 @@ const toggleServiceSave = (
             "
           />
         </div>
+
       </div>
     </section>
   </main>

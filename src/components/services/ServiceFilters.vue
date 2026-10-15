@@ -3,7 +3,8 @@ src/components/services/ServiceFilters.vue
 Show service filters and send changes to ServicesView.
 
 How calls move:
-Input/change -> updateField -> emit update:filters -> ServicesView.updateFilters; Clear -> emit clear.
+Change -> updateField -> emit update:filters -> ServicesView.updateFilters;
+Clear -> emit clear.
 
 Reading tips:
   Examples show one possible case, not fixed API or model results.
@@ -20,8 +21,10 @@ Props and events:
 Notes:
   This component does not load services or directly change the parent filters.
 -->
+
 <script setup>
-// Receive filters, area/type/accessibility options and the dataAvailable flag from the parent.
+// Receive filters, area/type/accessibility options
+// and the dataAvailable flag from the parent.
 const props = defineProps({
   filters: {
     type: Object,
@@ -49,20 +52,26 @@ const props = defineProps({
   },
 })
 
-// Notify the parent through update:filters and clear component events.
+// Notify the parent through update:filters
+// and clear component events.
 const emit = defineEmits([
   'update:filters',
   'clear',
 ])
 
-// Change one filter and send the full filter object to the parent page.
-// Example input: field='search', value='care', current area='Clayton'
-// Example result: sends update:filters with search='care' and area='Clayton'; returns no value.
+// Change one filter and send the full filter object
+// to the parent page.
+//
+// Example input:
+// field='area', value='Clayton'
+//
+// Example result:
+// Sends update:filters with area='Clayton'
+// while keeping the other current filter values.
 const updateField = (
   field,
   value,
 ) => {
-  // Send new filters to the parent; keep the other choices.
   emit('update:filters', {
     ...props.filters,
     [field]: value,
@@ -75,6 +84,9 @@ const updateField = (
     class="service-filter-panel"
     aria-labelledby="service-filter-heading"
   >
+    <!-- =========================================
+         Filter heading
+    ========================================== -->
     <div class="service-filter-heading">
       <div>
         <p class="section-kicker">
@@ -82,7 +94,7 @@ const updateField = (
         </p>
 
         <h2 id="service-filter-heading">
-          Search essential services
+          Find essential services
         </h2>
 
         <p>
@@ -101,6 +113,10 @@ const updateField = (
       </button>
     </div>
 
+
+    <!-- =========================================
+         Data availability note
+    ========================================== -->
     <div
       v-if="!dataAvailable"
       class="service-filter-availability"
@@ -115,44 +131,22 @@ const updateField = (
         </strong>
 
         <p>
-          The search structure is ready, but
+          The filter structure is ready, but
           verified provider and access data
           is not yet available.
         </p>
       </div>
     </div>
 
+
+    <!-- =========================================
+         Filter controls
+    ========================================== -->
     <div class="service-filter-grid">
-      <div
-        class="service-filter-field service-filter-search"
-      >
-        <label for="service-search">
-          Search
-        </label>
 
-        <input
-          id="service-search"
-          type="search"
-          :value="filters.search"
-          :disabled="!dataAvailable"
-          placeholder="Search by service or provider"
-          @input="
-            updateField(
-              'search',
-              $event.target.value,
-            )
-          "
-        />
-
-        <small
-          v-if="!dataAvailable"
-          class="service-filter-helper"
-        >
-          Available after verified service
-          data is connected.
-        </small>
-      </div>
-
+      <!-- =======================================
+           General area
+      ======================================== -->
       <div class="service-filter-field">
         <label for="service-area">
           General area
@@ -191,6 +185,10 @@ const updateField = (
         </small>
       </div>
 
+
+      <!-- =======================================
+           Service type
+      ======================================== -->
       <div class="service-filter-field">
         <label for="service-type">
           Service type
@@ -229,6 +227,10 @@ const updateField = (
         </small>
       </div>
 
+
+      <!-- =======================================
+           Accessibility
+      ======================================== -->
       <div class="service-filter-field">
         <label for="service-accessibility">
           Accessibility

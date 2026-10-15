@@ -575,7 +575,7 @@ const outdoorConditions =
           ======================================= -->
           <div>
             <span class="weather-label">
-              UV
+              Ultraviolet (UV) Index
             </span>
 
             <!-- Original numeric UV value -->
@@ -613,7 +613,7 @@ const outdoorConditions =
           ======================================= -->
           <div>
             <span class="weather-label">
-              AQI (US)
+              Air Quality Index (AQI)
             </span>
 
             <!-- Original numeric AQI value -->

@@ -77,7 +77,6 @@ const errorMessage =
 // Using a function allows clearFilters() to create a new
 // object whenever the filters need to be reset.
 const defaultFilters = () => ({
-  search: '',
   area: '',
   interest: '',
   day: '',
@@ -257,42 +256,9 @@ const recurrenceOptions =
 //
 const filteredActivities =
   computed(() => {
-    // Normalise the free-text search so that matching
-    // is case-insensitive and ignores surrounding spaces.
-    const search =
-      filters.value.search
-        .trim()
-        .toLowerCase()
-
     const results =
       activities.value.filter(
         (activity) => {
-          // ------------------------------------------
-          // Free-text search
-          // ------------------------------------------
-          //
-          // Search across several useful activity fields
-          // instead of checking the activity name only.
-          if (search) {
-            const searchableText = [
-              activity.name,
-              activity.venue,
-              activity.suburb,
-              activity.activityType,
-              ...activity.tags,
-            ]
-              .join(' ')
-              .toLowerCase()
-
-            if (
-              !searchableText.includes(
-                search,
-              )
-            ) {
-              return false
-            }
-          }
-
           // ------------------------------------------
           // Area filter
           // ------------------------------------------
@@ -491,7 +457,7 @@ const toggleSave = (
             </h1>
 
             <p>
-              Search activities by
+              Filter activities by
               general area, interests
               and preferred schedule
               using simple, optional

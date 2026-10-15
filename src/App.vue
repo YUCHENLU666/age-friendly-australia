@@ -3,44 +3,22 @@
 import {
   RouterLink,
   RouterView,
-  useRoute,
 } from 'vue-router'
-
-// Import computed so Vue can automatically
-// update the layout when the URL changes.
-import { computed } from 'vue'
 
 // Import the navigation bar.
 import AppNavbar from '@/components/AppNavbar.vue'
-
-// Get the current route information.
-//
-// Example:
-// /login      -> route.name is "login"
-// /            -> route.name is "home"
-// /activities  -> route.name is "activities"
-const route = useRoute()
-
-// Check whether the current page is the login page.
-//
-// We use this value to hide the normal website
-// navigation bar and footer on /login.
-const isLoginPage = computed(
-  () => route.name === 'login',
-)
 </script>
 
 <template>
   <div class="app-shell">
 
     <!--
-      Show the normal navigation bar only
-      after the administrator enters the website.
+      Main navigation bar.
 
-      On /login:
-      Navbar is hidden.
+      Admin login has been removed,
+      so the navigation bar is always visible.
     -->
-    <AppNavbar v-if="!isLoginPage" />
+    <AppNavbar />
 
     <!--
       RouterView displays the page selected
@@ -48,30 +26,36 @@ const isLoginPage = computed(
 
       Example:
 
-      /login
+      /
           ↓
-      LoginView.vue
+      HomeView.vue
 
       /activities
           ↓
       ActivitiesView.vue
+
+      /services
+          ↓
+      ServicesView.vue
+
+      /calendar
+          ↓
+      CalendarView.vue
     -->
     <main
       id="main-content"
-      :class="{
-        'main-content': !isLoginPage,
-      }"
+      class="main-content"
     >
       <RouterView />
     </main>
 
     <!--
-      The footer is also hidden on the login page.
+      Site footer.
+
+      Admin login has been removed,
+      so the footer is always visible.
     -->
-    <footer
-      v-if="!isLoginPage"
-      class="site-footer"
-    >
+    <footer class="site-footer">
       <div class="page-container footer-main">
         <div class="footer-brand-section">
           <RouterLink
@@ -91,8 +75,8 @@ const isLoginPage = computed(
           </RouterLink>
 
           <p>
-            Helping older adults discover useful local activities,
-            local activities and verified aged-care support services.
+            Helping older adults discover useful local activities
+            and verified aged-care support services.
           </p>
         </div>
 

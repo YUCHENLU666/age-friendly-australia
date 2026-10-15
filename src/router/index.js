@@ -16,7 +16,6 @@ const router = createRouter({
   // to use normal browser URLs such as:
   //
   // /
-  // /login
   // /activities
   // /services
   // /live
@@ -34,41 +33,6 @@ const router = createRouter({
   // =========================
   routes: [
     // =========================
-    // Login page
-    // =========================
-    {
-      // When the browser URL is:
-      //
-      // /login
-      //
-      // Vue Router loads LoginView.vue.
-      path: '/login',
-
-      // Route name.
-      name: 'login',
-
-      // Lazy-load LoginView.vue.
-      //
-      // This means the component is loaded
-      // only when the user visits /login.
-      component: () =>
-        import(
-          '@/views/LoginView.vue'
-        ),
-
-      // IMPORTANT:
-      //
-      // We do NOT add:
-      //
-      // meta: {
-      //   requiresAuth: true
-      // }
-      //
-      // because the login page must be
-      // accessible before the user logs in.
-    },
-
-    // =========================
     // Homepage
     // =========================
     {
@@ -82,14 +46,6 @@ const router = createRouter({
       // HomeView was imported
       // at the top of this file.
       component: HomeView,
-
-      // This route is protected.
-      //
-      // The navigation guard below
-      // will check this value.
-      meta: {
-        requiresAuth: true,
-      },
     },
 
     // =========================
@@ -109,11 +65,6 @@ const router = createRouter({
         import(
           '@/views/ActivitiesView.vue'
         ),
-
-      // User must be logged in.
-      meta: {
-        requiresAuth: true,
-      },
     },
 
     // =========================
@@ -139,11 +90,6 @@ const router = createRouter({
         import(
           '@/views/ActivityDetailView.vue'
         ),
-
-      // This page is also protected.
-      meta: {
-        requiresAuth: true,
-      },
     },
 
     // =========================
@@ -162,11 +108,6 @@ const router = createRouter({
         import(
           '@/views/ServicesView.vue'
         ),
-
-      // User must be logged in.
-      meta: {
-        requiresAuth: true,
-      },
     },
 
     // =========================
@@ -188,11 +129,6 @@ const router = createRouter({
         import(
           '@/views/ServiceDetailView.vue'
         ),
-
-      // This page also requires login.
-      meta: {
-        requiresAuth: true,
-      },
     },
 
     // =========================
@@ -211,12 +147,6 @@ const router = createRouter({
         import(
           '@/views/LiveInformationView.vue'
         ),
-
-      // This page requires login,
-      // consistent with other feature pages.
-      meta: {
-        requiresAuth: true,
-      },
     },
 
     // =========================
@@ -235,11 +165,6 @@ const router = createRouter({
         import(
           '@/views/SavedView.vue'
         ),
-
-      // This page is protected.
-      meta: {
-        requiresAuth: true,
-      },
     },
 
     // =========================
@@ -273,12 +198,6 @@ const router = createRouter({
         import(
           '@/views/CalendarView.vue'
         ),
-
-      // Keep the calendar protected
-      // like the other main feature pages.
-      meta: {
-        requiresAuth: true,
-      },
     },
 
     // =========================
@@ -297,14 +216,6 @@ const router = createRouter({
         import(
           '@/views/PreferencesView.vue'
         ),
-
-      // This page is protected.
-      //
-      // Only logged-in users can access
-      // the preferences page.
-      meta: {
-        requiresAuth: true,
-      },
     },
 
     // =========================
@@ -338,119 +249,6 @@ const router = createRouter({
       top: 0,
     }
   },
-})
-
-// =========================
-// Global Navigation Guard
-// =========================
-//
-// beforeEach() runs BEFORE every route change.
-//
-// Example:
-//
-// User enters:
-//
-// /calendar
-//
-//        ↓
-//
-// router.beforeEach()
-//
-//        ↓
-//
-// Check whether Calendar
-// requires login.
-//
-//        ↓
-//
-// Check localStorage login status.
-//
-//        ↓
-//
-// Logged in?
-//
-// YES → continue to /calendar
-//
-// NO → redirect to /login
-//
-router.beforeEach((to) => {
-  // =========================
-  // Read login status
-  // =========================
-  //
-  // LoginView.vue saves this value
-  // after successful login:
-  //
-  // localStorage.setItem(
-  //   'ageFriendlyAdminLoggedIn',
-  //   'true'
-  // )
-  //
-  // localStorage stores strings,
-  // so we compare the stored value
-  // with the string "true".
-  const isLoggedIn =
-    localStorage.getItem(
-      'ageFriendlyAdminLoggedIn',
-    ) === 'true'
-
-  // =========================
-  // Protect private routes
-  // =========================
-  //
-  // "to" represents the page
-  // that the user wants to visit.
-  //
-  // Example:
-  //
-  // User wants:
-  //
-  // /calendar
-  //
-  // Then:
-  //
-  // to.meta.requiresAuth
-  //
-  // will be true.
-  if (
-    to.meta.requiresAuth &&
-    !isLoggedIn
-  ) {
-    // User is trying to visit
-    // a protected page without logging in.
-    //
-    // Redirect them to LoginView.vue.
-    return {
-      name: 'login',
-    }
-  }
-
-  // =========================
-  // Prevent logged-in user
-  // from returning to login
-  // =========================
-  //
-  // Example:
-  //
-  // User logs in successfully
-  //        ↓
-  // Goes to homepage
-  //        ↓
-  // Manually enters /login
-  //        ↓
-  // Redirect back to homepage
-  //
-  if (
-    to.name === 'login' &&
-    isLoggedIn
-  ) {
-    return {
-      name: 'home',
-    }
-  }
-
-  // If no return happens above,
-  // Vue Router allows navigation normally.
 })
 
 // =========================

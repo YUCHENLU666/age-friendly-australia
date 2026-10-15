@@ -40,7 +40,6 @@ const props = defineProps({
   // Example:
   //
   // {
-  //   search: '',
   //   area: '',
   //   interest: '',
   //   day: '',
@@ -171,36 +170,6 @@ const updateField = (field, value) => {
          Filter controls
     ============================================= -->
     <div class="activity-filter-grid">
-
-      <!-- ==========================================
-           Free-text search
-      =========================================== -->
-      <!--
-        Search text is sent to ActivitiesView on every
-        input event.
-
-        The parent component decides which activity
-        fields are included in the search.
-      -->
-      <div class="activity-filter-field filter-field--search">
-        <label for="activity-search">
-          Search
-        </label>
-
-        <input
-          id="activity-search"
-          type="search"
-          :value="filters.search"
-          placeholder="Try walking, technology, knitting..."
-          @input="
-            updateField(
-              'search',
-              $event.target.value,
-            )
-          "
-        />
-      </div>
-
 
       <!-- ==========================================
            General area filter
