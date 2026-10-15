@@ -1,17 +1,18 @@
 {
   "status": "partial",
-  "last_attempt_at": "2026-10-14T23:14:27.978709+00:00",
-  "last_success_at": "2026-10-14T23:14:27.853106+00:00",
-  "refreshed_count": 40,
+  "last_attempt_at": "2026-10-15T23:09:33.530554+00:00",
+  "last_success_at": "2026-10-15T23:09:33.374390+00:00",
+  "refreshed_count": 39,
   "failed_suburbs": [
-    "Brunswick East",
+    "Carlton",
     "Carlton North",
+    "Elsternwick",
     "Eltham",
-    "Footscray",
+    "Fitzroy North",
     "Laverton",
-    "Main Ridge",
-    "Mooroolbark",
-    "St Kilda"
+    "Mount Evelyn",
+    "Richmond",
+    "St Kilda West"
   ],
   "message": "Some locations could not refresh. Previous data was retained where available."
 }
