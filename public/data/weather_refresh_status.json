@@ -1,18 +1,20 @@
 {
   "status": "partial",
-  "last_attempt_at": "2026-10-15T23:09:33.530554+00:00",
-  "last_success_at": "2026-10-15T23:09:33.374390+00:00",
-  "refreshed_count": 39,
+  "last_attempt_at": "2026-10-16T22:50:56.415580+00:00",
+  "last_success_at": "2026-10-16T22:50:56.259361+00:00",
+  "refreshed_count": 37,
   "failed_suburbs": [
-    "Carlton",
     "Carlton North",
-    "Elsternwick",
-    "Eltham",
-    "Fitzroy North",
-    "Laverton",
-    "Mount Evelyn",
-    "Richmond",
-    "St Kilda West"
+    "Clayton",
+    "Clayton South",
+    "Footscray",
+    "Frankston",
+    "Melbourne CBD",
+    "Moonee Ponds",
+    "Northcote",
+    "Prahran",
+    "South Wharf",
+    "Williamstown"
   ],
   "message": "Some locations could not refresh. Previous data was retained where available."
 }
