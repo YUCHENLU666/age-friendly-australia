@@ -1,20 +1,18 @@
 {
   "status": "partial",
-  "last_attempt_at": "2026-10-16T22:50:56.415580+00:00",
-  "last_success_at": "2026-10-16T22:50:56.259361+00:00",
-  "refreshed_count": 37,
+  "last_attempt_at": "2026-10-17T22:08:56.699221+00:00",
+  "last_success_at": "2026-10-17T22:08:56.538458+00:00",
+  "refreshed_count": 39,
   "failed_suburbs": [
-    "Carlton North",
     "Clayton",
     "Clayton South",
-    "Footscray",
-    "Frankston",
-    "Melbourne CBD",
-    "Moonee Ponds",
-    "Northcote",
-    "Prahran",
-    "South Wharf",
-    "Williamstown"
+    "Gladstone Park",
+    "Hallam",
+    "Hampton East",
+    "Mooroolbark",
+    "Mornington",
+    "Richmond",
+    "Ringwood East"
   ],
   "message": "Some locations could not refresh. Previous data was retained where available."
 }
