@@ -1,20 +1,21 @@
 {
   "status": "partial",
-  "last_attempt_at": "2026-10-18T22:27:05.696023+00:00",
-  "last_success_at": "2026-10-18T22:27:05.539704+00:00",
-  "refreshed_count": 37,
+  "last_attempt_at": "2026-10-20T23:10:46.411583+00:00",
+  "last_success_at": "2026-10-20T23:10:46.264430+00:00",
+  "refreshed_count": 36,
   "failed_suburbs": [
-    "Carlton North",
-    "Clayton",
-    "Clayton South",
-    "Footscray",
-    "Frankston",
-    "Gladstone Park",
-    "Moonee Ponds",
-    "Moorabbin",
+    "Brighton East",
+    "Collingwood",
+    "Dandenong North",
+    "Docklands",
+    "Hawthorn",
+    "Laverton",
+    "Main Ridge",
+    "Narre Warren",
+    "Newport",
+    "Northcote",
     "Prahran",
-    "St Kilda West",
-    "Williamstown"
+    "St Kilda Road"
   ],
   "message": "Some locations could not refresh. Previous data was retained where available."
 }
