@@ -1,21 +1,17 @@
 {
   "status": "partial",
-  "last_attempt_at": "2026-10-20T23:10:46.411583+00:00",
-  "last_success_at": "2026-10-20T23:10:46.264430+00:00",
-  "refreshed_count": 36,
+  "last_attempt_at": "2026-10-21T23:10:40.359377+00:00",
+  "last_success_at": "2026-10-21T23:10:40.250176+00:00",
+  "refreshed_count": 40,
   "failed_suburbs": [
-    "Brighton East",
+    "Coburg",
     "Collingwood",
     "Dandenong North",
-    "Docklands",
+    "Hampton East",
     "Hawthorn",
     "Laverton",
-    "Main Ridge",
-    "Narre Warren",
-    "Newport",
-    "Northcote",
-    "Prahran",
-    "St Kilda Road"
+    "North Melbourne",
+    "Northcote"
   ],
   "message": "Some locations could not refresh. Previous data was retained where available."
 }
