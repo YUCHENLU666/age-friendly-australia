@@ -1,17 +1,16 @@
 {
   "status": "partial",
-  "last_attempt_at": "2026-10-21T23:10:40.359377+00:00",
-  "last_success_at": "2026-10-21T23:10:40.250176+00:00",
-  "refreshed_count": 40,
+  "last_attempt_at": "2026-10-22T23:12:23.818312+00:00",
+  "last_success_at": "2026-10-22T23:12:23.709545+00:00",
+  "refreshed_count": 41,
   "failed_suburbs": [
-    "Coburg",
-    "Collingwood",
+    "Brunswick East",
+    "Carlton",
     "Dandenong North",
+    "Docklands",
+    "Gladstone Park",
     "Hampton East",
-    "Hawthorn",
-    "Laverton",
-    "North Melbourne",
-    "Northcote"
+    "Prahran"
   ],
   "message": "Some locations could not refresh. Previous data was retained where available."
 }
