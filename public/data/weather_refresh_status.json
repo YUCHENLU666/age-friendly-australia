@@ -1,16 +1,22 @@
 {
   "status": "partial",
-  "last_attempt_at": "2026-10-22T23:12:23.818312+00:00",
-  "last_success_at": "2026-10-22T23:12:23.709545+00:00",
-  "refreshed_count": 41,
+  "last_attempt_at": "2026-10-23T23:06:55.104537+00:00",
+  "last_success_at": "2026-10-23T23:06:54.956268+00:00",
+  "refreshed_count": 35,
   "failed_suburbs": [
-    "Brunswick East",
-    "Carlton",
-    "Dandenong North",
-    "Docklands",
+    "Carlton North",
+    "Clayton",
+    "Clayton South",
+    "Footscray",
+    "Frankston",
     "Gladstone Park",
-    "Hampton East",
-    "Prahran"
+    "Moonee Ponds",
+    "Moorabbin",
+    "Mooroolbark",
+    "Richmond",
+    "Ringwood East",
+    "Southbank",
+    "St Kilda East"
   ],
   "message": "Some locations could not refresh. Previous data was retained where available."
 }
