@@ -1,22 +1,18 @@
 {
   "status": "partial",
-  "last_attempt_at": "2026-10-23T23:06:55.104537+00:00",
-  "last_success_at": "2026-10-23T23:06:54.956268+00:00",
-  "refreshed_count": 35,
+  "last_attempt_at": "2026-10-24T22:25:07.413991+00:00",
+  "last_success_at": "2026-10-24T22:25:07.266063+00:00",
+  "refreshed_count": 39,
   "failed_suburbs": [
-    "Carlton North",
-    "Clayton",
     "Clayton South",
-    "Footscray",
-    "Frankston",
-    "Gladstone Park",
-    "Moonee Ponds",
-    "Moorabbin",
-    "Mooroolbark",
-    "Richmond",
-    "Ringwood East",
-    "Southbank",
-    "St Kilda East"
+    "Coburg",
+    "Collingwood",
+    "Hampton East",
+    "Hawthorn",
+    "Laverton",
+    "Newport",
+    "Noble Park",
+    "North Melbourne"
   ],
   "message": "Some locations could not refresh. Previous data was retained where available."
 }
