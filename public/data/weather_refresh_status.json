@@ -1,15 +1,16 @@
 {
   "status": "partial",
-  "last_attempt_at": "2026-10-25T22:32:19.778435+00:00",
-  "last_success_at": "2026-10-25T22:32:19.673811+00:00",
-  "refreshed_count": 42,
+  "last_attempt_at": "2026-10-26T23:45:10.827811+00:00",
+  "last_success_at": "2026-10-26T23:45:10.750270+00:00",
+  "refreshed_count": 41,
   "failed_suburbs": [
     "Clayton",
-    "Clayton South",
-    "Frankston",
-    "Gladstone Park",
-    "Narre Warren",
-    "St Kilda East"
+    "Dandenong North",
+    "Docklands",
+    "Hawthorn",
+    "Laverton",
+    "Prahran",
+    "Richmond"
   ],
   "message": "Some locations could not refresh. Previous data was retained where available."
 }
