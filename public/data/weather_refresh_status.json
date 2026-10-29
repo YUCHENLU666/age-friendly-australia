@@ -1,21 +1,21 @@
 {
   "status": "partial",
-  "last_attempt_at": "2026-10-29T00:06:29.292351+00:00",
-  "last_success_at": "2026-10-29T00:06:29.160264+00:00",
+  "last_attempt_at": "2026-10-29T23:58:18.167208+00:00",
+  "last_success_at": "2026-10-29T23:58:18.023437+00:00",
   "refreshed_count": 36,
   "failed_suburbs": [
-    "Carlton",
-    "Carlton North",
     "Clayton",
-    "Footscray",
-    "Frankston",
-    "Gladstone Park",
-    "Malvern",
-    "Moorabbin",
-    "Narre Warren",
+    "Clayton South",
+    "Coburg",
+    "Hampton East",
+    "Hawthorn",
+    "Laverton",
     "Newport",
-    "Southbank",
-    "St Kilda East"
+    "Noble Park",
+    "North Melbourne",
+    "St Kilda Road",
+    "St Kilda West",
+    "Williamstown"
   ],
   "message": "Some locations could not refresh. Previous data was retained where available."
 }
