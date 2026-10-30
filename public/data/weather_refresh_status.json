@@ -1,21 +1,13 @@
 {
   "status": "partial",
-  "last_attempt_at": "2026-10-29T23:58:18.167208+00:00",
-  "last_success_at": "2026-10-29T23:58:18.023437+00:00",
-  "refreshed_count": 36,
+  "last_attempt_at": "2026-10-30T23:39:13.296004+00:00",
+  "last_success_at": "2026-10-30T23:39:13.191397+00:00",
+  "refreshed_count": 44,
   "failed_suburbs": [
-    "Clayton",
-    "Clayton South",
-    "Coburg",
-    "Hampton East",
-    "Hawthorn",
-    "Laverton",
-    "Newport",
-    "Noble Park",
-    "North Melbourne",
-    "St Kilda Road",
-    "St Kilda West",
-    "Williamstown"
+    "Carlton",
+    "Carlton North",
+    "Eltham",
+    "Mooroolbark"
   ],
   "message": "Some locations could not refresh. Previous data was retained where available."
 }
