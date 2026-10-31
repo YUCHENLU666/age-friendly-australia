@@ -1,13 +1,18 @@
 {
   "status": "partial",
-  "last_attempt_at": "2026-10-30T23:39:13.296004+00:00",
-  "last_success_at": "2026-10-30T23:39:13.191397+00:00",
-  "refreshed_count": 44,
+  "last_attempt_at": "2026-10-31T23:20:14.563580+00:00",
+  "last_success_at": "2026-10-31T23:20:14.412803+00:00",
+  "refreshed_count": 39,
   "failed_suburbs": [
-    "Carlton",
-    "Carlton North",
-    "Eltham",
-    "Mooroolbark"
+    "Clayton",
+    "Clayton South",
+    "Footscray",
+    "Frankston",
+    "Gladstone Park",
+    "Moonee Ponds",
+    "Moorabbin",
+    "Ringwood East",
+    "South Wharf"
   ],
   "message": "Some locations could not refresh. Previous data was retained where available."
 }
