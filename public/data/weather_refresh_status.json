@@ -1,21 +1,19 @@
 {
   "status": "partial",
-  "last_attempt_at": "2026-11-01T23:38:05.841026+00:00",
-  "last_success_at": "2026-11-01T23:38:05.691710+00:00",
-  "refreshed_count": 36,
+  "last_attempt_at": "2026-11-03T02:16:31.395603+00:00",
+  "last_success_at": "2026-11-03T02:16:31.283378+00:00",
+  "refreshed_count": 38,
   "failed_suburbs": [
     "Carlton",
     "Carlton North",
-    "Clayton",
     "Fitzroy North",
     "Footscray",
-    "Main Ridge",
-    "Malvern",
+    "Frankston",
+    "Hawthorn",
+    "Moorabbin",
     "Mornington",
-    "Noble Park",
-    "Prahran",
-    "St Kilda",
-    "Williamstown"
+    "Richmond",
+    "Ringwood East"
   ],
   "message": "Some locations could not refresh. Previous data was retained where available."
 }
