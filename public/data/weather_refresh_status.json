@@ -1,19 +1,21 @@
 {
   "status": "partial",
-  "last_attempt_at": "2026-11-03T02:16:31.395603+00:00",
-  "last_success_at": "2026-11-03T02:16:31.283378+00:00",
-  "refreshed_count": 38,
+  "last_attempt_at": "2026-11-04T00:38:43.875421+00:00",
+  "last_success_at": "2026-11-04T00:38:43.727297+00:00",
+  "refreshed_count": 36,
   "failed_suburbs": [
-    "Carlton",
-    "Carlton North",
-    "Fitzroy North",
+    "Clayton",
+    "Clayton South",
+    "Coburg",
     "Footscray",
     "Frankston",
     "Hawthorn",
-    "Moorabbin",
     "Mornington",
-    "Richmond",
-    "Ringwood East"
+    "Mount Evelyn",
+    "Narre Warren",
+    "South Wharf",
+    "Southbank",
+    "St Kilda"
   ],
   "message": "Some locations could not refresh. Previous data was retained where available."
 }
