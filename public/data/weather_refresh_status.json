@@ -1,21 +1,18 @@
 {
   "status": "partial",
-  "last_attempt_at": "2026-11-04T00:38:43.875421+00:00",
-  "last_success_at": "2026-11-04T00:38:43.727297+00:00",
-  "refreshed_count": 36,
+  "last_attempt_at": "2026-11-05T00:56:25.905293+00:00",
+  "last_success_at": "2026-11-05T00:56:25.821740+00:00",
+  "refreshed_count": 39,
   "failed_suburbs": [
     "Clayton",
     "Clayton South",
-    "Coburg",
-    "Footscray",
-    "Frankston",
-    "Hawthorn",
-    "Mornington",
-    "Mount Evelyn",
-    "Narre Warren",
-    "South Wharf",
-    "Southbank",
-    "St Kilda"
+    "Main Ridge",
+    "Malvern",
+    "Melbourne CBD",
+    "Noble Park",
+    "North Melbourne",
+    "St Kilda",
+    "St Kilda West"
   ],
   "message": "Some locations could not refresh. Previous data was retained where available."
 }
