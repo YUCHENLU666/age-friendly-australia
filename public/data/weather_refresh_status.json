@@ -1,18 +1,19 @@
 {
   "status": "partial",
-  "last_attempt_at": "2026-11-05T00:56:25.905293+00:00",
-  "last_success_at": "2026-11-05T00:56:25.821740+00:00",
-  "refreshed_count": 39,
+  "last_attempt_at": "2026-11-06T01:01:14.258405+00:00",
+  "last_success_at": "2026-11-06T01:01:14.127308+00:00",
+  "refreshed_count": 38,
   "failed_suburbs": [
-    "Clayton",
     "Clayton South",
+    "Coburg",
+    "Collingwood",
+    "Hawthorn",
+    "Laverton",
     "Main Ridge",
-    "Malvern",
-    "Melbourne CBD",
     "Noble Park",
     "North Melbourne",
-    "St Kilda",
-    "St Kilda West"
+    "Northcote",
+    "Williamstown"
   ],
   "message": "Some locations could not refresh. Previous data was retained where available."
 }
