@@ -1,22 +1,21 @@
 {
   "status": "partial",
-  "last_attempt_at": "2026-11-07T23:40:51.457535+00:00",
-  "last_success_at": "2026-11-07T23:40:51.344576+00:00",
-  "refreshed_count": 35,
+  "last_attempt_at": "2026-11-08T23:38:55.425479+00:00",
+  "last_success_at": "2026-11-08T23:38:55.279216+00:00",
+  "refreshed_count": 36,
   "failed_suburbs": [
-    "Carlton North",
+    "Carlton",
     "Clayton",
-    "Clayton South",
+    "Dandenong North",
     "Elsternwick",
-    "Eltham",
-    "Fitzroy North",
-    "Melbourne CBD",
-    "Moonee Ponds",
-    "Moorabbin",
-    "Prahran",
-    "Richmond",
-    "St Kilda East",
-    "St Kilda Road"
+    "Laverton",
+    "Main Ridge",
+    "Malvern",
+    "Newport",
+    "Noble Park",
+    "North Melbourne",
+    "Southbank",
+    "St Kilda"
   ],
   "message": "Some locations could not refresh. Previous data was retained where available."
 }
