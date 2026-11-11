@@ -1,19 +1,21 @@
 {
   "status": "partial",
-  "last_attempt_at": "2026-11-10T02:44:42.783255+00:00",
-  "last_success_at": "2026-11-10T02:44:42.635700+00:00",
-  "refreshed_count": 38,
+  "last_attempt_at": "2026-11-11T00:40:42.091158+00:00",
+  "last_success_at": "2026-11-11T00:40:41.941733+00:00",
+  "refreshed_count": 36,
   "failed_suburbs": [
+    "Carlton",
+    "Carlton North",
     "Clayton",
-    "Clayton South",
+    "Eltham",
+    "Fitzroy North",
     "Footscray",
-    "Frankston",
-    "Gladstone Park",
-    "Mornington",
-    "Mount Evelyn",
-    "Narre Warren",
-    "South Wharf",
-    "Southbank"
+    "Main Ridge",
+    "Malvern",
+    "Newport",
+    "Noble Park",
+    "St Kilda",
+    "St Kilda East"
   ],
   "message": "Some locations could not refresh. Previous data was retained where available."
 }
