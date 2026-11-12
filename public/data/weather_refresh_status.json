@@ -1,21 +1,19 @@
 {
   "status": "partial",
-  "last_attempt_at": "2026-11-11T00:40:42.091158+00:00",
-  "last_success_at": "2026-11-11T00:40:41.941733+00:00",
-  "refreshed_count": 36,
+  "last_attempt_at": "2026-11-12T01:58:36.747934+00:00",
+  "last_success_at": "2026-11-12T01:58:36.596247+00:00",
+  "refreshed_count": 38,
   "failed_suburbs": [
-    "Carlton",
-    "Carlton North",
     "Clayton",
-    "Eltham",
-    "Fitzroy North",
+    "Clayton South",
     "Footscray",
-    "Main Ridge",
-    "Malvern",
-    "Newport",
-    "Noble Park",
-    "St Kilda",
-    "St Kilda East"
+    "Frankston",
+    "Mooroolbark",
+    "Mornington",
+    "Mount Evelyn",
+    "Ringwood East",
+    "South Melbourne",
+    "South Wharf"
   ],
   "message": "Some locations could not refresh. Previous data was retained where available."
 }
