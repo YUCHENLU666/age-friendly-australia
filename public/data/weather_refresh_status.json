@@ -1,19 +1,16 @@
 {
   "status": "partial",
-  "last_attempt_at": "2026-11-12T01:58:36.747934+00:00",
-  "last_success_at": "2026-11-12T01:58:36.596247+00:00",
-  "refreshed_count": 38,
+  "last_attempt_at": "2026-11-13T01:03:52.452827+00:00",
+  "last_success_at": "2026-11-13T01:03:52.338545+00:00",
+  "refreshed_count": 41,
   "failed_suburbs": [
     "Clayton",
     "Clayton South",
-    "Footscray",
-    "Frankston",
-    "Mooroolbark",
-    "Mornington",
-    "Mount Evelyn",
-    "Ringwood East",
-    "South Melbourne",
-    "South Wharf"
+    "Coburg",
+    "Gladstone Park",
+    "Northcote",
+    "Prahran",
+    "Richmond"
   ],
   "message": "Some locations could not refresh. Previous data was retained where available."
 }
