@@ -1,16 +1,16 @@
 {
   "status": "partial",
-  "last_attempt_at": "2026-11-13T01:03:52.452827+00:00",
-  "last_success_at": "2026-11-13T01:03:52.338545+00:00",
+  "last_attempt_at": "2026-11-14T00:51:14.225066+00:00",
+  "last_success_at": "2026-11-14T00:51:14.145537+00:00",
   "refreshed_count": 41,
   "failed_suburbs": [
     "Clayton",
     "Clayton South",
-    "Coburg",
     "Gladstone Park",
-    "Northcote",
-    "Prahran",
-    "Richmond"
+    "Mornington",
+    "Mount Evelyn",
+    "St Kilda",
+    "St Kilda East"
   ],
   "message": "Some locations could not refresh. Previous data was retained where available."
 }
