@@ -1,16 +1,15 @@
 {
   "status": "partial",
-  "last_attempt_at": "2026-11-14T00:51:14.225066+00:00",
-  "last_success_at": "2026-11-14T00:51:14.145537+00:00",
-  "refreshed_count": 41,
+  "last_attempt_at": "2026-11-14T23:48:10.928765+00:00",
+  "last_success_at": "2026-11-14T23:48:10.843743+00:00",
+  "refreshed_count": 42,
   "failed_suburbs": [
-    "Clayton",
     "Clayton South",
-    "Gladstone Park",
-    "Mornington",
-    "Mount Evelyn",
-    "St Kilda",
-    "St Kilda East"
+    "Coburg",
+    "Hampton East",
+    "Hawthorn",
+    "North Melbourne",
+    "Northcote"
   ],
   "message": "Some locations could not refresh. Previous data was retained where available."
 }
