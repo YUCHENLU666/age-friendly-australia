@@ -1,19 +1,8 @@
 {
-  "status": "partial",
-  "last_attempt_at": "2026-11-22T00:17:26.618551+00:00",
-  "last_success_at": "2026-11-22T00:17:26.490028+00:00",
-  "refreshed_count": 38,
-  "failed_suburbs": [
-    "Clayton",
-    "Clayton South",
-    "Frankston",
-    "Gladstone Park",
-    "Hallam",
-    "Narre Warren",
-    "Newport",
-    "Noble Park",
-    "St Kilda",
-    "St Kilda East"
-  ],
-  "message": "Some locations could not refresh. Previous data was retained where available."
+  "status": "ok",
+  "last_attempt_at": "2026-11-23T00:38:26.623385+00:00",
+  "last_success_at": "2026-11-23T00:38:26.530839+00:00",
+  "refreshed_count": 48,
+  "failed_suburbs": [],
+  "message": "Weather and air quality updated successfully."
 }
