@@ -1,17 +1,19 @@
 {
   "status": "partial",
-  "last_attempt_at": "2026-11-24T04:45:05.812747+00:00",
-  "last_success_at": "2026-11-24T04:45:05.727319+00:00",
-  "refreshed_count": 40,
+  "last_attempt_at": "2026-11-25T03:32:49.497156+00:00",
+  "last_success_at": "2026-11-25T03:32:49.350257+00:00",
+  "refreshed_count": 38,
   "failed_suburbs": [
     "Clayton South",
     "Coburg",
-    "Hallam",
     "Hampton East",
-    "Narre Warren",
-    "Newport",
+    "Hawthorn",
+    "Laverton",
     "Noble Park",
-    "Williamstown"
+    "North Melbourne",
+    "Northcote",
+    "St Kilda Road",
+    "St Kilda West"
   ],
   "message": "Some locations could not refresh. Previous data was retained where available."
 }
