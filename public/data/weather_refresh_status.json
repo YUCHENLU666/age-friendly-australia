@@ -1,17 +1,8 @@
 {
-  "status": "partial",
-  "last_attempt_at": "2026-11-26T02:47:23.161934+00:00",
-  "last_success_at": "2026-11-26T02:47:23.046562+00:00",
-  "refreshed_count": 40,
-  "failed_suburbs": [
-    "Dandenong North",
-    "Docklands",
-    "Elsternwick",
-    "Hampton East",
-    "Hawthorn",
-    "North Melbourne",
-    "Northcote",
-    "Prahran"
-  ],
-  "message": "Some locations could not refresh. Previous data was retained where available."
+  "status": "ok",
+  "last_attempt_at": "2026-11-27T02:41:53.559576+00:00",
+  "last_success_at": "2026-11-27T02:41:53.466356+00:00",
+  "refreshed_count": 48,
+  "failed_suburbs": [],
+  "message": "Weather and air quality updated successfully."
 }
