@@ -1,7 +1,7 @@
 {
   "status": "ok",
-  "last_attempt_at": "2026-11-27T02:41:53.559576+00:00",
-  "last_success_at": "2026-11-27T02:41:53.466356+00:00",
+  "last_attempt_at": "2026-11-28T02:32:04.852155+00:00",
+  "last_success_at": "2026-11-28T02:32:04.757593+00:00",
   "refreshed_count": 48,
   "failed_suburbs": [],
   "message": "Weather and air quality updated successfully."
